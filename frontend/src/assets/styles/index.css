@@ -1,0 +1,53 @@
+/* Custom variables */
+:root {
+  --coup-teal: #4ECDC4;
+  --coup-dark: #292F36;
+  --coup-red: #FF6B6B;
+  --coup-light: #F7FFF7;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--coup-dark);
+  color: var(--coup-light);
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header, footer {
+  background-color: var(--coup-teal);
+  color: var(--coup-dark);
+  padding: 1rem;
+}
+
+main {
+  flex: 1;
+  padding: 1rem;
+}
+
+.btn-coup {
+  background-color: var(--coup-teal);
+  color: var(--coup-dark);
+  border: none;
+}
+
+.btn-coup:hover {
+  background-color: var(--coup-red);
+  color: var(--coup-light);
+}
+
+.card {
+  background-color: var(--coup-dark);
+  border: 2px solid var(--coup-teal);
+  color: var(--coup-light);
+}
+
+.card-header {
+  background-color: var(--coup-teal);
+  color: var(--coup-dark);
+}

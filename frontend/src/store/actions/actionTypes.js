@@ -1,0 +1,10 @@
+export const AUTH_SUCCESS = 'AUTH_SUCCESS';
+export const AUTH_ERROR = 'AUTH_ERROR';
+export const AUTH_START = 'AUTH_START';
+export const GET_PROFILE = 'GET_PROFILE';
+export const LOGOUT = 'LOGOUT';
+export const FETCH_GAME_SUCCESS = 'FETCH_GAME_SUCCESS';
+export const FETCH_GAME_ERROR = 'FETCH_GAME_ERROR';
+export const UPDATE_GAME = 'UPDATE_GAME';
+export const JOIN_GAME_SUCCESS = 'JOIN_GAME_SUCCESS';
+export const JOIN_GAME_ERROR = 'JOIN_GAME_ERROR';
