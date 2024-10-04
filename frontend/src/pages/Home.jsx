@@ -58,7 +58,7 @@ const GameplaySection = () => (
     </ol>
 
     <h5>Eliminating a Player</h5>
-    <p><strong>Loss of Influence:</strong> When a player loses all their influences (i.e., all their character cards), they are immediately <strong>eliminated</strong> from the game.</p>
+    <p><strong>Loss of Influence:</strong> When a player loses all their influences (i.e., all their character cards), they are immediately <strong>eliminated</strong> from the game. </p>
     <ul>
       <li><strong>Effects of Elimination:</strong>
         <ul>

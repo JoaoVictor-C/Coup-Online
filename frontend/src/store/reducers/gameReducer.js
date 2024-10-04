@@ -1,4 +1,31 @@
-import { FETCH_GAME_SUCCESS, FETCH_GAME_ERROR, JOIN_GAME_SUCCESS, JOIN_GAME_ERROR, UPDATE_GAME, CREATE_GAME_SUCCESS, CREATE_GAME_ERROR, FETCH_GAME_START, PLAYER_DISCONNECTED, GAME_OVER, START_GAME_SUCCESS, START_GAME_ERROR, GAME_STARTED, GAME_UPDATE, CHALLENGE_ACTION, CHALLENGE_SUCCESS, CHALLENGE_FAILURE, BLOCK_ACTION, BLOCK_SUCCESS, BLOCK_FAILURE } from '../actions/actionTypes';
+import {
+  FETCH_GAME_SUCCESS,
+  FETCH_GAME_ERROR,
+  JOIN_GAME_SUCCESS,
+  JOIN_GAME_ERROR,
+  CREATE_GAME_SUCCESS,
+  CREATE_GAME_ERROR,
+  FETCH_GAME_START,
+  PLAYER_DISCONNECTED,
+  GAME_OVER,
+  START_GAME_SUCCESS,
+  START_GAME_ERROR,
+  GAME_STARTED,
+  GAME_UPDATE,
+  CHALLENGE_ACTION,
+  CHALLENGE_SUCCESS,
+  CHALLENGE_FAILURE,
+  BLOCK_ACTION,
+  BLOCK_SUCCESS,
+  BLOCK_FAILURE,
+  ACCEPT_ACTION_SUCCESS,
+  ACCEPT_ACTION_FAILURE,
+  PENDING_ACTION,
+  ACTION_EXECUTED_SUCCESS,
+  ACTION_EXECUTED_FAILURE,
+  RESPOND_TO_BLOCK_SUCCESS,
+  RESPOND_TO_BLOCK_FAILURE
+} from '../actions/actionTypes';
 
 const initialState = {
   currentGame: null,
@@ -42,20 +69,21 @@ const gameReducer = (state = initialState, action) => {
         loading: true,
         error: null,
       };
-    case UPDATE_GAME:
     case GAME_UPDATE:
       return {
         ...state,
-        currentGame: action.payload,
+        currentGame: {
+          ...state.currentGame,
+          ...action.payload,
+        },
       };
     case PLAYER_DISCONNECTED:
-      // Handle player disconnection logic
       return {
         ...state,
         currentGame: {
           ...state.currentGame,
           players: state.currentGame.players.map(player =>
-            player.userId === action.payload.userId
+            player.playerProfile.user._id === action.payload.userId
               ? { ...player, isConnected: false }
               : player
           ),
@@ -67,7 +95,7 @@ const gameReducer = (state = initialState, action) => {
         currentGame: {
           ...state.currentGame,
           status: 'finished',
-          winner: action.payload.winner,
+          winner: action.payload,
         },
       };
     case START_GAME_SUCCESS:
@@ -131,6 +159,10 @@ const gameReducer = (state = initialState, action) => {
           success: true,
           message: action.payload,
         },
+        currentGame: {
+          ...state.currentGame,
+          pendingAction: null,
+        },
       };
     case BLOCK_FAILURE:
       return {
@@ -139,6 +171,40 @@ const gameReducer = (state = initialState, action) => {
           isBlocking: false,
           success: false,
           message: action.payload,
+        },
+      };
+    case ACCEPT_ACTION_SUCCESS:
+    case ACCEPT_ACTION_FAILURE:
+      return {
+        ...state,
+        currentGame: {
+          ...state.currentGame,
+          pendingAction: null,
+        },
+      };
+    case PENDING_ACTION:
+      return {
+        ...state,
+        currentGame: action.payload,
+      };
+    case ACTION_EXECUTED_SUCCESS:
+      return {
+        ...state,
+        currentGame: action.payload.game,
+      };
+    case ACTION_EXECUTED_FAILURE:
+      return {
+        ...state,
+        error: action.payload.message,
+        currentGame: action.payload.game,
+      };
+    case RESPOND_TO_BLOCK_SUCCESS:
+    case RESPOND_TO_BLOCK_FAILURE:
+      return {
+        ...state,
+        currentGame: {
+          ...state.currentGame,
+          pendingAction: null,
         },
       };
     default:

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../store/actions/authActions';
-import { Navigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import '../assets/styles/LoginPage.css'; // Import the LoginPage styles
 
 const LoginPage = () => {
@@ -11,6 +11,7 @@ const LoginPage = () => {
     username: '',
     password: '',
   });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,7 +23,7 @@ const LoginPage = () => {
   };
 
   if (isAuthenticated) {
-    return <Navigate to="/profile" />;
+    return navigate('/');
   }
 
   return (

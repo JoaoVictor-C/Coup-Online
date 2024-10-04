@@ -4,6 +4,7 @@ import { AUTH_START, AUTH_SUCCESS, AUTH_ERROR, LOGOUT, GET_PROFILE } from './act
 // Register User
 export const register = (userData) => async (dispatch) => {
   try {
+    console.log(userData);
     const res = await api.post('/auth/register', userData);
     localStorage.setItem('token', res.data.token);
     dispatch({ type: AUTH_SUCCESS, payload: res.data });

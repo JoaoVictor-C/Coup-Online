@@ -23,6 +23,20 @@ const io = socketIo(server, {
     },
 });
 
+io.use((socket, next) => {
+    const token = socket.handshake.auth.token;
+    if (!token) {
+        return next(new Error('Authentication error'));
+    }
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return next(new Error('Authentication error'));
+        }
+        socket.userId = decoded.id; // Adjust based on your JWT payload structure
+        next();
+    });
+});
+
 // Make io accessible to controllers
 app.set('io', io);
 

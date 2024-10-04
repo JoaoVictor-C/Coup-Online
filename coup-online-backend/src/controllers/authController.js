@@ -27,11 +27,16 @@ const register = async (req, res) => {
             username,
             password: hashedPassword,
             email,
+            games: [], // Initialize games as an empty array if not already handled by the schema
         });
+
+        await user.save(); // Save the user before creating PlayerProfile to get the user._id
 
         // Create player profile
         const playerProfile = new PlayerProfile({
             user: user._id,
+            username: username, // Assign the username to PlayerProfile
+            // Initialize other fields if necessary
         });
 
         await playerProfile.save();
@@ -52,6 +57,11 @@ const register = async (req, res) => {
                 id: user._id,
                 username: user.username,
                 email: user.email,
+                playerProfile: {
+                    id: playerProfile._id,
+                    coins: playerProfile.coins,
+                    influences: playerProfile.influences,
+                },
             },
         });
     } catch (err) {
@@ -67,8 +77,8 @@ const login = async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        // Check if user exists
-        const user = await User.findOne({ username });
+        // Check if user exists and populate playerProfile
+        const user = await User.findOne({ username }).populate('playerProfile');
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
@@ -90,8 +100,13 @@ const login = async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                coins: user.coins,
-                influences: user.influences,
+                email: user.email,
+                playerProfile: {
+                    id: user.playerProfile._id,
+                    coins: user.playerProfile.coins,
+                    influences: user.playerProfile.influences,
+                    // Add other PlayerProfile fields if needed
+                },
             },
         });
     } catch (err) {

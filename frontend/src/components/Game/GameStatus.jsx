@@ -8,7 +8,7 @@ const GameStatus = ({ game }) => {
       <div className="card-body">
         <h3 className="card-title text-light">Game Status</h3>
         <ul className="list-group list-group-flush">
-          {game.status === 'finished' && (
+          {game.status === 'finished' && game.winner && (
             <li className="list-group-item d-flex justify-content-between align-items-center">
               Winner
               <span className="badge bg-success rounded-pill">{game.winner.username}</span>
@@ -17,10 +17,6 @@ const GameStatus = ({ game }) => {
           <li className="list-group-item d-flex justify-content-between align-items-center">
             Status
             <span className="badge bg-primary rounded-pill">{game.status}</span>
-          </li>
-          <li className="list-group-item d-flex justify-content-between align-items-center">
-            Central Treasury
-            <span className="badge bg-secondary rounded-pill">{game.centralTreasury} coins</span>
           </li>
           <li className="list-group-item d-flex justify-content-between align-items-center">
             Current Player

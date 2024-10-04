@@ -26,7 +26,7 @@ const RegisterPage = () => {
       console.log(response);
       if (response.message === 'User registered successfully') {
         setFormData({ username: '', password: '', email: '' });
-        navigate('/login');
+        navigate('/');
       } else {
         setError('Registration failed. Please try again.');
       }

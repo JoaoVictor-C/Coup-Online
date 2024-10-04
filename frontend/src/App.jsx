@@ -6,6 +6,7 @@ import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
 import PrivateRoute from './components/Auth/PrivateRoute';
 import { getProfile } from './store/actions/authActions';
+import socketService from './services/socket';
 
 function App() {
   const dispatch = useDispatch();
@@ -16,6 +17,10 @@ function App() {
       dispatch(getProfile());
     }
   }, [dispatch]);
+
+  useEffect(() => {
+    socketService.initializeSocket();
+  }, []);
 
   return (
     <div className="App">

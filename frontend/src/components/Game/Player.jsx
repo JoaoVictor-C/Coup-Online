@@ -5,8 +5,9 @@ const Player = ({ player, isCurrentPlayer, isCurrentTurn }) => {
         <div className={`player card ${isCurrentPlayer ? 'border-primary' : ''} ${!player.isAlive ? 'bg-dark text-white' : 'bg-light'}`}>
             <div className="card-body">
                 <h4 className="card-title">
-                  {player.username} {isCurrentPlayer && <span className="badge bg-primary">You</span>}
-                  {isCurrentTurn && <span className="badge bg-success ms-2">Current Turn</span>}
+                    {player.username}
+                    {isCurrentPlayer && <span className="badge bg-primary ms-2">You</span>}
+                    {isCurrentTurn && <span className="badge bg-success ms-2">Current Turn</span>}
                 </h4>
                 <p className="card-text">Coins: {player.coins}</p>
                 <p className="card-text">Influences: {player.characters.length}</p>

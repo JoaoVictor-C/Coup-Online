@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchGame, startGame } from '../store/actions/gameActions';
-import { getSocket } from '../services/socket';
+import socketService from '../services/socket'; // Use the singleton service
 
 const LobbyPage = () => {
   const { gameId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const socket = getSocket();
+  const socket = socketService.getSocket(); // Use the singleton socket
   const gameFromRedux = useSelector(state => state.game.currentGame);
   const userId = useSelector(state => state.auth.user._id);
   const [game, setGame] = useState(null);
@@ -42,55 +42,12 @@ const LobbyPage = () => {
     fetchGameData();
     const intervalId = setInterval(fetchGameData, 5000); // Fetch every 5 seconds
 
-    const handleGameUpdate = (updatedGame) => {
-      dispatch({ type: 'UPDATE_GAME', payload: updatedGame });
-      setGame(updatedGame);
-      if (updatedGame.status === 'in_progress') {
-        navigate(`/game/${gameId}`);
-      }
-    };
-
-    const handleActionError = (error) => {
-      setError(error.message);
-    };
-
-    const HandlePlayerDisconnected = ({ userId: disconnectedUserId, reason }) => {
-      if (disconnectedUserId === userId) {
-        setIsDisconnected(true);
-        setError('You have been disconnected from the game.');
-      } else {
-        setError(`A player has been disconnected: ${reason}`);
-      }
-      fetchGameData(); // Fetch updated game data when a player disconnects
-    };
-
-    const HandleGameOver = ({ winner }) => {
-      if (winner === userId) {
-        alert('Congratulations! You have won the game!');
-      } else {
-        alert('Game Over! You have lost.');
-      }
-      navigate('/');
-    };
-
-    const HandleGameStarted = ({ gameId }) => {
-      console.log('Game Started')
-      navigate(`/game/${gameId}`);
-    };
-
-    socket.on('gameUpdate', handleGameUpdate);
-    socket.on('actionError', handleActionError);
-    socket.on('playerDisconnected', HandlePlayerDisconnected);
-    socket.on('gameOver', HandleGameOver);
-    socket.on('gameStarted', HandleGameStarted);
+    // The event listeners are now centralized in socket.js
 
     return () => {
       clearInterval(intervalId);
-      socket.off('gameUpdate', handleGameUpdate);
-      socket.off('actionError', handleActionError);
-      socket.off('playerDisconnected', HandlePlayerDisconnected);
-      socket.off('gameOver', HandleGameOver);
-      socket.off('gameStarted', HandleGameStarted);
+      // Optionally leave the room or perform cleanup
+      // socket.emit('leaveGame', { gameId, userId });
     };
   }, [dispatch, gameId, navigate, userId, socket]);
 

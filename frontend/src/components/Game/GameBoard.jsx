@@ -23,10 +23,17 @@ const GameBoard = ({ game, currentUserId }) => {
         {/* Display any pending challenges or blocks */}
         {game.pendingAction && (
           <div className="mt-4 alert alert-info">
-            <h4>Pending Action: {game.pendingAction.actionType}</h4>
-            <p>Action performed by: {game.pendingAction.userId === currentUserId ? 'You' : game.players.find(player => player.playerProfile.user._id === game.pendingAction.userId).playerProfile.user.username}</p>
+            <h4>Pending Action: {game.pendingAction.type}</h4>
+            <p>
+              Action performed by:{' '}
+              {game.pendingAction.userId === currentUserId ? 'You' :
+                game.players.find(player => player.playerProfile.user._id === game.pendingAction.userId)?.playerProfile.user.username || 'Unknown'}
+            </p>
             {game.pendingAction.targetUserId && (
-              <p>Target player: {game.pendingAction.targetUserId}</p>
+              <p>
+                Target player:{' '}
+                {game.players.find(player => player.playerProfile.user._id === game.pendingAction.targetUserId)?.playerProfile.user.username || 'Unknown'}
+              </p>
             )}
             {/* Optionally display buttons or indicators for challenge/block */}
           </div>
@@ -44,12 +51,12 @@ GameBoard.propTypes = {
     currentPlayerIndex: PropTypes.number.isRequired,
     currentPlayerUsername: PropTypes.string.isRequired,
     pendingAction: PropTypes.shape({
-      actionType: PropTypes.string.isRequired,
+      type: PropTypes.string.isRequired,
       userId: PropTypes.string.isRequired,
       targetUserId: PropTypes.string,
     }),
   }).isRequired,
   currentUserId: PropTypes.string.isRequired,
-};  
+};
 
 export default GameBoard;

@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchGame } from '../store/actions/gameActions';
+import { fetchGame} from '../store/actions/gameActions';
 import GameBoard from '../components/Game/GameBoard';
 import GameStatus from '../components/Game/GameStatus';
 import PlayerActions from '../components/Game/PlayerActions';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import socketService from '../services/socket';
 
 const GamePage = () => {
   const { gameId } = useParams();
@@ -23,10 +24,10 @@ const GamePage = () => {
   }, [authLoading, isAuthenticated, navigate]);
 
   useEffect(() => {
-    const getGame = async () => {
+    const getGame = () => {
       if (userId) {
         setIsLoading(true);
-        await dispatch(fetchGame(gameId));
+        dispatch(fetchGame(gameId));
         setIsLoading(false);
       }
     };
@@ -34,7 +35,6 @@ const GamePage = () => {
     if (!authLoading && userId) {
       getGame();
     }
-
   }, [dispatch, gameId, navigate, userId, authLoading]);
 
   if (authLoading || isLoading) {
