@@ -16,28 +16,24 @@ const UserSchema = new Schema(
             required: true,
             minlength: 6,
         },
-        coins: {
-            type: Number,
-            default: 2,
-            min: 0,
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true,
         },
-        characters: [
-            {
-                type: String,
-                enum: ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa'],
-            },
-        ],
-        influences: {
-            type: Number,
-            default: 2,
-            min: 0,
+        playerProfile: {
+            type: Schema.Types.ObjectId,
+            ref: 'PlayerProfile',
         },
+        // Add games the user is part of, if not already present
         games: [
             {
                 type: Schema.Types.ObjectId,
                 ref: 'Game',
             },
         ],
+        
     },
     { timestamps: true }
 );

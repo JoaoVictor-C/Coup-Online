@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faSignInAlt, faUserPlus, faUser, faSignOutAlt, faBars } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faSignInAlt, faUserPlus, faUser, faSignOutAlt, faBars, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { logout } from '../../store/actions/authActions';
+import '../../assets/styles/Header.css'; 
+import coupLogo from '../../assets/images/coup-logo.png';
 
 const Header = () => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -28,43 +30,60 @@ const Header = () => {
   }, [isAuthenticated]);
 
   return (
-    <header className="navbar navbar-expand navbar-dark bg-coup-teal shadow-sm">
-      <div className="container">
+    <header className="navbar navbar-expand-lg navbar-dark bg-header shadow-sm">
+      <div className="container d-flex justify-content-between align-items-center">
         <Link to="/" className="navbar-brand d-flex align-items-center">
-          <span className="font-weight-bold">COUP Online</span>
+          <img src={coupLogo} alt="COUP Online Logo" className="img-fluid mr-2" style={{ maxWidth: '75px' }} />
         </Link>
-        <nav className="position-relative d-flex justify-content-between">
-          <Link to="/" className="btn btn-outline-light mx-1" title="Home">
-            <FontAwesomeIcon icon={faHome} /> Home
-          </Link>
-          
-          {!isAuthenticated ? ( 
-            <button className="btn btn-outline-light mx-1" onClick={toggleMenu} title="Account">
-              <FontAwesomeIcon icon={faBars} /> Account
-            </button>
-          ) : (
-            <>
-              <Link to="/profile" className="btn btn-outline-light mx-1" title="Profile">
-                <FontAwesomeIcon icon={faUser} /> {user?.username || 'Profile'}
+        <button className="navbar-toggler text-dark" type="button" onClick={toggleMenu}>
+          <FontAwesomeIcon icon={faBars} />
+        </button>
+        <div className={`collapse navbar-collapse ${isMenuOpen ? 'show' : ''}`}>
+          <ul className="navbar-nav ms-auto text-dark">
+            <li className="nav-item">
+              <Link to="/" className="nav-link text-dark">
+                <FontAwesomeIcon icon={faHome} /> Home
               </Link>
-              <button onClick={handleLogout} className="btn btn-outline-light mx-1" title="Logout">
-                <FontAwesomeIcon icon={faSignOutAlt} /> Logout
-              </button>
-            </>
-          )}
-          {isMenuOpen && (
-            <div className="position-absolute start-0 top-100 mt-2 bg-coup-teal p-2 rounded shadow">
-                <>
-                  <Link to="/login" className="d-block btn btn-outline-light my-1" title="Login">
+            </li>
+            {!isAuthenticated ? (
+              <>
+                <li className="nav-item">
+                  <Link to="/login" className="nav-link text-dark">
                     <FontAwesomeIcon icon={faSignInAlt} /> Login
                   </Link>
-                  <Link to="/register" className="d-block btn btn-outline-light my-1" title="Register">
+                </li>
+                <li className="nav-item">
+                  <Link to="/register" className="nav-link text-dark">
                     <FontAwesomeIcon icon={faUserPlus} /> Register
                   </Link>
-                </>
-            </div>
-          )}
-        </nav>
+                </li>
+              </>
+            ) : (
+              <>
+                <li className="nav-item">
+                  <Link to="/game/create" className="nav-link text-dark">
+                    <FontAwesomeIcon icon={faPlus} /> Create Game
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link to="/game/join" className="nav-link text-dark">
+                    <FontAwesomeIcon icon={faSignInAlt} /> Join Game
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <button onClick={handleLogout} className="nav-link btn btn-link text-dark">
+                    <FontAwesomeIcon icon={faSignOutAlt} /> Logout
+                  </button>
+                </li>
+                <li className="nav-item">
+                  <Link to="/profile" className="nav-link text-dark">
+                    <FontAwesomeIcon icon={faUser} /> {user?.username || 'Profile'}
+                  </Link>
+                </li>
+              </>
+            )}
+          </ul>
+        </div>
       </div>
     </header>
   );

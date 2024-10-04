@@ -7,7 +7,12 @@ const getUser = async (req, res) => {
     try {
         const { userId } = req.params;
 
-        const user = await User.findById(userId).select('-password').populate('games');
+        const user = await User.findById(userId)
+            .select('-password')
+            .populate({
+                path: 'playerProfile',
+                populate: { path: 'games' }
+            });
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -21,6 +26,7 @@ const getUser = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
 
 module.exports = {
     getUser,

@@ -1,27 +1,24 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../store/actions/authActions';
 import { Navigate, Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faLock, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
+import '../assets/styles/LoginPage.css'; // Import the LoginPage styles
 
 const LoginPage = () => {
   const dispatch = useDispatch();
-  const { isAuthenticated, error, loading } = useSelector((state) => state.auth);
-  
+  const { isAuthenticated, error } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
 
-  const { username, password } = formData;
-
-  const onChange = (e) =>
+  const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-  const onSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(login(username, password));
+    dispatch(login(formData.username, formData.password));
   };
 
   if (isAuthenticated) {
@@ -29,70 +26,42 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-6">
-          <div className="card bg-coup-dark">
-            <div className="card-header bg-coup-teal text-center">
-              <h2 className="mb-0">Login</h2>
-            </div>
-            <div className="card-body">
-              {error && <div className="alert alert-danger" role="alert">{error}</div>}
-              <form onSubmit={onSubmit}>
-                <div className="mb-3">
-                  <div className="input-group">
-                    <span className="input-group-text bg-coup-teal">
-                      <FontAwesomeIcon icon={faUser} />
-                    </span>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="username"
-                      value={username}
-                      onChange={onChange}
-                      required
-                      placeholder="Username"
-                    />
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <div className="input-group">
-                    <span className="input-group-text bg-coup-teal">
-                      <FontAwesomeIcon icon={faLock} />
-                    </span>
-                    <input
-                      type="password"
-                      className="form-control"
-                      name="password"
-                      value={password}
-                      onChange={onChange}
-                      required
-                      placeholder="Password"
-                    />
-                  </div>
-                </div>
-                <div className="d-grid">
-                  <button type="submit" className="btn btn-coup" disabled={loading}>
-                    {loading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Logging in...
-                      </>
-                    ) : (
-                      <>
-                        <FontAwesomeIcon icon={faSignInAlt} className="me-2" />
-                        Login
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-            <div className="card-footer text-center">
-              <p className="mb-0">Don&apos;t have an account? <Link to="/register" className="text-coup-teal">Register here</Link></p>
-            </div>
+    <div className="login-container py-5">
+      <div className="login-card shadow">
+        <h2 className="mb-4">Login</h2>
+        {error && <div className="error-message">{error}</div>}
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group mb-3">
+            <label htmlFor="username">Username</label>
+            <input 
+              type="text" 
+              name="username" 
+              id="username"
+              value={formData.username} 
+              onChange={handleChange} 
+              placeholder="Enter your username" 
+              required 
+              className="form-control border"
+            />
           </div>
-        </div>
+          <div className="form-group mb-4">
+            <label htmlFor="password">Password</label>
+            <input 
+              type="password" 
+              name="password" 
+              id="password"
+              value={formData.password} 
+              onChange={handleChange} 
+              placeholder="Enter your password" 
+              required 
+              className="form-control border"
+            />
+          </div>
+          <button type="submit" className="btn btn-primary w-100">Login</button>
+        </form>
+        <p className="mt-3 text-center">
+          Don&apos;t have an account? <Link to="/register">Register here</Link>
+        </p>
       </div>
     </div>
   );

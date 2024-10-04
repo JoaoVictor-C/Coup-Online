@@ -1,16 +1,20 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import routes from './routes';
 import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
 import PrivateRoute from './components/Auth/PrivateRoute';
-import { useDispatch } from 'react-redux';
 import { getProfile } from './store/actions/authActions';
 
 function App() {
   const dispatch = useDispatch();
+
   useEffect(() => {
-    dispatch(getProfile());
+    const token = localStorage.getItem('token');
+    if (token) {
+      dispatch(getProfile());
+    }
   }, [dispatch]);
 
   return (

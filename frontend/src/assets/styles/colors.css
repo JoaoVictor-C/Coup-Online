@@ -1,0 +1,43 @@
+/* frontend/src/styles/colors.css */
+
+:root {
+    /* Primary Colors */
+    --primary-teal: #4ECDC4;      /* Teal for main actions and highlights */
+    --primary-red: #FF6B6B;       /* Red for accents and alerts */
+
+    /* Neutral Colors */
+    --neutral-dark: #292F36;      /* Dark background */
+    --neutral-light: #F7FFF7;     /* Light text and backgrounds */
+    --background-color: #f8f9fa;  /* Light background for main content */
+    --text-color: #212529;        /* Dark text for readability */
+
+    /* Secondary Colors */
+    --secondary-blue: #219669;    /* Secondary blue for buttons and links */
+    --secondary-brown: #8B4513;   /* Brown for complementary elements */
+
+    /* Accent Colors */
+    --accent-white: #ffffff;      /* White for accents and highlights */
+}
+  
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+  
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+  
+.btn-primary:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+  
+.card {
+    border: 2px solid var(--primary-color);
+}
+  
+.card-title {
+    color: var(--primary-color);
+}

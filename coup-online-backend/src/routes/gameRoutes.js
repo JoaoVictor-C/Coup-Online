@@ -1,15 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const gameController = require('../controllers/gameController');
+const { 
+    createGame, 
+    joinGame, 
+    getGameState, 
+    handleDisconnection,
+    startGame // Import the new controller
+} = require('../controllers/gameController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Create a new game
-router.post('/create', authMiddleware, gameController.createGame);
+router.post('/create', authMiddleware, createGame);
 
-// Join an existing game
-router.post('/join', authMiddleware, gameController.joinGame);
+// Join a game
+router.post('/join', authMiddleware, joinGame);
 
 // Get game state
-router.get('/:gameId', authMiddleware, gameController.getGameState);
+router.get('/:gameId', authMiddleware, getGameState);
 
+// Start the game
+router.post('/:gameId/start', authMiddleware, startGame);
+
+// Handle disconnection (if needed as an API endpoint)
+router.post('/disconnect/:gameId', authMiddleware, handleDisconnection);
+
+// Export the router
 module.exports = router;

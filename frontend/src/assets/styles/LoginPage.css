@@ -1,0 +1,43 @@
+.login-container {
+  background-color: var(--background-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+
+.login-card {
+  background-color: var(--card-background-color);
+  padding: 2rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.login-form label {
+  color: var(--text-color);
+}
+
+.login-form .form-control {
+  background-color: var(--input-background-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.login-form .form-control::placeholder {
+  color: var(--placeholder-color);
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover-color);
+}
+
+.error-message {
+  color: var(--error-color);
+  margin-bottom: 1rem;
+}

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const PlayerProfile = require('../models/PlayerProfile');
 
 /**
  * Register a new user
@@ -28,22 +29,29 @@ const register = async (req, res) => {
             email,
         });
 
+        // Create player profile
+        const playerProfile = new PlayerProfile({
+            user: user._id,
+        });
+
+        await playerProfile.save();
+
+        // Link player profile to user
+        user.playerProfile = playerProfile._id;
         await user.save();
 
         // Generate JWT
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-            expiresIn: '2h', // Extended token validity
+            expiresIn: '24h', // Extended token validity
         });
 
-        res.status(201).json({
+        res.status(200).json({
             message: 'User registered successfully',
             token,
             user: {
                 id: user._id,
                 username: user.username,
                 email: user.email,
-                coins: user.coins,
-                influences: user.influences,
             },
         });
     } catch (err) {
@@ -73,7 +81,7 @@ const login = async (req, res) => {
 
         // Generate JWT
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-            expiresIn: '2h',
+            expiresIn: '24h',
         });
 
         res.status(200).json({
@@ -99,7 +107,10 @@ const getProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user.id)
             .select('-password')
-            .populate('games');
+            .populate({
+                path: 'playerProfile',
+                populate: { path: 'games' }
+            });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }

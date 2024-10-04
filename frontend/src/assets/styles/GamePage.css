@@ -1,0 +1,13 @@
+.game-container {
+    background-color: var(--background-color);
+    padding: 2rem;
+  }
+  
+  .text-center {
+    color: var(--primary-color);
+  }
+  
+  .loading {
+    color: var(--text-color);
+    text-align: center;
+  }

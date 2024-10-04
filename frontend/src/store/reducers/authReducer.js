@@ -5,6 +5,7 @@ const initialState = {
   isAuthenticated: null,
   loading: false,
   user: null,
+  userId: null,
   error: null,
 };
 
@@ -25,6 +26,7 @@ const authReducer = (state = initialState, action) => {
         isAuthenticated: true,
         loading: false,
         user: payload.user,
+        userId: payload.user._id,
         error: null,
       };
     case GET_PROFILE:
@@ -34,6 +36,7 @@ const authReducer = (state = initialState, action) => {
         isAuthenticated: true,
         loading: false,
         error: null,
+        userId: payload.user._id,
       };
     case AUTH_ERROR:
     case LOGOUT:
@@ -44,9 +47,10 @@ const authReducer = (state = initialState, action) => {
         loading: false,
         user: null,
         error: payload,
+        userId: null,
       };
-    default:
-      return state;
+      default:
+        return state;
   }
 };
 
