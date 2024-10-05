@@ -51,6 +51,19 @@ const PendingActionSchema = new mongoose.Schema({
         ref: 'User',
         required: false
     },
+    blockType: {
+        type: String,
+        enum: ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa', null],
+        required: false
+    },
+    canBeBlocked: {
+        type: Boolean,
+        default: false
+    },
+    canBeChallenged: {
+        type: Boolean,
+        default: false
+    },
     challengedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -59,6 +72,15 @@ const PendingActionSchema = new mongoose.Schema({
     timestamp: { // New field to track when the action was initiated
         type: Date,
         default: Date.now
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'challenged', 'blocked', 'executed'],
+        default: 'pending'
+    },
+    challengeDeadline: {
+        type: Date,
+        required: false
     },
 }, { id: false });
 const GameSchema = new mongoose.Schema({

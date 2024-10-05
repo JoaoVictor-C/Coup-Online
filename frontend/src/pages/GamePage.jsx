@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchGame} from '../store/actions/gameActions';
+import { fetchGame } from '../store/actions/gameActions';
 import GameBoard from '../components/Game/GameBoard';
 import GameStatus from '../components/Game/GameStatus';
 import PlayerActions from '../components/Game/PlayerActions';
@@ -12,10 +12,11 @@ const GamePage = () => {
   const { gameId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { currentGame, error } = useSelector(state => state.game);
+  const socket = socketService.getSocket();
+  const gameFromRedux = useSelector(state => state.game.currentGame);
   const { userId, isAuthenticated, loading: authLoading } = useSelector(state => state.auth);
   const [isLoading, setIsLoading] = useState(true);
-  const [disconnected, setDisconnected] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -24,41 +25,46 @@ const GamePage = () => {
   }, [authLoading, isAuthenticated, navigate]);
 
   useEffect(() => {
-    const getGame = () => {
-      if (userId) {
-        setIsLoading(true);
-        dispatch(fetchGame(gameId));
-        setIsLoading(false);
-      }
+    if (userId && gameId) {
+      setIsLoading(true);
+      dispatch(fetchGame(gameId))
+        .then(() => setIsLoading(false))
+        .catch(err => {
+          setError(err.message);
+          setIsLoading(false);
+        });
+    }
+  }, [dispatch, gameId, userId]);
+
+  useEffect(() => {
+    if (gameFromRedux && gameFromRedux.status === 'in_progress') {
+      navigate(`/game/${gameId}`);
+    }
+  }, [gameFromRedux, navigate, gameId]);
+
+  useEffect(() => {
+    // Listen for gameUpdate events
+    const handleGameUpdate = (updatedGame) => {
+      dispatch({ type: 'GAME_UPDATE', payload: updatedGame });
     };
 
-    if (!authLoading && userId) {
-      getGame();
-    }
-  }, [dispatch, gameId, navigate, userId, authLoading]);
+    socket.on('gameUpdate', handleGameUpdate);
 
-  if (authLoading || isLoading) {
-    return <div>Loading...</div>;
-  }
+    return () => {
+      socket.off('gameUpdate', handleGameUpdate);
+    };
+  }, [dispatch, socket]);
 
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
-
-  if (!currentGame) {
-    return <div>Game not found</div>;
-  }
-
-  if (disconnected) {
-    return <div>You have been disconnected from the game.</div>;
-  }
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div className="alert alert-danger">{error}</div>;
+  if (!gameFromRedux) return <div>Game not found</div>;
 
   return (
     <div className="game-page container py-5">
       <h2>Game {gameId}</h2>
-      <GameBoard game={currentGame} currentUserId={userId} />
-      <GameStatus game={currentGame} />
-      <PlayerActions game={currentGame} currentUserId={userId} />
+      <GameBoard game={gameFromRedux} currentUserId={userId} />
+      <GameStatus game={gameFromRedux} />
+      <PlayerActions game={gameFromRedux} currentUserId={userId} />
     </div>
   );
 };

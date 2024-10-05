@@ -19,7 +19,7 @@ function App() {
   }, [dispatch]);
 
   useEffect(() => {
-    socketService.initializeSocket();
+    socketService.getSocket();
   }, []);
 
   return (

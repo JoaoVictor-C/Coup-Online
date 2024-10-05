@@ -8,13 +8,12 @@ const JoinGamePage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     try {
       const result = await dispatch(joinGame(gameId));
-      console.log(result)
       if (result.gameId) {
         navigate(`/lobby/${result.gameId}`);
       } else {

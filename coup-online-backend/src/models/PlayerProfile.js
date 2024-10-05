@@ -29,7 +29,7 @@ const PlayerProfileSchema = new Schema(
             default: 2,
             min: 0,
         },
-        isConnected: { // Track connection status
+        isConnected: {
             type: Boolean,
             default: true,
         },

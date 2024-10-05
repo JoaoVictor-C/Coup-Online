@@ -46,6 +46,28 @@ const initialState = {
 const gameReducer = (state = initialState, action) => {
   switch (action.type) {
     case FETCH_GAME_SUCCESS:
+      return {
+        ...state,
+        currentGame: {
+          ...action.payload,
+          players: action.payload.players.map(player => ({
+            ...player,
+            user: player.playerProfile.user || {},
+            username: player.playerProfile.user?.username || 'Unknown',
+            characters: player.characters,
+            coins: player.coins,
+            isAlive: player.isAlive,
+            isConnected: player.isConnected
+          })),
+          currentUserId: state.currentGame?.currentUserId || action.payload.currentUserId,
+          centralTreasury: action.payload.centralTreasury || 1000,
+          currentPlayerUsername: action.payload.currentPlayerUsername || '',
+          winner: action.payload.winner || null,
+          pendingAction: action.payload.pendingAction || null,
+        },
+        loading: false,
+        error: null,
+      };
     case JOIN_GAME_SUCCESS:
     case CREATE_GAME_SUCCESS:
       return {
@@ -101,7 +123,11 @@ const gameReducer = (state = initialState, action) => {
     case START_GAME_SUCCESS:
       return {
         ...state,
-        currentGame: action.payload,
+        currentGame: {
+          ...state.currentGame,
+          ...action.payload,
+          status: 'in_progress',
+        },
         loading: false,
         error: null,
       };

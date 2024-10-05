@@ -25,14 +25,12 @@ const GameBoard = ({ game, currentUserId }) => {
           <div className="mt-4 alert alert-info">
             <h4>Pending Action: {game.pendingAction.type}</h4>
             <p>
-              Action performed by:{' '}
-              {game.pendingAction.userId === currentUserId ? 'You' :
+              Action performed by: {game.pendingAction.userId === currentUserId ? 'You' :
                 game.players.find(player => player.playerProfile.user._id === game.pendingAction.userId)?.playerProfile.user.username || 'Unknown'}
             </p>
             {game.pendingAction.targetUserId && (
               <p>
-                Target player:{' '}
-                {game.players.find(player => player.playerProfile.user._id === game.pendingAction.targetUserId)?.playerProfile.user.username || 'Unknown'}
+                Target player: {game.players.find(player => player.playerProfile.user._id === game.pendingAction.targetUserId)?.playerProfile.user.username || 'Unknown'}
               </p>
             )}
             {/* Optionally display buttons or indicators for challenge/block */}
@@ -54,6 +52,8 @@ GameBoard.propTypes = {
       type: PropTypes.string.isRequired,
       userId: PropTypes.string.isRequired,
       targetUserId: PropTypes.string,
+      canBeBlocked: PropTypes.bool,
+      canBeChallenged: PropTypes.bool,
     }),
   }).isRequired,
   currentUserId: PropTypes.string.isRequired,

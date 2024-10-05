@@ -23,6 +23,7 @@ const io = socketIo(server, {
     },
 });
 
+// Consolidated Middleware for Socket.IO Authentication
 io.use((socket, next) => {
     const token = socket.handshake.auth.token;
     if (!token) {
@@ -32,7 +33,7 @@ io.use((socket, next) => {
         if (err) {
             return next(new Error('Authentication error'));
         }
-        socket.userId = decoded.id; // Adjust based on your JWT payload structure
+        socket.user = decoded; // Ensure consistent naming
         next();
     });
 });
@@ -59,21 +60,6 @@ connectDB();
 
 // Error Handling Middleware
 app.use(errorHandler);
-
-// Middleware to authenticate Socket.IO connections
-io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-        return next(new Error('Authentication error'));
-    }
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return next(new Error('Authentication error'));
-        }
-        socket.user = decoded;
-        next();
-    });
-});
 
 // Handle Socket.io connections
 io.on('connection', (socket) => {

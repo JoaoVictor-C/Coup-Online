@@ -26,14 +26,12 @@ const UserSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: 'PlayerProfile',
         },
-        // Add games the user is part of, if not already present
         games: [
             {
                 type: Schema.Types.ObjectId,
                 ref: 'Game',
             },
         ],
-        
     },
     { timestamps: true }
 );

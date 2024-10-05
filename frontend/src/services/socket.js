@@ -1,12 +1,11 @@
 import { io } from 'socket.io-client';
 import store from '../store';
 import {
-  CHALLENGE_SUCCESS,
-  CHALLENGE_FAILURE,
-  BLOCK_SUCCESS,
-  BLOCK_FAILURE,
-  ACTION_EXECUTED_SUCCESS,
-  ACTION_EXECUTED_FAILURE
+  GAME_UPDATE,
+  GAME_OVER,
+  PLAYER_DISCONNECTED,
+  GAME_STARTED,
+  PENDING_ACTION,
 } from '../store/actions/actionTypes';
 import { gameUpdate, gameOver, playerDisconnected, gameStarted, pendingAction } from '../store/actions/gameActions';
 
@@ -14,6 +13,7 @@ const SOCKET_IO_URL = import.meta.env.VITE_SOCKET_IO_URL || 'http://localhost:50
 
 class SocketService {
   socket = null;
+  actionTimeouts = {};
 
   initializeSocket() {
     if (!this.socket) {
@@ -55,37 +55,38 @@ class SocketService {
       });
 
       this.socket.on('challengeResult', (data) => {
-        const { success, message } = data;
+        const { success, message, game } = data;
         if (success) {
-          store.dispatch({ type: CHALLENGE_SUCCESS, payload: message });
+          store.dispatch({ type: 'CHALLENGE_SUCCESS', payload: message });
+          store.dispatch(gameUpdate(game));
         } else {
-          store.dispatch({ type: CHALLENGE_FAILURE, payload: message });
+          store.dispatch({ type: 'CHALLENGE_FAILURE', payload: message });
         }
       });
 
       this.socket.on('blockResult', (data) => {
         const { success, message, game } = data;
         if (success) {
-          store.dispatch({ type: BLOCK_SUCCESS, payload: message });
+          store.dispatch({ type: 'BLOCK_SUCCESS', payload: message });
           store.dispatch(gameUpdate(game));
         } else {
-          store.dispatch({ type: BLOCK_FAILURE, payload: message });
+          store.dispatch({ type: 'BLOCK_FAILURE', payload: message });
         }
       });
 
       this.socket.on('actionExecuted', (data) => {
         const { success, message, game } = data;
         if (success) {
-          store.dispatch({ type: ACTION_EXECUTED_SUCCESS, payload: { message, game } });
+          store.dispatch({ type: 'ACTION_EXECUTED_SUCCESS', payload: { message, game } });
         } else {
-          store.dispatch({ type: ACTION_EXECUTED_FAILURE, payload: { message, game } });
+          store.dispatch({ type: 'ACTION_EXECUTED_FAILURE', payload: { message, game } });
         }
       });
 
       this.socket.on('blockAttempt', (data) => {
         const { success, message, game } = data;
         if (success) {
-          console.log('Block attempt success')
+          console.log('Block attempt success');
           store.dispatch(gameUpdate(game));
         }
       });
@@ -93,10 +94,14 @@ class SocketService {
       this.socket.on('blockChallengeResult', (data) => {
         const { success, message, game } = data;
         store.dispatch(gameUpdate(game));
-        // You might want to dispatch an action to show a message to the user
+        // Optionally dispatch an action to show a message to the user
       });
+    }
+  }
 
-      // Add more listeners as needed
+  connect() {
+    if (this.socket && !this.socket.connected) {
+      this.socket.connect();
     }
   }
 
@@ -109,8 +114,25 @@ class SocketService {
 
   disconnect() {
     if (this.socket) {
+      console.log('Disconnecting socket');
       this.socket.disconnect();
       this.socket = null;
+    }
+  }
+
+  // Manage action timeouts
+  setActionTimeout(gameId, callback, delay = 30000) { // Default 30 seconds
+    this.clearActionTimeout(gameId);
+    this.actionTimeouts[gameId] = setTimeout(() => {
+      callback();
+      delete this.actionTimeouts[gameId];
+    }, delay);
+  }
+
+  clearActionTimeout(gameId) {
+    if (this.actionTimeouts[gameId]) {
+      clearTimeout(this.actionTimeouts[gameId]);
+      delete this.actionTimeouts[gameId];
     }
   }
 }

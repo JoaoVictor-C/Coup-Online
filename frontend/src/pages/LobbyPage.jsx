@@ -11,20 +11,8 @@ const LobbyPage = () => {
   const socket = socketService.getSocket(); // Use the singleton socket
   const gameFromRedux = useSelector(state => state.game.currentGame);
   const userId = useSelector(state => state.auth.user._id);
-  const [game, setGame] = useState(null);
   const [error, setError] = useState('');
   const [copySuccess, setCopySuccess] = useState('');
-  const [isDisconnected, setIsDisconnected] = useState(false);
-
-  useEffect(() => {
-    setGame(gameFromRedux);
-  }, [gameFromRedux]);
-
-  useEffect(() => {
-    if (game && game.status === 'in_progress') {
-      navigate(`/game/${gameId}`);
-    }
-  }, [game, navigate, gameId]);
 
   useEffect(() => {
     // Emit joinGame event
@@ -34,22 +22,25 @@ const LobbyPage = () => {
       }
     });
 
-    const fetchGameData = () => {
-      dispatch(fetchGame(gameId));
+    // Listen for gameUpdate events
+    const handleGameUpdate = (updatedGame) => {
+      dispatch({ type: 'GAME_UPDATE', payload: updatedGame });
     };
 
-    // Fetch game data initially and set up an interval to fetch it regularly
-    fetchGameData();
-    const intervalId = setInterval(fetchGameData, 5000); // Fetch every 5 seconds
-
-    // The event listeners are now centralized in socket.js
+    socket.on('gameUpdate', handleGameUpdate);
 
     return () => {
-      clearInterval(intervalId);
+      socket.off('gameUpdate', handleGameUpdate);
       // Optionally leave the room or perform cleanup
       // socket.emit('leaveGame', { gameId, userId });
     };
-  }, [dispatch, gameId, navigate, userId, socket]);
+  }, [dispatch, gameId, userId, socket]);
+
+  useEffect(() => {
+    if (gameFromRedux && gameFromRedux.status === 'in_progress') {
+      navigate(`/game/${gameId}`);
+    }
+  }, [gameFromRedux, navigate, gameId]);
 
   const copyRoomId = () => {
     navigator.clipboard.writeText(gameId)
@@ -72,9 +63,8 @@ const LobbyPage = () => {
     }
   };
 
-  if (!game) return <div>Loading...</div>;
+  if (!gameFromRedux) return <div>Loading...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;
-  if (isDisconnected) return <div className="alert alert-warning">You have been disconnected from the game.</div>;
 
   return (
     <div className="container py-5">
@@ -84,9 +74,9 @@ const LobbyPage = () => {
         <button className="btn btn-secondary btn-sm pr-2 pl-2" onClick={copyRoomId}>Copy Room ID</button>
         {copySuccess && <span className="text-success ml-2 pl-2">{copySuccess}</span>}
       </div>
-      <p>Waiting for players... ({game.players.length}/{game.maxPlayers})</p>
+      <p>Waiting for players... ({gameFromRedux.players.length}/{gameFromRedux.maxPlayers})</p>
       <ul className="list-group">
-        {game.players.map((player, index) => (
+        {gameFromRedux.players.map((player, index) => (
           <li key={index} className="list-group-item d-flex justify-content-between align-items-center">
             {player.username}
             {player.isConnected ? 
@@ -96,7 +86,7 @@ const LobbyPage = () => {
           </li>
         ))}
       </ul>
-      {game.status === 'waiting' && game.players.length >= 2 && (
+      {gameFromRedux.status === 'waiting' && gameFromRedux.players.length >= 2 && (
         <button className="btn btn-primary mt-3" onClick={handleStartGame}>Start Game</button>
       )}
     </div>

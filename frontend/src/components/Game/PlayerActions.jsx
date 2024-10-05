@@ -18,9 +18,9 @@ const PlayerActions = ({ game, currentUserId }) => {
     }
 
     try {
-      console.log(game)
       dispatch(performAction(game._id, actionType, selectedTarget, currentUserId));
-      setSelectedTarget(null); // Reset after action
+      setSelectedTarget(null);
+      console.log(JSON.stringify(game, null, 2));
     } catch (error) {
       console.error('Action failed:', error);
       alert(`Action failed: ${error}`);
@@ -32,10 +32,18 @@ const PlayerActions = ({ game, currentUserId }) => {
   };
 
   const handleChallenge = () => {
-    dispatch(performChallenge(game._id, currentUserId));
+    if (!game.pendingAction.canBeChallenged) {
+      alert('This action cannot be challenged.');
+      return;
+    }
+    dispatch(performChallenge(game._id, currentUserId, 'action'));
   };
 
   const handleBlock = () => {
+    if (!game.pendingAction.canBeBlocked) {
+      alert('This action cannot be blocked.');
+      return;
+    }
     dispatch(performBlock(game._id, currentUserId, game.pendingAction.type));
   };
 
@@ -73,10 +81,22 @@ const PlayerActions = ({ game, currentUserId }) => {
     return (
       <div className="player-actions card">
         <div className="card-body">
-          <h3 className="card-title mb-3">Your Action Was Blocked</h3>
+          <h3 className="card-title mb-3 text-light">Your Action Was Blocked</h3>
           <div className="d-grid gap-2">
-            <button className="btn btn-outline-success" onClick={() => handleRespondToBlock('accept')}>Accept Block</button>
-            <button className="btn btn-outline-danger" onClick={() => handleRespondToBlock('challenge')}>Challenge Block</button>
+            {game.pendingAction.canBeChallenged && (
+              <>
+                <p className='text-light'>Challenged by: {game.pendingAction.challengedBy}</p>
+                <button className="btn btn-outline-success" onClick={() => handleRespondToBlock('accept')}>Accept Challenge</button>
+                <button className="btn btn-outline-danger" onClick={() => handleRespondToBlock('challenge')}>Challenge Action</button>
+              </>
+            )}
+            {game.pendingAction.canBeBlocked && (
+              <>
+                <p className='text-light'>Blocked by: {game.pendingAction.blockedBy}</p>
+                <button className="btn btn-outline-success" onClick={() => handleRespondToBlock('accept')}>Accept Block</button>
+                <button className="btn btn-outline-danger" onClick={() => handleRespondToBlock('challenge')}>Challenge Action</button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -94,13 +114,17 @@ const PlayerActions = ({ game, currentUserId }) => {
         </div>
       );
     } else if (game.currentPlayerIndex !== game.players.findIndex(player => player.playerProfile.user._id === currentUserId)) {
+      // Verify if the action can be blocked or challenged
+      const canChallenge = game.pendingAction.canBeChallenged;
+      const canBlock = game.pendingAction.canBeBlocked;
+
       return (
         <div className="player-actions card">
           <div className="card-body">
             <h3 className="card-title mb-3">Pending Action</h3>
             <div className="d-grid gap-2">
-              <button className="btn btn-outline-warning" onClick={handleChallenge}>Challenge Action</button>
-              <button className="btn btn-outline-secondary" onClick={handleBlock}>Block Action</button>
+              {canChallenge && <button className="btn btn-outline-warning" onClick={handleChallenge}>Challenge Action</button>}
+              {canBlock && <button className="btn btn-outline-secondary" onClick={handleBlock}>Block Action</button>}
               <button className="btn btn-outline-success" onClick={handleAcceptAction}>Accept Action</button>
             </div>
           </div>
@@ -117,12 +141,10 @@ const PlayerActions = ({ game, currentUserId }) => {
     return <div className="alert alert-info">Waiting for the other player to perform an action..</div>;
   }
 
- 
-
   return (
     <div className="player-actions card">
       <div className="card-body">
-        <h3 className="card-title mb-3">Your Turn</h3>
+        <h3 className="card-title mb-3 text-light">Your Turn</h3>
         <div className="d-grid gap-2">
           <button className="btn btn-primary" onClick={() => handleAction('income')}>Take Income</button>
           <button className="btn btn-secondary" onClick={() => handleAction('foreignAid')}>Foreign Aid</button>
@@ -133,18 +155,18 @@ const PlayerActions = ({ game, currentUserId }) => {
         </div>
         {(game.status === 'in_progress') && (game.players.length > 1) && (
           <div className="mt-3">
-            <label htmlFor="targetPlayer" className="form-label">Select Target Player:</label>
+            <label htmlFor="targetPlayer" className="form-label text-light">Select Target Player:</label>
             <select
               id="targetPlayer"
               className="form-select"
-              value={selectedTarget}
+              value={selectedTarget || ''}
               onChange={handleSelectChange}
             >
               <option value="">-- Select --</option>
               {game.players
-                .filter(player => player.playerProfile.user.id !== currentUserId && player.isAlive)
+                .filter(player => player.playerProfile.user._id !== currentUserId && player.isAlive)
                 .map(player => (
-                  <option key={player.playerProfile.user.id} value={player.playerProfile.user._id}>
+                  <option key={player.playerProfile.user._id} value={player.playerProfile.user._id}>
                     {player.playerProfile.user.username}
                   </option>
                 ))}
