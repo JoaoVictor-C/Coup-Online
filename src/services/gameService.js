@@ -61,7 +61,7 @@ const checkGameOver = async (game) => {
         console.log(`Alive players.lenght ${alivePlayers.length}`);
         console.log('freshGame.status', freshGame.status);
 
-        if (alivePlayers.length <= 1 && freshGame.status === 'in_progress') {
+        if (alivePlayers.length <= 1 && freshGame.status === 'in_progress' && freshGame.players.length != 1) {
             if (alivePlayers.length === 1) {
                 freshGame.winner = alivePlayers[0].username;
                 console.log(`Game Over! Winner: ${freshGame.winner}`);
