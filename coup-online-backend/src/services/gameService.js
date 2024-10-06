@@ -39,22 +39,49 @@ const removeRandomCharacter = (player) => {
 
 const updateAlivePlayers = (game) => {
     game.players.forEach(player => {
-        player.isAlive = player.characters.length > 0;
+        if (player.characters.length === 0) {
+            player.isAlive = false;
+        } else {
+            player.isAlive = true;
+        }
     });
 };
 
-const checkGameOver = (game) => {
-    updateAlivePlayers(game);
-    const alivePlayers = game.players.filter(player => player.isAlive);
-    if (alivePlayers.length <= 1 && game.status === 'in_progress' && game.maxPlayers === game.players.length) {
-        game.status = 'finished';
-        if (alivePlayers.length === 1) {
-            game.winner = alivePlayers[0].username;
+const checkGameOver = async (game) => {
+    try {
+        const freshGame = await Game.findById(game._id)
+            .populate({
+                path: 'players.playerProfile',
+                populate: { path: 'user' }
+            })
+            .lean();
+
+        const alivePlayers = freshGame.players.filter(player => player.isAlive);
+
+        if (alivePlayers.length <= 1 && freshGame.status === 'in_progress' && freshGame.players.length != 1) {
+            if (alivePlayers.length === 1) {
+                freshGame.winner = alivePlayers[0].username;
+                console.log(`Game Over! Winner: ${freshGame.winner}`);
+            } else {
+                console.log('Game Over! No winners.');
+            }
+
+            await Game.findByIdAndUpdate(game._id, {
+                status: 'finished',
+                winner: alivePlayers.length === 1 ? alivePlayers[0].username : null,
+                acceptedPlayers: []
+            });
+
+            return true;
+        } else {
+            console.log(`Game continues with ${alivePlayers.length} players alive.`);
         }
-        return true;
+
+        return false;
+    } catch (error) {
+        console.error('Error in checkGameOver:', error);
+        return false;
     }
-    
-    return false;
 };
 
 // Game Setup Functions
@@ -177,11 +204,7 @@ const startGameLogic = async (gameId, userId, io) => {
         populate: { path: 'user' }
     }).lean();
 
-    const formattedGame = formatGameData(updatedGame, userId);
-
-    io.to(gameId).emit('gameUpdate', formattedGame);
-
-    return { success: true, status: 200, message: 'Game started successfully', game: formattedGame };
+    return { success: true, status: 200, message: 'Game started successfully', game: updatedGame };
 };
 
 
@@ -355,17 +378,13 @@ const executeAction = async (game, action) => {
 
 // Advance turn to the next player
 const advanceTurn = (game) => {
-    if (checkGameOver(game)) {
-        game.status = 'finished';
-    } else {
-        let nextPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
-        while (!game.players[nextPlayerIndex].isAlive) {
-            console.log(`Player: ${game.players[nextPlayerIndex].username} is not alive`)
-            nextPlayerIndex = (nextPlayerIndex + 1) % game.players.length;
-        }
-        game.currentPlayerIndex = nextPlayerIndex;
-        game.currentPlayerUsername = game.players[game.currentPlayerIndex].username;
+    let nextPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
+    while (!game.players[nextPlayerIndex].isAlive) {
+        console.log(`Player: ${game.players[nextPlayerIndex].username} is not alive`)
+        nextPlayerIndex = (nextPlayerIndex + 1) % game.players.length;
     }
+    game.currentPlayerIndex = nextPlayerIndex;
+    game.currentPlayerUsername = game.players[game.currentPlayerIndex].username;
     return game;
 };
 

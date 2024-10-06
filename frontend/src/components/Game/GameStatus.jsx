@@ -1,11 +1,29 @@
 import PropTypes from 'prop-types';
+import { useState, useEffect } from 'react';
 
 const GameStatus = ({ game }) => {
   const currentPlayerUsername = game.currentPlayerUsername || 'Unknown';
+  const [timer, setTimer] = useState(30);
 
   // Calculate accepted players if there's a pending action
   const acceptedCount = game.pendingAction?.acceptedPlayers?.length || 0;
   const requiredAccepts = game.players.length - 1; // All except acting player
+
+  useEffect(() => {
+    let interval;
+    if (game.pendingAction && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prevTimer) => prevTimer - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [game.pendingAction, timer]);
+
+  useEffect(() => {
+    if (game.pendingAction) {
+      setTimer(30);
+    }
+  }, [game.pendingAction]);
 
   return (
     <div className="game-status card my-4">
@@ -27,13 +45,20 @@ const GameStatus = ({ game }) => {
             <span className="badge bg-info rounded-pill">{currentPlayerUsername}</span>
           </li>
           {game.pendingAction && (
-            <li className="list-group-item d-flex justify-content-between align-items-center">
-              Acceptances
-              <span className="badge bg-warning rounded-pill">
-                {acceptedCount}/{requiredAccepts}
-              </span>
-            </li>
+            <>
+              <li className="list-group-item d-flex justify-content-between align-items-center">
+                Acceptances
+                <span className="badge bg-warning rounded-pill">
+                  {acceptedCount}/{requiredAccepts}
+                </span>
+              </li>
+              <li className="list-group-item d-flex justify-content-between align-items-center">
+                Pending Action Timer:
+                <span className="badge bg-danger rounded-pill">{timer}s</span>
+              </li>
+            </>
           )}
+          {/* */}
           {/* Add more status items as needed */}
         </ul>
       </div>

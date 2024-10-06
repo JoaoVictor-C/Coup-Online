@@ -1,14 +1,14 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const authRoutes = require('./routes/authRoutes');
-const gameRoutes = require('./routes/gameRoutes');
-const userRoutes = require('./routes/userRoutes');
-const { gameSockets } = require('./sockets/gameSockets');
+const authRoutes = require('./src/routes/authRoutes');
+const gameRoutes = require('./src/routes/gameRoutes');
+const userRoutes = require('./src/routes/userRoutes');
+const { gameSockets } = require('./src/sockets/gameSockets');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const connectDB = require('./services/databaseService');
-const errorHandler = require('./middleware/errorHandler');
+const connectDB = require('./src/services/databaseService');
+const errorHandler = require('./src/middleware/errorHandler');
 const jwt = require('jsonwebtoken');
 
 dotenv.config();
@@ -17,7 +17,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: process.env.CLIENT_URL || '*',
+        origin: [process.env.CLIENT_URL, '179.108.3.212'] || '*',
         methods: ['GET', 'POST'],
         credentials: true,
     },
@@ -43,7 +43,7 @@ app.set('io', io);
 
 // Middleware
 app.use(cors({
-    origin: process.env.CLIENT_URL || '*',
+    origin: [process.env.CLIENT_URL, 'http://179.108.3.212'] || '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -63,17 +63,12 @@ app.use(errorHandler);
 
 // Handle Socket.io connections
 io.on('connection', (socket) => {
-    console.log('New client connected:', socket.id, 'User ID:', socket.user.id);
+    console.log('New client connected: ', socket.id, 'User ID:', socket.user.id);
     gameSockets(io, socket);
-
-    socket.on('disconnect', (reason) => {
-        console.log('Client disconnected:', socket.id, 'Reason:', reason);
-        // Handle disconnection if needed
-    });
 });
 
 // Start the server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log(`Server running on port http://localhost:${PORT}`);
 });

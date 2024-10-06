@@ -169,9 +169,12 @@ const gameSockets = (io, socket) => {
         try {
             const response = await startGameLogic(gameId, socket.user.id, io);
 
+            emitGameUpdate(gameId);
+
             if (!response.success) {
                 return callback?.({ success: false, message: response.message });
             }
+
 
             callback?.({ success: true, message: 'Game started successfully', game: response.game });
         } catch (error) {
@@ -921,12 +924,7 @@ const gameSockets = (io, socket) => {
                 console.warn(`Game ${gameId} not found during emitGameUpdate.`);
                 return;
             }
-    
-            const winner = checkGameOver(gameState);
-            if (winner) {
-                gameState.status = 'finished';
-                gameState.winner = winner;
-            }
+            await checkGameOver(gameState);
     
             // Format game data for each user
             const room = io.sockets.adapter.rooms.get(gameId);

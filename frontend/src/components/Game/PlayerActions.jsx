@@ -362,6 +362,21 @@ const PlayerActions = ({ game, currentUserId }) => {
     );
   }
 
+  // Handle UI when someone blocked another person (just a screen to wait for their actions)
+  if (game.pendingAction && game.pendingAction.blockPending && game.pendingAction.userId !== currentUserId) {
+    const respondingPlayer = game.players.find(player => player.playerProfile.user._id === game.pendingAction.userId);
+    return (
+      <div className="player-actions card">
+        <div className="card-body">
+          <h3 className="card-title mb-3 text-light">Action Blocked</h3>
+          <p className="text-light">
+            Waiting for {respondingPlayer ? respondingPlayer.username : 'player'} to respond...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Handle UI when there is a pending action to challenge or block
   if (game.pendingAction && game.pendingAction.userId !== currentUserId) {
     const canChallenge = game.pendingAction.canBeChallenged;

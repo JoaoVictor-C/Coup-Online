@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { register } from '../store/actions/authActions';
-import { useNavigate } from 'react-router-dom';
 import '../assets/styles/RegisterPage.css'; // Import the RegisterPage styles
 
 const RegisterPage = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -26,7 +24,7 @@ const RegisterPage = () => {
       console.log(response);
       if (response.message === 'User registered successfully') {
         setFormData({ username: '', password: '', email: '' });
-        navigate('/');
+        window.location.href = '/';
       } else {
         setError('Registration failed. Please try again.');
       }

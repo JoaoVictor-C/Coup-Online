@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../store/actions/authActions';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import '../assets/styles/LoginPage.css'; // Import the LoginPage styles
 
 const LoginPage = () => {
@@ -11,7 +11,6 @@ const LoginPage = () => {
     username: '',
     password: '',
   });
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,9 +21,11 @@ const LoginPage = () => {
     dispatch(login(formData.username, formData.password));
   };
 
-  if (isAuthenticated) {
-    return navigate('/');
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      window.location.href = '/';
+    }
+  }, [isAuthenticated]);
 
   return (
     <div className="login-container py-5">
