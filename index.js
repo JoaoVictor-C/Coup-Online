@@ -65,11 +65,6 @@ app.use(errorHandler);
 io.on('connection', (socket) => {
     console.log('New client connected:', socket.id, 'User ID:', socket.user.id);
     gameSockets(io, socket);
-
-    socket.on('disconnect', (reason) => {
-        console.log('Client disconnected:', socket.id, 'Reason:', reason);
-        // Handle disconnection if needed
-    });
 });
 
 // Start the server
