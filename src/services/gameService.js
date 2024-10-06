@@ -43,14 +43,21 @@ const updateAlivePlayers = (game) => {
     });
 };
 
-const checkGameOver = (game) => {
-    updateAlivePlayers(game);
-    const alivePlayers = game.players.filter(player => player.isAlive);
-    if (alivePlayers.length <= 1 && game.status === 'in_progress' && game.maxPlayers === game.players.length) {
-        game.status = 'finished';
+const checkGameOver = async (game) => {
+    const freshGame = await Game.findById(game._id)
+        .populate({
+            path: 'players.playerProfile',
+            populate: { path: 'user' }
+        })
+    updateAlivePlayers(freshGame);
+    const alivePlayers = freshGame.players.filter(player => player.isAlive);
+    if (alivePlayers.length <= 1 && freshGame.status === 'in_progress' && freshGame.maxPlayers === freshGame.players.length) {
+        freshGame.status = 'finished';
         if (alivePlayers.length === 1) {
-            game.winner = alivePlayers[0].username;
+            freshGame.winner = alivePlayers[0].username;
         }
+        freshGame.acceptedPlayers = [];
+        await freshGame.save();
         return true;
     }
     

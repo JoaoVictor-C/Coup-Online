@@ -922,11 +922,7 @@ const gameSockets = (io, socket) => {
                 return;
             }
     
-            const winner = checkGameOver(gameState);
-            if (winner) {
-                gameState.status = 'finished';
-                gameState.winner = winner;
-            }
+            await checkGameOver(gameState);
     
             // Format game data for each user
             const room = io.sockets.adapter.rooms.get(gameId);
