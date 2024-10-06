@@ -1,14 +1,14 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const authRoutes = require('./routes/authRoutes');
-const gameRoutes = require('./routes/gameRoutes');
-const userRoutes = require('./routes/userRoutes');
-const { gameSockets } = require('./sockets/gameSockets');
+const authRoutes = require('./src/routes/authRoutes');
+const gameRoutes = require('./src/routes/gameRoutes');
+const userRoutes = require('./src/routes/userRoutes');
+const { gameSockets } = require('./src/sockets/gameSockets');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const connectDB = require('./services/databaseService');
-const errorHandler = require('./middleware/errorHandler');
+const connectDB = require('./src/services/databaseService');
+const errorHandler = require('./src/middleware/errorHandler');
 const jwt = require('jsonwebtoken');
 
 dotenv.config();
