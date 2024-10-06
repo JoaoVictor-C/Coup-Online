@@ -51,7 +51,7 @@ const checkGameOver = async (game) => {
         })
     updateAlivePlayers(freshGame);
     const alivePlayers = freshGame.players.filter(player => player.isAlive);
-    if (alivePlayers.length <= 1 && freshGame.status === 'in_progress' && freshGame.maxPlayers === freshGame.players.length) {
+    if (alivePlayers.length <= 1 && freshGame.status === 'in_progress') {
         freshGame.status = 'finished';
         if (alivePlayers.length === 1) {
             freshGame.winner = alivePlayers[0].username;
