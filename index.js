@@ -17,7 +17,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: process.env.CLIENT_URL || '*',
+        origin: [process.env.CLIENT_URL, '179.108.3.212'] || '*',
         methods: ['GET', 'POST'],
         credentials: true,
     },
@@ -43,7 +43,7 @@ app.set('io', io);
 
 // Middleware
 app.use(cors({
-    origin: process.env.CLIENT_URL || '*',
+    origin: [process.env.CLIENT_URL, 'http://179.108.3.212'] || '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
