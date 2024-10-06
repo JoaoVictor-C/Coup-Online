@@ -39,7 +39,11 @@ const removeRandomCharacter = (player) => {
 
 const updateAlivePlayers = (game) => {
     game.players.forEach(player => {
-        player.isAlive = player.characters.length > 0;
+        if (player.characters.length === 0) {
+            player.isAlive = false;
+        } else {
+            player.isAlive = true;
+        }
     });
 };
 
@@ -49,6 +53,7 @@ const checkGameOver = async (game) => {
             path: 'players.playerProfile',
             populate: { path: 'user' }
         })
+        .lean();
     updateAlivePlayers(freshGame);
     const alivePlayers = freshGame.players.filter(player => player.isAlive);
     if (alivePlayers.length <= 1 && freshGame.status === 'in_progress') {
