@@ -58,6 +58,8 @@ const checkGameOver = async (game) => {
 
         const alivePlayers = freshGame.players.filter(player => player.isAlive);
         console.log(`Alive players (${alivePlayers.length}):`, alivePlayers.map(p => p.username));
+        console.log(`Alive players.lenght ${alivePlayers.length}`);
+        console.log('freshGame.status', freshGame.status);
 
         if (alivePlayers.length <= 1 && freshGame.status === 'in_progress') {
             if (alivePlayers.length === 1) {
@@ -75,6 +77,8 @@ const checkGameOver = async (game) => {
             });
 
             return true;
+        } else {
+            console.log(`Game continues with ${alivePlayers.length} players alive.`);
         }
 
         return false;
