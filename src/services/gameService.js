@@ -48,25 +48,40 @@ const updateAlivePlayers = (game) => {
 };
 
 const checkGameOver = async (game) => {
-    const freshGame = await Game.findById(game._id)
-        .populate({
-            path: 'players.playerProfile',
-            populate: { path: 'user' }
-        })
-        .lean();
-    updateAlivePlayers(freshGame);
-    const alivePlayers = freshGame.players.filter(player => player.isAlive);
-    if (alivePlayers.length <= 1 && freshGame.status === 'in_progress') {
-        freshGame.status = 'finished';
-        if (alivePlayers.length === 1) {
-            freshGame.winner = alivePlayers[0].username;
+    try {
+        const freshGame = await Game.findById(game._id)
+            .populate({
+                path: 'players.playerProfile',
+                populate: { path: 'user' }
+            })
+            .lean();
+
+        const alivePlayers = freshGame.players.filter(player => player.isAlive);
+        console.log(`Alive players (${alivePlayers.length}):`, alivePlayers.map(p => p.username));
+
+        if (alivePlayers.length <= 1 && freshGame.status === 'in_progress') {
+            if (alivePlayers.length === 1) {
+                freshGame.winner = alivePlayers[0].username;
+                console.log(`Game Over! Winner: ${freshGame.winner}`);
+            } else {
+                console.log('Game Over! No winners.');
+            }
+
+            // Update the game status in the database
+            await Game.findByIdAndUpdate(game._id, {
+                status: 'finished',
+                winner: alivePlayers.length === 1 ? alivePlayers[0].username : null,
+                acceptedPlayers: []
+            });
+
+            return true;
         }
-        freshGame.acceptedPlayers = [];
-        await freshGame.save();
-        return true;
+
+        return false;
+    } catch (error) {
+        console.error('Error in checkGameOver:', error);
+        return false;
     }
-    
-    return false;
 };
 
 // Game Setup Functions
