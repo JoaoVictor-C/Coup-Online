@@ -168,7 +168,7 @@ const gameSockets = (io, socket) => {
     socket.on('startGame', async ({ gameId }, callback) => {
         try {
             const response = await startGameLogic(gameId, socket.user.id, io);
-            
+
             emitGameUpdate(gameId);
 
             if (!response.success) {
@@ -924,8 +924,11 @@ const gameSockets = (io, socket) => {
                 console.warn(`Game ${gameId} not found during emitGameUpdate.`);
                 return;
             }
-    
-            await checkGameOver(gameState);
+            const alivePlayers = gameState.players.filter(player => player.isAlive);
+
+            if (alivePlayers.length === 1) {
+                await checkGameOver(gameState);
+            }
     
             // Format game data for each user
             const room = io.sockets.adapter.rooms.get(gameId);
