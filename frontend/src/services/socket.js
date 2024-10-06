@@ -1,13 +1,6 @@
 import { io } from 'socket.io-client';
 import store from '../store';
-import {
-  GAME_UPDATE,
-  GAME_OVER,
-  PLAYER_DISCONNECTED,
-  GAME_STARTED,
-  PENDING_ACTION,
-} from '../store/actions/actionTypes';
-import { gameUpdate, gameOver, playerDisconnected, gameStarted, pendingAction } from '../store/actions/gameActions';
+import { gameUpdate, gameOver, playerDisconnected, gameStarted } from '../store/actions/gameActions';
 
 const SOCKET_IO_URL = import.meta.env.VITE_SOCKET_IO_URL || 'http://localhost:5001';
 
@@ -49,53 +42,6 @@ class SocketService {
         store.dispatch(gameStarted(gameId, currentPlayerIndex, players));
       });
 
-      this.socket.on('pendingAction', (data) => {
-        const { game } = data;
-        store.dispatch(pendingAction(game));
-      });
-
-      this.socket.on('challengeResult', (data) => {
-        const { success, message, game } = data;
-        if (success) {
-          store.dispatch({ type: 'CHALLENGE_SUCCESS', payload: message });
-          store.dispatch(gameUpdate(game));
-        } else {
-          store.dispatch({ type: 'CHALLENGE_FAILURE', payload: message });
-        }
-      });
-
-      this.socket.on('blockResult', (data) => {
-        const { success, message, game } = data;
-        if (success) {
-          store.dispatch({ type: 'BLOCK_SUCCESS', payload: message });
-          store.dispatch(gameUpdate(game));
-        } else {
-          store.dispatch({ type: 'BLOCK_FAILURE', payload: message });
-        }
-      });
-
-      this.socket.on('actionExecuted', (data) => {
-        const { success, message, game } = data;
-        if (success) {
-          store.dispatch({ type: 'ACTION_EXECUTED_SUCCESS', payload: { message, game } });
-        } else {
-          store.dispatch({ type: 'ACTION_EXECUTED_FAILURE', payload: { message, game } });
-        }
-      });
-
-      this.socket.on('blockAttempt', (data) => {
-        const { success, message, game } = data;
-        if (success) {
-          console.log('Block attempt success');
-          store.dispatch(gameUpdate(game));
-        }
-      });
-
-      this.socket.on('blockChallengeResult', (data) => {
-        const { success, message, game } = data;
-        store.dispatch(gameUpdate(game));
-        // Optionally dispatch an action to show a message to the user
-      });
     }
   }
 

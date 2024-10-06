@@ -7,6 +7,7 @@ import GameStatus from '../components/Game/GameStatus';
 import PlayerActions from '../components/Game/PlayerActions';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import socketService from '../services/socket';
+import '../assets/styles/GamePage.css';
 
 const GamePage = () => {
   const { gameId } = useParams();

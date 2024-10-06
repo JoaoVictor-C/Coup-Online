@@ -23,8 +23,6 @@ import {
   PENDING_ACTION,
   ACTION_EXECUTED_SUCCESS,
   ACTION_EXECUTED_FAILURE,
-  RESPOND_TO_BLOCK_SUCCESS,
-  RESPOND_TO_BLOCK_FAILURE
 } from '../actions/actionTypes';
 
 const initialState = {
@@ -97,6 +95,20 @@ const gameReducer = (state = initialState, action) => {
         currentGame: {
           ...state.currentGame,
           ...action.payload,
+          players: action.payload.players.map(player => ({
+            ...player,
+            user: player.playerProfile.user || {},
+            username: player.playerProfile.user?.username || 'Unknown',
+            characters: player.characters,
+            coins: player.coins,
+            isAlive: player.isAlive,
+            isConnected: player.isConnected
+          })),
+          currentUserId: action.payload.currentUserId,
+          currentPlayerUsername: action.payload.currentPlayerUsername,
+          winner: action.payload.winner,
+          pendingAction: action.payload.pendingAction,
+          
         },
       };
     case PLAYER_DISCONNECTED:
@@ -223,15 +235,6 @@ const gameReducer = (state = initialState, action) => {
         ...state,
         error: action.payload.message,
         currentGame: action.payload.game,
-      };
-    case RESPOND_TO_BLOCK_SUCCESS:
-    case RESPOND_TO_BLOCK_FAILURE:
-      return {
-        ...state,
-        currentGame: {
-          ...state.currentGame,
-          pendingAction: null,
-        },
       };
     default:
       return state;

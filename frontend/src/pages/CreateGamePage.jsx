@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { createGame } from '../store/actions/gameActions';
 
 const CreateGamePage = () => {
-  const [playerCount, setPlayerCount] = useState(2);
+  const [playerCount, setPlayerCount] = useState(4);
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const dispatch = useDispatch();

@@ -8,21 +8,12 @@ import {
   FETCH_GAME_START,
   START_GAME_SUCCESS,
   START_GAME_ERROR,
-  CHALLENGE_SUCCESS,
-  CHALLENGE_FAILURE,
-  BLOCK_SUCCESS,
-  BLOCK_FAILURE,
-  GAME_STARTED,
-  GAME_UPDATE,
   GAME_OVER,
   PLAYER_DISCONNECTED,
+  GAME_STARTED,
+  GAME_UPDATE,
   ACCEPT_ACTION_SUCCESS,
   ACCEPT_ACTION_FAILURE,
-  PENDING_ACTION,
-  ACTION_EXECUTED_SUCCESS,
-  ACTION_EXECUTED_FAILURE,
-  RESPOND_TO_BLOCK_SUCCESS,
-  RESPOND_TO_BLOCK_FAILURE
 } from './actionTypes';
 import socketService from '../../services/socket';
 import api from '../../services/api'; // Ensure this is correctly set up
@@ -55,9 +46,6 @@ export const joinGame = (gameId) => (dispatch, getState) => {
     socket.emit('joinGame', { gameId, userId }, (response) => {
       if (response.success) {
         dispatch({ type: JOIN_GAME_SUCCESS, payload: response.game });
-        if (response.game.status === 'in_progress') {
-          dispatch(fetchGame(gameId));
-        }
         resolve({ gameId: response.game._id, status: response.game.status });
       } else {
         dispatch({ type: JOIN_GAME_ERROR, payload: response.message || 'Error joining game' });
@@ -67,11 +55,36 @@ export const joinGame = (gameId) => (dispatch, getState) => {
   });
 };
 
+// gameStarted
+export const gameStarted = (game) => ({
+  type: GAME_STARTED,
+  payload: game,
+});
+
+// gameUpdate
+export const gameUpdate = (game) => ({
+  type: GAME_UPDATE,
+  payload: game,
+});
+
+// gameOver
+export const gameOver = (game) => ({
+  type: GAME_OVER,
+  payload: game,
+});
+
+// playerDisconnected
+export const playerDisconnected = (game) => ({
+  type: PLAYER_DISCONNECTED,
+  payload: game,
+});
+
 // Perform Action using Socket.IO
-export const performAction = (gameId, actionType, targetUserId, userId) => (dispatch) => {
+export const performAction = (gameId, actionType, targetUserId = '') => (dispatch, getState) => {
   const socket = socketService.getSocket();
+
   return new Promise((resolve, reject) => {
-    socket.emit('action', { gameId, actionType, targetUserId, userId }, (response) => {
+    socket.emit('action', { gameId, actionType, targetUserId }, (response) => {
       if (response.success) {
         resolve(response.message);
       } else {
@@ -80,6 +93,7 @@ export const performAction = (gameId, actionType, targetUserId, userId) => (disp
     });
   });
 };
+
 
 // Create Game using Socket.IO
 export const createGame = (playerCount) => (dispatch) => {
@@ -115,8 +129,83 @@ export const startGame = (gameId) => (dispatch) => {
   });
 };
 
+// Challenge Action
+export const performChallenge = (gameId, challengerId) => (dispatch) => {
+  const socket = socketService.getSocket();
+
+  return new Promise((resolve, reject) => {
+    socket.emit('challenge', { gameId, challengerId }, (response) => {
+      if (response.success) {
+        resolve(response.message);
+      } else {
+        reject(response.message);
+      }
+    });
+  });
+};
+
+// Block Action
+export const performBlock = (gameId, blockerId, actionType) => (dispatch) => {
+  const socket = socketService.getSocket();
+
+  return new Promise((resolve, reject) => {
+    socket.emit('block', { gameId, actionType, blockerId }, (response) => {
+      if (response.success) {
+        resolve(response.message);
+      } else {
+        reject(response.message);
+      }
+    });
+  });
+};
+
+// Perform Exchange
+export const performExchange = (gameId) => (dispatch) => {
+  const socket = socketService.getSocket();
+
+  return new Promise((resolve, reject) => {
+    socket.emit('exchange', { gameId }, (response) => {
+      if (response.success) {
+        resolve(response.message);
+      } else {
+        reject(response.message);
+      }
+    });
+  });
+};
+
+// Select Exchange Cards
+export const selectExchangeCards = (gameId, selectedCards) => (dispatch) => {
+  const socket = socketService.getSocket();
+  console.log(selectedCards);
+  return new Promise((resolve, reject) => {
+    socket.emit('selectExchangeCards', { gameId, selectedCards }, (response) => {
+      if (response.success) {
+        resolve(response.message);
+      } else {
+        reject(response.message);
+      }
+    });
+  });
+};
+
+// Respond to Block Action
+export const respondToBlock = (gameId, response, userId) => (dispatch) => {
+  const socket = socketService.getSocket();
+
+  return new Promise((resolve, reject) => {
+    socket.emit('respondToBlock', { gameId, response }, (res) => {
+      if (res.success) {
+        resolve(res.message);
+      } else {
+        reject(res.message);
+      }
+    });
+  });
+};
+
 // Accept Action
-export const acceptAction = (gameId) => async (dispatch) => {
+export const acceptAction = (gameId) => (dispatch) => {
   const socket = socketService.getSocket();
   return new Promise((resolve, reject) => {
     socket.emit('acceptAction', { gameId }, (response) => {
@@ -131,99 +220,33 @@ export const acceptAction = (gameId) => async (dispatch) => {
   });
 };
 
-// Perform Challenge
-export const performChallenge = (gameId, challengerId, targetType) => async (dispatch) => {
+// Perform Challenge Success
+export const performChallengeSuccess = (gameId, cards) => (dispatch) => {
   const socket = socketService.getSocket();
+
   return new Promise((resolve, reject) => {
-    socket.emit('challenge', { gameId, challengerId, targetType }, (response) => {
+    socket.emit('challengeSuccess', { gameId, cards }, (response) => {
       if (response.success) {
-        dispatch({ type: CHALLENGE_SUCCESS, payload: response.message });
         resolve(response.message);
       } else {
-        dispatch({ type: CHALLENGE_FAILURE, payload: response.message });
         reject(response.message);
       }
     });
   });
 };
 
-// Perform Block
-export const performBlock = (gameId, blockerId, actionType) => async (dispatch, getState) => {
+// Play Again
+export const playAgain = (gameId) => (dispatch) => {
   const socket = socketService.getSocket();
-  const { currentGame } = getState().game;
-  
-  // Verify if the action can be blocked
-  if (!currentGame.pendingAction.canBeBlocked) {
-    return Promise.reject('This action cannot be blocked.');
-  }
 
   return new Promise((resolve, reject) => {
-    socket.emit('block', { gameId, blockerId, actionType }, (response) => {
+    socket.emit('restartGame', { gameId }, (response) => {
       if (response.success) {
-        dispatch({ type: BLOCK_SUCCESS, payload: response.message });
         resolve(response.message);
       } else {
-        dispatch({ type: BLOCK_FAILURE, payload: response.message });
         reject(response.message);
       }
     });
   });
 };
 
-// Pending Action
-export const pendingAction = (game) => ({
-  type: PENDING_ACTION,
-  payload: game,
-});
-
-// Game Started
-export const gameStarted = (gameId, currentPlayerIndex, players) => ({
-  type: GAME_STARTED,
-  payload: { gameId, currentPlayerIndex, players },
-});
-
-// Game Update
-export const gameUpdate = (updatedGame) => ({
-  type: GAME_UPDATE,
-  payload: updatedGame,
-});
-
-// Game Over
-export const gameOver = (gameId) => ({
-  type: GAME_OVER,
-  payload: gameId,
-});
-
-// Player Disconnected
-export const playerDisconnected = (gameId, userId) => ({
-  type: PLAYER_DISCONNECTED,
-  payload: { gameId, userId },
-});
-
-// Join game error
-export const joinGameError = (error) => ({
-  type: JOIN_GAME_ERROR,
-  payload: error,
-});
-
-// Join game success
-export const joinGameSuccess = (game) => ({
-  type: JOIN_GAME_SUCCESS,
-  payload: game,
-});
-
-// Example: Respond to Block
-export const respondToBlock = (gameId, response, userId) => (dispatch) => {
-  const socket = socketService.getSocket();
-  return new Promise((resolve, reject) => {
-    socket.emit('respondToBlock', { gameId, response, userId }, (responseData) => {
-      if (responseData.success) {
-        dispatch({ type: RESPOND_TO_BLOCK_SUCCESS, payload: responseData.message });
-        resolve(responseData.message);
-      } else {
-        dispatch({ type: RESPOND_TO_BLOCK_FAILURE, payload: responseData.message });
-        reject(responseData.message);
-      }
-    });
-  });
-};

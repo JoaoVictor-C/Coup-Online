@@ -1,11 +1,30 @@
 const Game = require('../models/Game');
 const PlayerProfile = require('../models/PlayerProfile');
 const User = require('../models/User');
+const mongoose = require('mongoose');
 
 // Utility Functions
 const shuffleArray = (array) => {
     return array.slice().sort(() => Math.random() - 0.5);
 };
+
+
+// Initialize the Deck based on player count
+const initializeDeck = (playerCount) => {
+    const roles = ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa'];
+    const deck = [];
+    const cardsPerRole = playerCount <= 4 ? 2 : 3;
+
+    roles.forEach(role => {
+        for (let i = 0; i < cardsPerRole; i++) {
+            deck.push(role);
+        }
+    });
+
+
+    return shuffleArray(deck);
+};
+
 
 const removeRandomCharacter = (player) => {
     if (player.characters.length > 0) {
@@ -18,50 +37,45 @@ const removeRandomCharacter = (player) => {
     return player;
 };
 
-const checkGameOver = (game) => {
-    const alivePlayers = game.players.filter(p => p.isAlive);
-    if (alivePlayers.length === 1) {
-        return alivePlayers[0].playerProfile.user._id;
-    }
-    return null;
+const updateAlivePlayers = (game) => {
+    game.players.forEach(player => {
+        player.isAlive = player.characters.length > 0;
+    });
 };
 
-const canActionBeBlocked = (actionType) => {
-    const blockRules = {
-        'foreignAid': ['Duke'],
-        'steal': ['Captain', 'Ambassador'],
-        'assassinate': ['Contessa']
-    };
-    return !!blockRules[actionType];
+const checkGameOver = (game) => {
+    updateAlivePlayers(game);
+    const alivePlayers = game.players.filter(player => player.isAlive);
+    if (alivePlayers.length <= 1 && game.status === 'in_progress' && game.maxPlayers === game.players.length) {
+        game.status = 'finished';
+        if (alivePlayers.length === 1) {
+            game.winner = alivePlayers[0].username;
+        }
+        return true;
+    }
+    
+    return false;
 };
 
 // Game Setup Functions
-const initializeDeck = (playerCount) => {
-    const roles = ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa'];
-    const deck = [];
-    const cardsPerRole = playerCount <= 4 ? 2 : 3;
-
-    roles.forEach(role => {
-        for (let i = 0; i < cardsPerRole; i++) {
-            deck.push(role);
-        }
-    });
-
-    return shuffleArray(deck);
-};
-
 const formatGameData = (game, userId) => {
     const formattedPlayers = game.players.map(player => {
-        if (player.playerProfile.user._id.toString() !== userId) {
-            return {
-                ...player,
-                characters: player.characters.map(() => 'hidden'),
-            };
+        const playerId = player.playerProfile.user._id.toString();
+        const requestingUserId = userId.toString();
+
+        const formattedPlayer = { ...player };
+
+        if (playerId !== requestingUserId) {
+            formattedPlayer.characters = player.characters.map(() => 'hidden');
         }
-        return player;
+
+        return formattedPlayer;
     });
 
-    return { ...game, players: formattedPlayers };
+    return {
+        ...game,
+        players: formattedPlayers,
+    };
 };
 
 // Game Management Functions
@@ -84,6 +98,15 @@ const addUserToGame = async (game, playerProfile) => {
     }
 
     const charactersPerPlayer = game.maxPlayers <= 4 ? 2 : 3;
+
+    // Ensure there are enough cards in the deck
+    if (game.deck.length < charactersPerPlayer) {
+        // Reinitialize and reshuffle the deck if insufficient cards
+        const newCards = initializeDeck(game.maxPlayers);
+        game.deck = game.deck.concat(newCards);
+        shuffleArray(game.deck);
+    }
+
     const characters = game.deck.splice(0, charactersPerPlayer);
 
     game.players.push({
@@ -94,6 +117,7 @@ const addUserToGame = async (game, playerProfile) => {
         isAlive: true,
         isConnected: true,
     });
+
 
     await game.save();
     await User.findByIdAndUpdate(user._id, { $push: { games: game._id } });
@@ -113,6 +137,7 @@ const addUserToGame = async (game, playerProfile) => {
 
     return { success: true, status: 200, message: 'User added to the game', game: formattedGame };
 };
+
 
 const startGameLogic = async (gameId, userId, io) => {
     const game = await Game.findById(gameId).populate({
@@ -159,10 +184,14 @@ const startGameLogic = async (gameId, userId, io) => {
     return { success: true, status: 200, message: 'Game started successfully', game: formattedGame };
 };
 
+
 // Action Handlers
 const handleIncome = async (game, userId) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
     if (player && player.isAlive) {
+        if (game.centralTreasury < 1) {
+            return { success: false, message: 'Not enough funds in the treasury' };
+        }
         game.centralTreasury -= 1;
         player.coins += 1;
         game = await Game.findByIdAndUpdate(game._id, game, { new: true });
@@ -185,6 +214,7 @@ const handleForeignAid = async (game, userId) => {
     return { success: false, message: 'Action failed' };
 };
 
+
 const handleCoup = async (game, userId, targetUserId) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
     const targetPlayer = game.players.find(p => p.playerProfile.user._id.toString() === targetUserId.toString());
@@ -197,14 +227,10 @@ const handleCoup = async (game, userId, targetUserId) => {
     player.coins -= 7;
     game.centralTreasury += 7;
     removeRandomCharacter(targetPlayer);
-    const winner = checkGameOver(game);
-    if (winner) {
-        game.status = 'finished';
-        game.winner = winner;
-    }
     game = await Game.findByIdAndUpdate(game._id, game, { new: true });
     return { success: true, message: 'Coup action successful' };
 };
+
 
 const handleTaxes = async (game, userId) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
@@ -232,14 +258,10 @@ const handleAssassinate = async (game, userId, targetUserId) => {
     player.coins -= 3;
     game.centralTreasury -= 3;
     removeRandomCharacter(targetPlayer);
-    const winner = checkGameOver(game);
-    if (winner) {
-        game.status = 'finished';
-        game.winner = winner;
-    }
     game = await Game.findByIdAndUpdate(game._id, game, { new: true });
     return { success: true, message: 'Assassinate action successful' };
 };
+
 
 const handleSteal = async (game, userId, targetUserId) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
@@ -250,29 +272,62 @@ const handleSteal = async (game, userId, targetUserId) => {
     const stolenCoins = Math.min(2, targetPlayer.coins);
     targetPlayer.coins -= stolenCoins;
     player.coins += stolenCoins;
-    const winner = checkGameOver(game);
-    if (winner) {
-        game.status = 'finished';
-        game.winner = winner;
-    }
     game = await Game.findByIdAndUpdate(game._id, game, { new: true });
     return { success: true, message: 'Steal action successful' };
 };
 
-const handleExchange = async (game, userId) => {
+
+const handleExchange = async (game, userId, selectedCards) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
-    if (player && player.isAlive) {
-        // Implement exchange logic as needed
-        // Placeholder: Assume exchange is successful
-        // You might want to allow the player to draw from the deck and replace characters
-        game = await Game.findByIdAndUpdate(game._id, game, { new: true });
-        return { success: true, message: 'Exchange action successful' };
+    if (!player || !player.isAlive) {
+        return { success: false, message: 'Player not found or not alive' };
     }
-    return { success: false, message: 'Action failed' };
+
+    if (!game.pendingAction || game.pendingAction.type !== 'exchange') {
+        return { success: false, message: 'No pending exchange action' };
+    }
+
+    const combinedCards = game.pendingAction.exchange.combinedCards;
+
+    // If the player originally has 1 card combinedRule = 3, if 2 combinedRule = 4
+    const combinedRule = player.characters.length === 1 ? 3 : 4;
+
+    if (combinedRule === 3 && selectedCards.length !== 1) {
+        return { success: false, message: 'You must select 1 card to keep' };
+    }
+    if (combinedRule === 4 && selectedCards.length !== 2) {
+        return { success: false, message: 'You must select 2 cards to keep' };
+    }
+
+    if (combinedCards.length !== combinedRule) {
+        return { success: false, message: 'Invalid number of cards for exchange' };
+    }
+
+    if (!selectedCards || selectedCards.length !== combinedRule-2) {
+        return { success: false, message: `You must select ${combinedRule-2} cards to keep` };
+    }
+
+    // Validate selected cards
+    const isValidSelection = selectedCards.every(card => combinedCards.includes(card));
+    if (!isValidSelection) {
+        return { success: false, message: 'Invalid card selection' };
+    }
+
+    // Update player's characters
+    player.characters = selectedCards;
+
+    // Determine the cards to return to the deck
+    const cardsToReturn = combinedCards.filter(card => !selectedCards.includes(card));
+
+    // Shuffle and return the unused cards to the deck
+    game.deck = shuffleArray([...game.deck, ...cardsToReturn]);
+
+    return { success: true, message: 'Exchange action successful' };
 };
 
 // Action Execution
 const executeAction = async (game, action) => {
+    // Refresh the game state
     const freshGame = await Game.findById(game._id)
         .populate({
             path: 'players.playerProfile',
@@ -293,36 +348,47 @@ const executeAction = async (game, action) => {
             return await handleAssassinate(freshGame, action.userId, action.targetUserId);
         case 'steal':
             return await handleSteal(freshGame, action.userId, action.targetUserId);
-        case 'exchange':
-            return await handleExchange(freshGame, action.userId);
         default:
             return { success: false, message: 'Unknown action type' };
     }
 };
 
-const executePendingAction = async (gameId, io) => {
-    const game = await Game.findById(gameId)
-        .populate({
-            path: 'players.playerProfile',
-            populate: { path: 'user' }
-        })
-        .lean();
-    if (!game || !game.pendingAction) return;
+// Advance turn to the next player
+const advanceTurn = (game) => {
+    if (checkGameOver(game)) {
+        game.status = 'finished';
+    } else {
+        let nextPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
+        while (!game.players[nextPlayerIndex].isAlive) {
+            console.log(`Player: ${game.players[nextPlayerIndex].username} is not alive`)
+            nextPlayerIndex = (nextPlayerIndex + 1) % game.players.length;
+        }
+        game.currentPlayerIndex = nextPlayerIndex;
+        game.currentPlayerUsername = game.players[game.currentPlayerIndex].username;
+    }
+    return game;
+};
 
-    const action = game.pendingAction;
-    const result = await executeAction(game, action);
-    game.pendingAction = null;
-    advanceTurn(game);
-    game = await Game.findByIdAndUpdate(game._id, game, { new: true });
-
-    // Emit the updated game state
-    const updatedGame = await Game.findById(gameId)
-        .populate({
-            path: 'players.playerProfile',
-            populate: { path: 'user' }
-        })
-        .lean();
-    io.to(gameId).emit('gameUpdate', updatedGame);
+// Helper function to emit game updates
+const emitGameUpdate = async (gameId, userId) => {
+    try {
+        const updatedGame = await Game.findById(gameId)
+            .populate({
+                path: 'players.playerProfile',
+                populate: { path: 'user' }
+            })
+            .lean(); // Use .lean() for better performance
+        const formattedGame = formatGameData(updatedGame, userId);
+        const room = io.sockets.adapter.rooms.get(gameId);
+        if (room && room.size > 0) {
+            io.to(gameId).emit('gameUpdate', formattedGame);
+            console.log(`Emitted gameUpdate to room ${gameId} for game ${gameId}`);
+        } else {
+            console.warn(`Attempted to emit to room ${gameId}, but it does not exist or has no members.`);
+        }
+    } catch (error) {
+        console.error('Error emitting gameUpdate:', error);
+    }
 };
 
 // Export functions
@@ -339,8 +405,8 @@ module.exports = {
     checkGameOver,
     removeRandomCharacter,
     executeAction,
-    executePendingAction,
-    canActionBeBlocked,
+    advanceTurn,
+    emitGameUpdate,
     addUserToGame,
     startGameLogic,
     formatGameData
