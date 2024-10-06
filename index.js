@@ -63,7 +63,7 @@ app.use(errorHandler);
 
 // Handle Socket.io connections
 io.on('connection', (socket) => {
-    console.log('New client connected:', socket.id, 'User ID:', socket.user.id);
+    console.log('New client connected: ', socket.id, 'User ID:', socket.user.id);
     gameSockets(io, socket);
 });
 
