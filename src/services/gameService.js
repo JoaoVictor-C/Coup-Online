@@ -386,17 +386,13 @@ const executeAction = async (game, action) => {
 
 // Advance turn to the next player
 const advanceTurn = (game) => {
-    if (checkGameOver(game)) {
-        game.status = 'finished';
-    } else {
-        let nextPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
-        while (!game.players[nextPlayerIndex].isAlive) {
-            console.log(`Player: ${game.players[nextPlayerIndex].username} is not alive`)
-            nextPlayerIndex = (nextPlayerIndex + 1) % game.players.length;
-        }
-        game.currentPlayerIndex = nextPlayerIndex;
-        game.currentPlayerUsername = game.players[game.currentPlayerIndex].username;
+    let nextPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
+    while (!game.players[nextPlayerIndex].isAlive) {
+        console.log(`Player: ${game.players[nextPlayerIndex].username} is not alive`)
+        nextPlayerIndex = (nextPlayerIndex + 1) % game.players.length;
     }
+    game.currentPlayerIndex = nextPlayerIndex;
+    game.currentPlayerUsername = game.players[game.currentPlayerIndex].username;
     return game;
 };
 
