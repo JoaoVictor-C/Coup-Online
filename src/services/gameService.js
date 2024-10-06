@@ -57,32 +57,24 @@ const checkGameOver = async (game) => {
             .lean();
 
         const alivePlayers = freshGame.players.filter(player => player.isAlive);
-        console.log(`Alive players (${alivePlayers.length}):`, alivePlayers.map(p => p.username));
-        console.log(`Alive players.lenght ${alivePlayers.length}`);
-        console.log('freshGame.status', freshGame.status);
 
         if (alivePlayers.length <= 1 && freshGame.status === 'in_progress' && freshGame.players.length != 1) {
             if (alivePlayers.length === 1) {
                 freshGame.winner = alivePlayers[0].username;
-                await Game.findByIdAndUpdate(game._id, {
-                    status: 'finished',
-                    winner: alivePlayers.length === 1 ? alivePlayers[0].username : null,
-                    acceptedPlayers: []
-                });
                 console.log(`Game Over! Winner: ${freshGame.winner}`);
             } else {
                 console.log('Game Over! No winners.');
             }
+
+            await Game.findByIdAndUpdate(game._id, {
+                status: 'finished',
+                winner: alivePlayers.length === 1 ? alivePlayers[0].username : null,
+                acceptedPlayers: []
+            });
+
             return true;
         } else {
             console.log(`Game continues with ${alivePlayers.length} players alive.`);
-            if (freshGame.status === 'finished') {
-                await Game.findByIdAndUpdate(game._id, {
-                    status: 'in_progress',
-                    winner: null,
-                    acceptedPlayers: []
-                });
-            }
         }
 
         return false;

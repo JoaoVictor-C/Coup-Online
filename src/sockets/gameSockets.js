@@ -924,11 +924,7 @@ const gameSockets = (io, socket) => {
                 console.warn(`Game ${gameId} not found during emitGameUpdate.`);
                 return;
             }
-            const alivePlayers = gameState.players.filter(player => player.isAlive);
-
-            if (alivePlayers.length === 1) {
-                await checkGameOver(gameState);
-            }
+            await checkGameOver(gameState);
     
             // Format game data for each user
             const room = io.sockets.adapter.rooms.get(gameId);
