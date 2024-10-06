@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "build": "docker build -t coup-online-backend .",
+    "run": "docker run -p 8080:8080 coup-online-backend"
   },
   "engines": {
     "node": ">=16.0.0"
