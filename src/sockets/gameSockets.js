@@ -168,10 +168,13 @@ const gameSockets = (io, socket) => {
     socket.on('startGame', async ({ gameId }, callback) => {
         try {
             const response = await startGameLogic(gameId, socket.user.id, io);
+            
+            emitGameUpdate(gameId);
 
             if (!response.success) {
                 return callback?.({ success: false, message: response.message });
             }
+
 
             callback?.({ success: true, message: 'Game started successfully', game: response.game });
         } catch (error) {

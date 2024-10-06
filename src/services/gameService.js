@@ -64,21 +64,25 @@ const checkGameOver = async (game) => {
         if (alivePlayers.length <= 1 && freshGame.status === 'in_progress' && freshGame.players.length != 1) {
             if (alivePlayers.length === 1) {
                 freshGame.winner = alivePlayers[0].username;
+                await Game.findByIdAndUpdate(game._id, {
+                    status: 'finished',
+                    winner: alivePlayers.length === 1 ? alivePlayers[0].username : null,
+                    acceptedPlayers: []
+                });
                 console.log(`Game Over! Winner: ${freshGame.winner}`);
             } else {
                 console.log('Game Over! No winners.');
             }
-
-            // Update the game status in the database
-            await Game.findByIdAndUpdate(game._id, {
-                status: 'finished',
-                winner: alivePlayers.length === 1 ? alivePlayers[0].username : null,
-                acceptedPlayers: []
-            });
-
             return true;
         } else {
             console.log(`Game continues with ${alivePlayers.length} players alive.`);
+            if (freshGame.status === 'finished') {
+                await Game.findByIdAndUpdate(game._id, {
+                    status: 'in_progress',
+                    winner: null,
+                    acceptedPlayers: []
+                });
+            }
         }
 
         return false;
@@ -208,11 +212,7 @@ const startGameLogic = async (gameId, userId, io) => {
         populate: { path: 'user' }
     }).lean();
 
-    const formattedGame = formatGameData(updatedGame, userId);
-
-    io.to(gameId).emit('gameUpdate', formattedGame);
-
-    return { success: true, status: 200, message: 'Game started successfully', game: formattedGame };
+    return { success: true, status: 200, message: 'Game started successfully', game: updatedGame };
 };
 
 
