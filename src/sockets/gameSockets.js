@@ -33,6 +33,7 @@ const gameSockets = (io, socket) => {
             const deck = initializeDeck(playerCount);
 
             const newGame = new Game({
+                _id: Math.random().toString(36).substring(2, 8).toUpperCase(),
                 maxPlayers: playerCount,
                 status: 'waiting',
                 players: [],
