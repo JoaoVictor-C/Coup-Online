@@ -110,9 +110,9 @@ const PlayerSchema = new mongoose.Schema({
     }, { id: false });
 const GameSchema = new mongoose.Schema({
     _id: {
-        type: Number,
+        type: mongoose.Schema.Types.ObjectId,
         required: true,
-        default: () => Math.floor(Math.random() * 1000000), // interval 0-999999
+        default: () => new mongoose.Types.ObjectId(),
     },
     players: {
         type: [PlayerSchema],
