@@ -17,6 +17,10 @@ const PlayerSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
+    deadCharacters: {
+        type: [String],
+        default: []
+    },
     isAlive: {
         type: Boolean,
         default: true

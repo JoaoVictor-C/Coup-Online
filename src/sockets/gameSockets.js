@@ -226,6 +226,8 @@ const gameSockets = (io, socket) => {
             if (!validActions.includes(actionType)) {
                 return callback?.({ success: false, message: 'Invalid action type' });
             }
+
+            console.log(targetUserId);
             
             // If the action is income or coup, execute immediately
             if (actionType === 'income' || actionType === 'coup') {
@@ -236,11 +238,19 @@ const gameSockets = (io, socket) => {
                     claimedRole: getClaimedRole(actionType),
                 };
                 const result = await executeAction(game, action);
-                advanceTurn(game);
-                await game.save();
+                if (result.success) {
+                    advanceTurn(game);
+                    await game.save();
 
-                await emitGameUpdate(gameId);
-
+                    await emitGameUpdate(gameId);
+                    
+                    io.to(gameId).emit('lastAction', {
+                        username: currentPlayer.playerProfile.user.username,
+                        userId: currentPlayer.playerProfile.user._id.toString(),
+                        action: actionType,
+                        targetUserId: targetUserId || null,
+                    });
+                }
                 return callback?.({ success: true, message: 'Action executed successfully' });
             }
 
@@ -273,12 +283,20 @@ const gameSockets = (io, socket) => {
                     const pending = updatedGame.pendingAction;
                     if (pending.blockers.length === 0) {
                         const result = await executeAction(updatedGame, pending);
-                        updatedGame.pendingAction = null;
-                        advanceTurn(updatedGame);
-                        await updatedGame.save();
+                        if (result.success) {
+                            updatedGame.pendingAction = null;
+                            advanceTurn(updatedGame);
+                            await updatedGame.save();
 
-                        // Emit gameUpdate
-                        await emitGameUpdate(gameId);
+                            // Emit gameUpdate
+                            await emitGameUpdate(gameId);
+                            io.to(gameId).emit('lastAction', {
+                                username: currentPlayer.playerProfile.user.username,
+                                userId: currentPlayer.playerProfile.user._id.toString(),
+                                action: actionType,
+                                targetUserId: targetUserId || null,
+                            });
+                        }
                     } else {
                         // Handle blocked action
                         updatedGame.pendingAction = null;
@@ -287,6 +305,13 @@ const gameSockets = (io, socket) => {
 
                         // Emit gameUpdate
                         await emitGameUpdate(gameId);
+
+                        io.to(gameId).emit('lastAction', {
+                            username: currentPlayer.playerProfile.user.username,
+                            userId: currentPlayer.playerProfile.user._id.toString(),
+                            action: actionType,
+                            targetUserId: targetUserId || null,
+                        });
                     }
                 }
             }, 30000); // 30 seconds
@@ -356,7 +381,14 @@ const gameSockets = (io, socket) => {
             await game.save();
     
             await emitGameUpdate(gameId);
-    
+
+            io.to(gameId).emit('lastAction', {
+                username: currentPlayer.playerProfile.user.username,
+                userId: currentPlayer.playerProfile.user._id.toString(),
+                action: 'exchange',
+                targetUserId: null,
+            });
+
             // Set a timeout for accepting the exchange action
             setActionTimeout(gameId, async () => {
                 const updatedGame = await Game.findById(gameId).populate({
@@ -371,6 +403,13 @@ const gameSockets = (io, socket) => {
     
                     // Emit gameUpdate
                     await emitGameUpdate(gameId);
+
+                    io.to(gameId).emit('lastAction', {
+                        username: currentPlayer.playerProfile.user.username,
+                        userId: currentPlayer.playerProfile.user._id.toString(),
+                        action: 'exchange',
+                        targetUserId: null,
+                    });
 
                     // Set another timeout for selecting cards
                     setActionTimeout(gameId, async () => {
@@ -389,6 +428,14 @@ const gameSockets = (io, socket) => {
                                 advanceTurn(finalGame);
                                 await finalGame.save();
                                 await emitGameUpdate(gameId);
+                                clearActionTimeout(gameId);
+                                io.to(gameId).emit('lastAction', {
+                                    username: currentPlayer.playerProfile.user.username,
+                                    userId: currentPlayer.playerProfile.user._id.toString(),
+                                    action: 'exchange',
+                                    targetUserId: null,
+                                });
+                                callback?.({ success: true, message: 'Exchange action initiated' });
                             }
                         }
                     }, 30000); // 30 seconds timeout for card selection
@@ -432,6 +479,12 @@ const gameSockets = (io, socket) => {
                 await game.save();
                 await emitGameUpdate(gameId);
                 clearActionTimeout(gameId);
+                io.to(gameId).emit('lastAction', {
+                    username: currentPlayer.playerProfile.user.username,
+                    userId: currentPlayer.playerProfile.user._id.toString(),
+                    action: 'exchange',
+                    targetUserId: null,
+                });
                 callback?.({ success: true, message: result.message });
             } else {
                 callback?.({ success: false, message: result.message });
@@ -479,6 +532,12 @@ const gameSockets = (io, socket) => {
                 action.blockPending = true;  // Add this flag to indicate a pending block
                 await game.save();
                 await emitGameUpdate(gameId);
+                io.to(gameId).emit('lastAction', {
+                    username: blocker.playerProfile.user.username,
+                    userId: blocker.playerProfile.user._id.toString(),
+                    action: actionType,
+                    targetUserId: null,
+                });
 
                 callback?.({ success: true, message: 'Block attempted, waiting for acting player response' });
             } else {
@@ -560,6 +619,12 @@ const gameSockets = (io, socket) => {
                 
                 await game.save();
                 await emitGameUpdate(gameId);
+                io.to(gameId).emit('lastAction', {
+                    username: challenger.playerProfile.user.username,
+                    userId: challenger.playerProfile.user._id.toString(),
+                    action: 'challenge',
+                    targetUserId: null,
+                });
 
                 return callback?.({ success: true, message: 'Challenge failed. Please select cards to keep for exchange.' });
             } else { // Challenged player does not have the claimed role
@@ -571,6 +636,12 @@ const gameSockets = (io, socket) => {
                 advanceTurn(game);
                 await game.save();
                 await emitGameUpdate(gameId);
+                io.to(gameId).emit('lastAction', {
+                    username: challengedPlayer.playerProfile.user.username,
+                    userId: challengedPlayer.playerProfile.user._id.toString(),
+                    action: actionType,
+                    targetUserId: null,
+                });
 
                 callback?.({ success: true, message: 'Challenge successful. Challenged player lost an influence.' });
             }
@@ -628,17 +699,32 @@ const gameSockets = (io, socket) => {
                     await game.save();
 
                     await emitGameUpdate(gameId);
+                    io.to(gameId).emit('lastAction', {
+                        username: blocker.playerProfile.user.username,
+                        userId: blocker.playerProfile.user._id.toString(),
+                        action: actionType,
+                        targetUserId: null,
+                    });
                 } else {
                     // Blocker loses an influence
                     removeRandomCharacter(blocker);
 
                     // The original action proceeds
                     const result = await executeAction(game, action);
-                    game.pendingAction = null;
-                    advanceTurn(game);
-                    await game.save();
+                    if (result.success) {
+                        game.pendingAction = null;
+                        advanceTurn(game);
+                        await game.save();
 
-                    await emitGameUpdate(gameId);
+                        await emitGameUpdate(gameId);
+
+                        io.to(gameId).emit('lastAction', {
+                            username: blocker.playerProfile.user.username,
+                            userId: blocker.playerProfile.user._id.toString(),
+                            action: actionType,
+                            targetUserId: null,
+                        });
+                    }
                 }
 
                 callback?.({ success: true, message: 'Response to block processed' });
@@ -649,6 +735,12 @@ const gameSockets = (io, socket) => {
                 await game.save();
 
                 await emitGameUpdate(gameId);
+                io.to(gameId).emit('lastAction', {
+                    username: player.playerProfile.user.username,
+                    userId: player.playerProfile.user._id.toString(),
+                    action: actionType,
+                    targetUserId: null,
+                });
 
                 callback?.({ success: true, message: 'Response to block processed' });
             } else {
@@ -685,6 +777,13 @@ const gameSockets = (io, socket) => {
                 return callback?.({ success: false, message: 'You have already accepted this action.' });
             }
 
+            // Check if targetUserId is needed and then if it is valid
+            if (action.type === 'steal' || action.type === 'assassinate' || action.type === 'coup') {
+                if (!action.targetUserId) {
+                    return callback?.({ success: false, message: 'Invalid target user ID.' });
+                }
+            }
+
             // Add userId to acceptedPlayers
             action.acceptedPlayers.push(userId);
             await game.save();
@@ -694,6 +793,15 @@ const gameSockets = (io, socket) => {
 
             // Emit game update to all players
             await emitGameUpdate(gameId);
+
+            const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
+
+            io.to(gameId).emit('lastAction', {
+                username: player.playerProfile.user.username,
+                userId: player.playerProfile.user._id.toString(),
+                action: action.type,
+                targetUserId: null,
+            });
 
             // Check if all required players have accepted
             if (action.acceptedPlayers.length >= requiredAccepts) {
@@ -722,6 +830,12 @@ const gameSockets = (io, socket) => {
                                 advanceTurn(updatedGame);
                                 await updatedGame.save();
                                 await emitGameUpdate(gameId);
+                                io.to(gameId).emit('lastAction', {
+                                    username: player.playerProfile.user.username,
+                                    userId: player.playerProfile.user._id.toString(),
+                                    action: actionType,
+                                    targetUserId: null,
+                                });
                                 console.log('Exchange completed automatically due to timeout');
                             }
                         }
@@ -731,10 +845,18 @@ const gameSockets = (io, socket) => {
                 } else {
                     // Execute the action for non-exchange actions
                     const result = await executeAction(game, action);
-                    game.pendingAction = null;
-                    advanceTurn(game);
-                    await game.save();
-                    emitGameUpdate(gameId);
+                    if (result.success) {
+                        game.pendingAction = null;
+                        advanceTurn(game);
+                        await game.save();
+                        emitGameUpdate(gameId);
+                        io.to(gameId).emit('lastAction', {
+                            username: player.playerProfile.user.username,
+                            userId: player.playerProfile.user._id.toString(),
+                            action: actionType,
+                            targetUserId: null,
+                        });
+                    }
                     return callback?.({ success: true, message: 'Action executed after all players accepted.' });
                 }
             } else {
@@ -805,14 +927,16 @@ const gameSockets = (io, socket) => {
             const result = await executeAction(game, pendingAction);
             if (result.success) {
                 advanceTurn(game);
+                game.pendingAction = null;
                 await game.save();
+                await emitGameUpdate(gameId);
+                io.to(gameId).emit('lastAction', {
+                    username: player.playerProfile.user.username,
+                    userId: player.playerProfile.user._id.toString(),
+                    action: pendingAction.type,
+                    targetUserId: null,
+                });
             }
-
-            game.pendingAction = null;
-
-            await game.save();
-
-            await emitGameUpdate(gameId);
 
             callback({ success: true, message: 'Challenge success processed successfully.', game: game });
         } catch (error) {
@@ -820,32 +944,6 @@ const gameSockets = (io, socket) => {
             callback({ success: false, message: 'Server Error during challenge success.', error: error.message });
         }
     });
-
-    const setNewPendingAction = async (gameId, action) => {
-        const game = await Game.findById(gameId).populate({
-            path: 'players.playerProfile',
-            populate: { path: 'user' }
-        });
-        if (!game) return;
-
-        // Initialize pendingAction with acceptedPlayers reset
-        game.pendingAction = {
-            ...action,
-            acceptedPlayers: []
-        };
-        await game.save();
-
-        // Emit game update to all players
-        await emitGameUpdate(gameId);
-
-        // Set action timeout if necessary
-        setActionTimeout(gameId, async () => {
-            // Handle timeout logic
-            // Execute the action if not already executed
-        }, 30000); // 30 seconds
-
-        return;
-    };
 
 
     // Helper Functions
@@ -926,7 +1024,6 @@ const gameSockets = (io, socket) => {
             }
             await checkGameOver(gameState);
     
-            // Format game data for each user
             const room = io.sockets.adapter.rooms.get(gameId);
             if (room && room.size > 0) {
                 for (const socketId of room) {
