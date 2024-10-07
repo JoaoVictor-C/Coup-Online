@@ -29,7 +29,8 @@ const initializeDeck = (playerCount) => {
 const removeRandomCharacter = (player) => {
     if (player.characters.length > 0) {
         const randomIndex = Math.floor(Math.random() * player.characters.length);
-        player.characters.splice(randomIndex, 1);
+        const removedCharacter = player.characters.splice(randomIndex, 1)[0];
+        player.deadCharacters.push(removedCharacter);
         if (player.characters.length === 0) {
             player.isAlive = false;
         }

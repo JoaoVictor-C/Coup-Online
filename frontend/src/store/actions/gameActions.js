@@ -14,9 +14,9 @@ import {
   GAME_UPDATE,
   ACCEPT_ACTION_SUCCESS,
   ACCEPT_ACTION_FAILURE,
+  UPDATE_LAST_ACTION,
 } from './actionTypes';
 import socketService from '../../services/socket';
-import api from '../../services/api'; // Ensure this is correctly set up
 
 // Fetch Game State using Socket.IO
 export const fetchGame = (gameId) => (dispatch, getState) => {
@@ -250,3 +250,7 @@ export const playAgain = (gameId) => (dispatch) => {
   });
 };
 
+export const updateLastAction = (username, action, targetUserId, userId) => ({
+  type: UPDATE_LAST_ACTION,
+  payload: { username, action, targetUserId, userId },
+});

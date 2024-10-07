@@ -1,0 +1,41 @@
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-coup {
+    background-color: #dc3545;
+}
+
+.btn-coup:hover {
+    background-color: #c82333;
+}
+
+.btn-foreign-aid {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.btn-foreign-aid:hover {
+    background-color: #e0a800;
+}
+
+.btn-income {
+    background-color: #28a745;
+}
+
+.btn-income:hover {
+    background-color: #218838;
+}

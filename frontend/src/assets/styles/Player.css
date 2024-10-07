@@ -1,0 +1,158 @@
+/* BEM Naming Convention Applied */
+
+:root {
+    /* CSS Variables for Theming */
+    --player-padding: 20px;
+    --player-padding-mobile: 10px;
+    --player-bg: #fff;
+    --player-border-radius: 8px;
+    --player-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    --current-player-border: #ffd700;
+    --current-player-bg: #fff;
+    --other-player-border: #ccc;
+    --other-player-bg: #fff;
+    --current-turn-shadow: #00ff00;
+    --player-name-color: #333;
+    --current-turn-color: #00d200;
+    --hover-transform: translateY(-5px);
+    --hover-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    --transition-duration: 0.3s;
+    --action-card-border: #00aaff;
+    --action-card-border-2: #00d200;
+}
+
+.player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--player-padding);
+    background-color: var(--player-bg);
+    border-radius: var(--player-border-radius);
+    box-shadow: var(--player-shadow);
+    transition: transform var(--transition-duration) ease, box-shadow var(--transition-duration) ease;
+}
+
+.player--current-player {
+    border: 2px solid var(--current-player-border);
+    background-color: var(--current-player-bg);
+}
+
+.player--other-player {
+    border: 1px solid var(--other-player-border);
+    background-color: var(--other-player-bg);
+}
+
+.player--current-turn {
+    box-shadow: 0 0 10px var(--current-turn-shadow);
+}
+
+.player:hover {
+    transform: var(--hover-transform);
+    box-shadow: var(--hover-shadow);
+}
+
+.player__info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.player__name {
+    font-size: 1.2em;
+    color: var(--player-name-color);
+    margin-right: 10px;
+}
+
+.player__cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.player__active-cards,
+.player__dead-cards {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.player__dead-cards {
+    opacity: 0.6;
+}
+
+.player__current-turn-indicator {
+    margin-top: 10px;
+    color: var(--current-turn-color);
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .player {
+        padding: var(--player-padding-mobile);
+    }
+    
+    .player__name {
+        font-size: 1em;
+    }
+    
+    .player__active-cards,
+    .player__dead-cards {
+        gap: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .player {
+        padding: 5px;
+    }
+    
+    .player__name {
+        font-size: 0.9em;
+    }
+    
+    .player__active-cards,
+    .player__dead-cards {
+        gap: 3px;
+    }
+}
+
+/* Highlight players with actionable cards */
+.player--actionable {
+    border: 2px solid #00aaff; /* Highlight color for actionable players */
+}
+
+/* Styles for action cards */
+.action-card {
+    border: 1px solid var(--action-card-border) !important;
+    transition: transform 0.2s ease;
+}
+
+.selected {
+    box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.745);
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    cursor: pointer;
+    box-shadow: var(--hover-shadow);
+}
+
+/* Style for cards the player actually has */
+.playerHasCard {
+    border: 1px solid var(--action-card-border-2) !important;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}

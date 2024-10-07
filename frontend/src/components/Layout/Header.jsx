@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faSignInAlt, faUserPlus, faUser, faSignOutAlt, faBars, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -28,6 +28,14 @@ const Header = () => {
       setIsMenuOpen(false);
     }
   }, [isAuthenticated]);
+
+  // If on gamepage don't return
+  const { pathname } = useLocation();
+  
+  // If on create or join game page, return header normally
+  if (pathname.startsWith('/game/') && !(pathname.endsWith('/create') || pathname.endsWith('/join'))) {
+    return null;
+  }
 
   return (
     <header className="navbar navbar-expand-lg navbar-dark bg-header shadow-sm">

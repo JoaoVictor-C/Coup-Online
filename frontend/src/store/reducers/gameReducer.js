@@ -23,6 +23,7 @@ import {
   PENDING_ACTION,
   ACTION_EXECUTED_SUCCESS,
   ACTION_EXECUTED_FAILURE,
+  UPDATE_LAST_ACTION,
 } from '../actions/actionTypes';
 
 const initialState = {
@@ -39,10 +40,21 @@ const initialState = {
     success: null,
     message: '',
   },
+  lastAction: null,
 };
 
 const gameReducer = (state = initialState, action) => {
   switch (action.type) {
+    case UPDATE_LAST_ACTION:
+      return {
+        ...state,
+        lastAction: {
+          username: action.payload.username,
+          action: action.payload.action,
+          targetUserId: action.payload.targetUserId,
+          userId: action.payload.userId,
+        },
+      };
     case FETCH_GAME_SUCCESS:
       return {
         ...state,
@@ -102,7 +114,8 @@ const gameReducer = (state = initialState, action) => {
             characters: player.characters,
             coins: player.coins,
             isAlive: player.isAlive,
-            isConnected: player.isConnected
+            isConnected: player.isConnected,
+            deadCharacters: player.deadCharacters,
           })),
           currentUserId: action.payload.currentUserId,
           currentPlayerUsername: action.payload.currentPlayerUsername,

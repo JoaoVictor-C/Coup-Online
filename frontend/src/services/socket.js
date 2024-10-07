@@ -1,8 +1,10 @@
 import { io } from 'socket.io-client';
 import store from '../store';
-import { gameUpdate, gameOver, playerDisconnected, gameStarted } from '../store/actions/gameActions';
+import { gameUpdate, gameOver, playerDisconnected, gameStarted, updateLastAction } from '../store/actions/gameActions';
 
-const SOCKET_IO_URL = import.meta.env.VITE_SOCKET_IO_URL || 'http://localhost:5001';
+const SOCKET_IO_URL = import.meta.env.DEV
+  ? import.meta.env.VITE_SOCKET_IO_URL_DEVELOPMENT || 'http://localhost:5001'
+  : import.meta.env.VITE_SOCKET_IO_URL || 'http://localhost:5001';
 
 class SocketService {
   socket = null;
@@ -40,6 +42,10 @@ class SocketService {
 
       this.socket.on('gameStarted', ({ gameId, currentPlayerIndex, players }) => {
         store.dispatch(gameStarted(gameId, currentPlayerIndex, players));
+      });
+
+      this.socket.on('lastAction', ({ username, action, targetUserId, userId }) => {
+        store.dispatch(updateLastAction(username, action, targetUserId, userId));
       });
 
     }

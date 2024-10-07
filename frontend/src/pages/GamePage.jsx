@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchGame } from '../store/actions/gameActions';
 import GameBoard from '../components/Game/GameBoard';
-import GameStatus from '../components/Game/GameStatus';
-import PlayerActions from '../components/Game/PlayerActions';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import GameMenu from '../components/Game/GameMenu';
 import socketService from '../services/socket';
 import '../assets/styles/GamePage.css';
+import ExchangeHandler from '../components/Game/ExchangeHandler';
+import BlockChallengeHandler from '../components/Game/BlockChallengeHandler';
+import ChallengeBlockHandler from '../components/Game/ChallengeBlockHandler';
+import WarningComponent from '../components/Game/WarningComponent';
 
 const GamePage = () => {
   const { gameId } = useParams();
@@ -18,6 +20,9 @@ const GamePage = () => {
   const { userId, isAuthenticated, loading: authLoading } = useSelector(state => state.auth);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Add selectedTarget state
+  const [selectedTarget, setSelectedTarget] = useState('');
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -56,16 +61,41 @@ const GamePage = () => {
     };
   }, [dispatch, socket]);
 
+  const handleLeaveGame = () => {
+    // Implement leave game logic here
+    navigate('/game/create');
+  };
+
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;
   if (!gameFromRedux) return <div>Game not found</div>;
 
   return (
-    <div className="game-page container py-5">
-      <h2>Game {gameId}</h2>
-      <GameBoard game={gameFromRedux} currentUserId={userId} />
-      <GameStatus game={gameFromRedux} />
-      <PlayerActions game={gameFromRedux} currentUserId={userId} />
+    <div className="game-page">
+      <GameMenu onLeaveGame={handleLeaveGame} />
+      <WarningComponent />
+      <GameBoard 
+        game={gameFromRedux} 
+        currentUserId={userId} 
+        selectedTarget={selectedTarget} 
+        setSelectedTarget={setSelectedTarget}
+      />
+      {gameFromRedux.pendingAction?.type === 'exchange' && 
+       gameFromRedux.pendingAction.userId === userId &&
+       gameFromRedux.pendingAction.accepted === true && (
+        <ExchangeHandler />
+      )}
+      {gameFromRedux.pendingAction && 
+       gameFromRedux.pendingAction.userId !== userId && 
+       (gameFromRedux.pendingAction.canBeChallenged || gameFromRedux.pendingAction.canBeBlocked) &&
+       gameFromRedux.pendingAction.blockPending === false && (
+        <BlockChallengeHandler />
+      )}
+      {gameFromRedux.pendingAction &&
+       gameFromRedux.pendingAction.blockPending &&
+       gameFromRedux.pendingAction.userId === userId && (
+        <ChallengeBlockHandler />
+      )}
     </div>
   );
 };

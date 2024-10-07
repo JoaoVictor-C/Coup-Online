@@ -1,14 +1,16 @@
 import PropTypes from 'prop-types';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { performAction, performChallenge, performBlock, acceptAction, respondToBlock, selectExchangeCards, performExchange, performChallengeSuccess, playAgain } from '../../store/actions/gameActions';
+import Card from './Card';
+import '../../assets/styles/PlayerActions.css';
 
 const PlayerActions = ({ game, currentUserId }) => {
   const dispatch = useDispatch();
   const isCurrentPlayerTurn = game.players[game.currentPlayerIndex]?.playerProfile.user._id === currentUserId;
   const [selectedTarget, setSelectedTarget] = useState('');
-  const [selectedExchangeCards, setSelectedExchangeCards] = useState([]); // Selected cards to keep for exchange
-  const [selectedChallengeCards, setSelectedChallengeCards] = useState([]); // Selected cards to keep for challenge success
+  const [selectedExchangeCards, setSelectedExchangeCards] = useState([]);
+  const [selectedChallengeCards, setSelectedChallengeCards] = useState([]);
 
   // Get challenge and block states from Redux
   const { challenge, block } = useSelector((state) => state.game);
@@ -430,6 +432,7 @@ const PlayerActions = ({ game, currentUserId }) => {
           <div className="card-body">
             <h3 className="card-title mb-3 text-light">Your Turn</h3>
             <div className="d-grid gap-2">
+              {/* Action Buttons */}
               <button
                 className="btn btn-primary"
                 onClick={() => handleAction('income')}
@@ -473,6 +476,7 @@ const PlayerActions = ({ game, currentUserId }) => {
                 Steal
               </button>
             </div>
+            {/* Target Selection */}
             <div className="mt-3">
               <label htmlFor="targetPlayer" className="form-label text-light">Select Target Player:</label>
               <select
@@ -496,6 +500,21 @@ const PlayerActions = ({ game, currentUserId }) => {
               </select>
             </div>
           </div>
+        </div>
+      )}
+      
+      {/* Display Real Cards to the Right of the User */}
+      {user && (
+        <div className="user-cards">
+          {user.characters.map((character, index) => (
+            <Card 
+              key={index} 
+              character={character} 
+              isRevealed={true} 
+              isSelectable={false} 
+              onClick={null}
+            />
+          ))}
         </div>
       )}
     </div>
