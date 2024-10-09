@@ -81,8 +81,8 @@ const GamePage = () => {
           <div className="col-md-6">
             <div className="card shadow-sm">
               <div className="card-body">
-                <h2 className="card-title mb-4 text-center">Game Not Found</h2>
-                <p className="text-center">The game you&apos;re trying to join does not exist. Please check the room name or choose an option below:</p>
+                <h2 className="card-title mb-4 text-center text-light">Game Not Found</h2>
+                <p className="text-center text-light">The game you&apos;re trying to join does not exist. Please check the room name or choose an option below:</p>
                 <div className="d-flex justify-content-center mt-4">
                   <Link to="/game/create" className="btn btn-primary me-2">
                     Create a New Game
