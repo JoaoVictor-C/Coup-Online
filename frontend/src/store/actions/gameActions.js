@@ -30,6 +30,7 @@ export const fetchGame = (roomName, userId) => (dispatch, getState) => {
         console.log(`Game fetched successfully: ${response.game}`);
         resolve(response.game);
       } else {
+        console.log(`Error fetching game: ${response.message}`);
         dispatch({ type: FETCH_GAME_ERROR, payload: response.message || 'Error fetching game' });
         reject(new Error(response.message || 'Error fetching game'));
       }
