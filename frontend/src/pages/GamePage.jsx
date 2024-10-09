@@ -47,10 +47,6 @@
         };
 
         socketService.getSocket().on('gameUpdate', handleGameUpdate);
-
-        return () => {
-          socketService.getSocket().off('gameUpdate', handleGameUpdate);
-        };
       }, [dispatch]);
     
       useEffect(() => {
