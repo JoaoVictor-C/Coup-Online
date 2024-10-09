@@ -29,6 +29,7 @@ class SocketService {
 
       // Centralized event listeners
       this.socket.on('gameUpdate', (updatedGame) => {
+        console.log('Received game update:', updatedGame);
         store.dispatch(gameUpdate(updatedGame));
       });
 
