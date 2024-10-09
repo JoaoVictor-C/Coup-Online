@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import Player from './Player';
 import { useDispatch } from 'react-redux';
-import { performAction, performExchange, fetchGame } from '../../store/actions/gameActions';
+import { performAction, performExchange } from '../../store/actions/gameActions';
 import { Container, Row, Col } from 'react-bootstrap'; // Import Bootstrap components
 
 const GameBoard = ({ game, currentUserId, selectedTarget, setSelectedTarget }) => {

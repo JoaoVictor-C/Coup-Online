@@ -34,12 +34,12 @@
     
       useEffect(() => { 
           setIsLoading(true);
-          dispatch(fetchGame(roomName))
+          dispatch(fetchGame(roomName, userId))
             .then(() => setIsLoading(false))
             .catch(() => {
               setIsLoading(false);
             });
-      }, [dispatch, roomName]);
+      }, [dispatch, roomName, userId]);
 
       useEffect(() => {
         const handleGameUpdate = (updatedGame) => {

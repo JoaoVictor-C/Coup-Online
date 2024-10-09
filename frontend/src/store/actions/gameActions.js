@@ -19,13 +19,12 @@ import {
 import socketService from '../../services/socket';
 
 // Fetch Game State using Socket.IO
-export const fetchGame = (roomName) => (dispatch, getState) => {
+export const fetchGame = (roomName, userId) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
     dispatch({ type: FETCH_GAME_START });
-    const { userId } = getState().auth;
     const socket = socketService.getSocket();
     console.log(`Fetching game for room: ${roomName}`);
-    socket.emit('getGame', { roomName, userId }, (response) => {
+    socket.emit('getGame', { roomName, userId }, (response) => {  
       if (response.success) {
         dispatch({ type: FETCH_GAME_SUCCESS, payload: response.game });
         console.log(`Game fetched successfully: ${response.game}`);
