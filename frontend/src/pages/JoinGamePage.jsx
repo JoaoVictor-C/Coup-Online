@@ -46,7 +46,7 @@ const JoinGamePage = () => {
         <div className="col-md-6">
           <div className="card shadow-sm">
             <div className="card-body">
-              <h2 className="card-title mb-4 text-center">Join a Game</h2>
+              <h2 className="card-title mb-4 text-center text-light">Join a Game</h2>
               {errorMessage && (
                 <div className="alert alert-warning alert-dismissible fade show" role="alert">
                   {errorMessage}
@@ -55,7 +55,7 @@ const JoinGamePage = () => {
               )}
               <form onSubmit={handleSubmit} noValidate>
                 <div className="mb-4">
-                  <label htmlFor="roomName" className="form-label">Room Name:</label>
+                  <label htmlFor="roomName" className="form-label text-light">Room Name:</label>
                   <input
                     type="text"
                     className={`form-control ${roomName && !isRoomNameValid() ? 'is-invalid' : ''}`}

@@ -40,7 +40,7 @@ const CreateGamePage = () => {
         <div className="col-md-6">
           <div className="card shadow-sm">
             <div className="card-body">
-              <h2 className="card-title mb-4 text-center">Create a New Game</h2>
+              <h2 className="card-title mb-4 text-center text-light">Create a New Game</h2>
               {errorMessage && (
                 <div className="alert alert-warning alert-dismissible fade show" role="alert">
                   {errorMessage}
@@ -49,7 +49,7 @@ const CreateGamePage = () => {
               )}
               <form onSubmit={handleSubmit} noValidate>
                 <div className="mb-4">
-                  <label htmlFor="playerCount" className="form-label">Number of Players:</label>
+                  <label htmlFor="playerCount" className="form-label text-light">Number of Players:</label>
                   <select
                     className="form-select form-select-lg"
                     id="playerCount"
