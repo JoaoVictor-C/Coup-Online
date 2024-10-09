@@ -1,8 +1,8 @@
 .warning-component {
   position: fixed;
   bottom: 10px;
-  left: 10px;
-  max-width: 300px;
+  right: 10px;
+  max-width: 350px;
   min-width: 200px;
   max-height: 200px;
   overflow-y: auto;
@@ -28,6 +28,10 @@
   position: fixed;
   bottom: 20px;
   left: 20%;
+  max-width: 350px;
+  min-width: 200px;
+  max-height: 200px;
+  overflow-y: auto;
   transform: translateX(-50%);
   background-color: #ffd700;
   color: #000;
