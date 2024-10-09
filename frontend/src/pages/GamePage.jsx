@@ -33,21 +33,16 @@
       }, [authLoading, isAuthenticated, navigate]);
     
       useEffect(() => { 
-        setIsLoading(true);
-        dispatch(fetchGame(roomName, userId))
-          .then(() => setIsLoading(false))
-          .catch(() => {
-            setIsLoading(false);
-          });
-      }, [dispatch, roomName, userId, gameFromRedux]);
-
-      useEffect(() => {
-        const handleGameUpdate = (updatedGame) => {
-          dispatch(gameUpdate(updatedGame));
-        };
-
-        socketService.getSocket().on('gameUpdate', handleGameUpdate);
-      }, [dispatch]);
+        console.log(userId, roomName);
+        if (userId && roomName) {
+          setIsLoading(true);
+          dispatch(fetchGame(roomName, userId))
+            .then(() => setIsLoading(false))
+            .catch(() => {
+              setIsLoading(false);
+            });
+        }
+      }, [dispatch, roomName, userId]);
     
       useEffect(() => {
         if (gameFromRedux && gameFromRedux.status === 'in_progress') {
