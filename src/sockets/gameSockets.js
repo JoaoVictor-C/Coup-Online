@@ -43,7 +43,7 @@ const gameSockets = (io, socket) => {
     // Handle disconnection
     socket.on('disconnect', async (reason) => {
         console.log(`Client disconnected: ${socket.id}, Reason: ${reason}`);
-        const gameId = userGames[socket.id].to
+        const gameId = userGames[socket.id];
         const userId = Object.keys(connectedUsers).find(key => connectedUsers[key] === socket.id);
         if (gameId && userId) {
             try {
@@ -62,7 +62,6 @@ const gameSockets = (io, socket) => {
                         // Cleanup
                         delete userGames[socket.id];
                         delete connectedUsers[userId];
-                        console.log(gameId);
                         const room = io.sockets.adapter.rooms.get(gameId);
                         if (!room || room.size === 0) {
                             if (!roomDeletionTimers[gameId]) {
