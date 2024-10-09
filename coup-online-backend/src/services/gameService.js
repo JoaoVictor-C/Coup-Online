@@ -357,6 +357,12 @@ const executeAction = async (game, action) => {
 // Advance turn to the next player
 const advanceTurn = (game) => {
     let nextPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
+    // Update the players.isAlive:
+    game.players.forEach(player => {
+        if (player.characters.length === 0) {
+            player.isAlive = false;
+        }
+    });
     while (!game.players[nextPlayerIndex].isAlive) {
         console.log(`Player: ${game.players[nextPlayerIndex].username} is not alive`)
         nextPlayerIndex = (nextPlayerIndex + 1) % game.players.length;

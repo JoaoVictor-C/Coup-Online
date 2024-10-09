@@ -22,7 +22,7 @@ const WarningComponent = () => {
 
       if (lastAction.targetUserId) {
         const targetUsername = getUsernameById(lastAction.targetUserId);
-        message += ` on **${targetUsername}**`;
+        message += ` on ${targetUsername}`;
       }
 
       if (lastAction.message) {
