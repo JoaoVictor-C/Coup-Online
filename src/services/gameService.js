@@ -112,17 +112,7 @@ const addUserToGame = async (game, playerProfile) => {
         return { success: false, status: 400, message: 'Game is already full' };
     }
 
-    const charactersPerPlayer = game.maxPlayers <= 4 ? 2 : 3;
-
-    // Ensure there are enough cards in the deck
-    if (game.deck.length < charactersPerPlayer) {
-        // Reinitialize and reshuffle the deck if insufficient cards
-        const newCards = initializeDeck(game.maxPlayers);
-        game.deck = game.deck.concat(newCards);
-        shuffleArray(game.deck);
-    }
-
-    const characters = game.deck.splice(0, charactersPerPlayer);
+    const characters = game.deck.splice(0, 2);
 
     game.players.push({
         playerProfile: playerProfile._id,

@@ -57,12 +57,13 @@ const handleBlockAction = async (io, socket, gameId, actionType, blockerId, call
     }
 }
 
-const handleRespondToBlock = async (io, socket, gameId, actionType, response, callback) => {
+ // Start of Selection
+const handleRespondToBlock = async (io, socket, gameId, response, callback) => {
     try {
         const userId = socket.user.id;
         const game = await Game.findById(gameId).populate({
-                path: 'players.playerProfile',
-                populate: { path: 'user' }
+            path: 'players.playerProfile',
+            populate: { path: 'user' }
         });
 
         if (!game || !game.pendingAction || !game.pendingAction.blockPending) {
@@ -71,7 +72,7 @@ const handleRespondToBlock = async (io, socket, gameId, actionType, response, ca
 
         const action = game.pendingAction;
 
-        const player = game.players.find(p => p.playerProfile.user._id.toString() === userId);
+        const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
         if (!player || !player.isAlive) {
             return callback?.({ success: false, message: 'Player not found or not alive' });
         }
@@ -80,7 +81,7 @@ const handleRespondToBlock = async (io, socket, gameId, actionType, response, ca
         clearActionTimeout(gameId);
 
         if (response === 'challenge') {
-            // Initiate a challenge against the first blocker]
+            // Initiate a challenge against the first blocker
             const blockerId = action.blockers[0];
             const blocker = game.players.find(p => p.playerProfile.user._id.toString() === blockerId.toString());
             if (!blocker || !blocker.isAlive) {
@@ -93,7 +94,7 @@ const handleRespondToBlock = async (io, socket, gameId, actionType, response, ca
 
             if (hasRole) {
                 // Challenger loses an influence
-                const challenger = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
+                const challenger = game.players.find(p => p.playerProfile.user._id.toString() === action.userId.toString());
                 if (challenger) {
                     removeRandomCharacter(challenger);
                 }
@@ -108,8 +109,8 @@ const handleRespondToBlock = async (io, socket, gameId, actionType, response, ca
                     username: blocker.playerProfile.user.username,
                     userId: blocker.playerProfile.user._id.toString(),
                     action: 'challenge',
-                    targetUserId: actionType,
-                    message: `Challenged the block on ${actionType} action.`,
+                    targetUserId: action.userId.toString(),
+                    message: `Challenged the block on ${action.type} action. Challenger lost an influence.`,
                 });
             } else {
                 // Blocker loses an influence
@@ -127,8 +128,9 @@ const handleRespondToBlock = async (io, socket, gameId, actionType, response, ca
                     io.to(gameId).emit('lastAction', {
                         username: blocker.playerProfile.user.username,
                         userId: blocker.playerProfile.user._id.toString(),
-                        action: actionType,
-                        targetUserId: null,
+                        action: action.type,
+                        targetUserId: action.targetUserId ? action.targetUserId.toString() : null,
+                        message: `${action.type.charAt(0).toUpperCase() + action.type.slice(1)} action executed after block was overridden.`,
                     });
                 }
             }
@@ -145,8 +147,8 @@ const handleRespondToBlock = async (io, socket, gameId, actionType, response, ca
                 username: player.playerProfile.user.username,
                 userId: player.playerProfile.user._id.toString(),
                 action: 'acceptBlock',
-                targetUserId: null,
-                message: `Accepted the block on ${actionType} action.`,
+                targetUserId: action.userId ? action.userId.toString() : null,
+                message: `Accepted the block on ${action.type} action.`,
             });
 
             callback?.({ success: true, message: 'Response to block processed' });
