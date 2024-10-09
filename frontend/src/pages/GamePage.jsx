@@ -129,16 +129,12 @@
         isUserPendingAction &&
         pendingAction.type !== 'challengeSuccess';
     
-          // Start of Selection
-          const showWaitActionContainer =
-            (pendingAction &&
-             !isBlockPending &&
-             isUserPendingAction === false &&
-             pendingAction.type !== 'exchange' && 
-             pendingAction.type !== 'challengeSuccess') ||
-            (pendingAction &&
-             !isUserPendingAction &&
-             pendingAction.type === 'challengeSuccess');
+      const showWaitActionContainer =
+        pendingAction &&
+        !isBlockPending &&
+        isUserPendingAction === false &&
+        pendingAction.type !== 'exchange' && 
+        ((pendingAction.type !== 'challengeSuccess' && isUserPendingAction) || (pendingAction.type === 'challengeSuccess' && !isUserPendingAction));
     
       return (
         <Container fluid className="game-page">
