@@ -6,9 +6,9 @@ const Coin = ({ count }) => {
   const coinImage = count >= 5 ? coinImage5 : coinImage1;
 
   return (
-    <div className="coin-container">
-      <img src={coinImage} alt="Coin" className="coin-image" />
-      <span className="coin-count text-black">{count}</span>
+    <div className="d-flex align-items-center">
+      <img src={coinImage} alt="Coin" className="me-2" style={{ width: '30px', height: '30px' }} />
+      <span className="text-light">{count}</span>
     </div>
   );
 };

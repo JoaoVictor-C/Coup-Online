@@ -24,8 +24,18 @@ const cardActions = {
   // contessa does not have an action
 };
 
-const Card = ({ character, isRevealed, isSelectable, onClick, className, enabled }) => {
-  const cardImage = isRevealed ? cardImages[character.toLowerCase()] || backCard : backCard;
+const Card = ({
+  character,
+  isRevealed,
+  isSelectable,
+  onClick,
+  className,
+  enabled,
+  style,
+}) => {
+  const cardImage = isRevealed
+    ? cardImages[character.toLowerCase()] || backCard
+    : backCard;
 
   // Handle click event
   const handleClick = () => {
@@ -34,12 +44,18 @@ const Card = ({ character, isRevealed, isSelectable, onClick, className, enabled
     }
   };
 
-    return (
+  return (
     <div
-      className={`game-card ${isSelectable ? 'selectable-action' : ''} ${className}`}
+      className={`card ${isSelectable ? 'selectable-action' : ''} ${className} justify-content-center align-items-center`}
       onClick={isSelectable ? handleClick : undefined}
+      style={{ cursor: isSelectable && enabled ? 'pointer' : 'default', ...style }}
     >
-      <img src={cardImage} alt={character} />
+      <img
+        src={cardImage}
+        alt={character}
+        className="card-img-top border border-dark"
+        style={{ width: '100px', height: 'auto', maxHeight: '171px' }}
+      />
     </div>
   );
 };
@@ -51,6 +67,7 @@ Card.propTypes = {
   onClick: PropTypes.func,
   className: PropTypes.string,
   enabled: PropTypes.bool,
+  style: PropTypes.object,
 };
 
 export default Card;

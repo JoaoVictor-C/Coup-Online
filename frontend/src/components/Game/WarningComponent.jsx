@@ -11,17 +11,22 @@ const WarningComponent = () => {
 
   useEffect(() => {
     const getUsernameById = (userId) => {
-      const player = players.find(p => p.playerProfile.user._id === userId);
-      return player ? player.playerProfile.user.username : 'Unknown';
+      const player = players.find(p => p.playerProfile.user._id.toString() === userId.toString());
+      return player ? player.username : 'Unknown';
     };
 
     if (lastAction && lastAction.userId !== currentUserId) {
       const actorUsername = lastAction.username || getUsernameById(lastAction.userId);
       const action = lastAction.action;
-      let message = `Player ${actorUsername} performed ${action}`;
+      let message = `${actorUsername} has performed ${formatAction(action)}`;
+
       if (lastAction.targetUserId) {
         const targetUsername = getUsernameById(lastAction.targetUserId);
-        message += ` on Player ${targetUsername}`;
+        message += ` on **${targetUsername}**`;
+      }
+
+      if (lastAction.message) {
+        message += `: ${lastAction.message}`;
       }
 
       // Update action history
@@ -41,20 +46,36 @@ const WarningComponent = () => {
     }
   }, [lastAction, currentUserId, players]);
 
+  const formatAction = (action) => {
+    const actionMap = {
+      'income': 'Income',
+      'foreignAid': 'Foreign Aid',
+      'coup': 'Coup',
+      'steal': 'Steal',
+      'taxes': 'Taxes',
+      'assassinate': 'Assassination',
+      'exchange': 'Exchange',
+      'challenge': 'Challenge',
+      'block': 'Block',
+      // Add more mappings as needed
+    };
+    return actionMap[action] || action;
+  };
+
   return (
     <>
       {actionHistory.length > 0 && (
         <div className="warning-component">
           <ul>
             {actionHistory.map((msg, index) => (
-              <li key={index}>{msg}</li>
+              <li key={index} dangerouslySetInnerHTML={{__html: msg}}></li>
             ))}
           </ul>
         </div>
       )}
       {centerMessage && (
         <div className="center-message">
-          {centerMessage}
+          <strong>{centerMessage}</strong>
         </div>
       )}
     </>

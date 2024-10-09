@@ -1,13 +1,15 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { performBlock, performChallenge, acceptAction } from '../../store/actions/gameActions';
 import '../../assets/styles/BlockChallengeHandler.css';
+import PropTypes from 'prop-types';
 
-const BlockChallengeHandler = () => {
+const BlockChallengeHandler = ({alreadyClicked, setAlreadyClicked}) => {
   const dispatch = useDispatch();
   const game = useSelector((state) => state.game.currentGame);
   const currentUserId = useSelector((state) => state.auth.userId);
 
   const handleBlock = () => {
+    setAlreadyClicked(!alreadyClicked);
     dispatch(performBlock(game._id, currentUserId, game.pendingAction.type))
       .catch((error) => {
         console.error('Block failed:', error);
@@ -15,6 +17,7 @@ const BlockChallengeHandler = () => {
   };
 
   const handleChallenge = () => {
+    setAlreadyClicked(!alreadyClicked);
     dispatch(performChallenge(game._id, currentUserId))
       .catch((error) => {
         console.error('Challenge failed:', error);
@@ -22,6 +25,7 @@ const BlockChallengeHandler = () => {
   };
 
   const handleAcceptAction = () => {
+    setAlreadyClicked(!alreadyClicked);
     dispatch(acceptAction(game._id))
       .catch((error) => {
         console.error('Accept action failed:', error);
@@ -51,6 +55,11 @@ const BlockChallengeHandler = () => {
       </div>
     </div>
   );
+};
+
+BlockChallengeHandler.propTypes = {
+  alreadyClicked: PropTypes.bool.isRequired,
+  setAlreadyClicked: PropTypes.func.isRequired,
 };
 
 export default BlockChallengeHandler;

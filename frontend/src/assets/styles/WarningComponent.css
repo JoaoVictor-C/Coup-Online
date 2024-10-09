@@ -1,43 +1,46 @@
+:frontend/src/assets/styles/WarningComponent.css
+
 .warning-component {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: rgba(255, 255, 0, 0.9);
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-weight: bold;
-    z-index: 1000;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  width: 300px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.warning-component ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.warning-component li {
+  margin-bottom: 5px;
+  font-size: 14px;
 }
 
 .center-message {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    padding: 20px 30px;
-    border-radius: 10px;
-    font-size: 1.2em;
-    z-index: 1001;
-    animation: fadeInOut 3s forwards;
+  position: fixed;
+  bottom: 20px;
+  left: 20%;
+  transform: translateX(-50%);
+  background-color: #ffd700;
+  color: #000;
+  padding: 10px 20px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: fadeInOut 3.5s forwards;
 }
 
 @keyframes fadeInOut {
-    0% {
-        opacity: 0;
-    }
-
-    10% {
-        opacity: 1;
-    }
-
-    90% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0;
-    }
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
 }

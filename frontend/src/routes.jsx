@@ -27,12 +27,12 @@ const routes = [
     private: true 
   },
   { 
-    path: '/game/:gameId', 
+    path: '/game/:roomName', 
     component: GamePage,
     private: true 
   },
   {
-    path: '/lobby/:gameId',
+    path: '/lobby/:roomName',
     component: LobbyPage,
     private: true
   },

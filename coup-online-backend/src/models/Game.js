@@ -109,6 +109,11 @@ const PlayerSchema = new mongoose.Schema({
         }
     }, { id: false });
 const GameSchema = new mongoose.Schema({
+    roomName: {
+        type: String,
+        required: true,
+        unique: true
+    },
     players: {
         type: [PlayerSchema],
         default: []
@@ -147,4 +152,5 @@ const GameSchema = new mongoose.Schema({
         default: null
     },
 }, { timestamps: true });
+
 module.exports = mongoose.model('Game', GameSchema);

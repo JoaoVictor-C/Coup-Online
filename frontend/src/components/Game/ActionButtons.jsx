@@ -6,24 +6,28 @@ const ActionButtons = ({ gameId, currentUserId, selectedTarget, setSelectedTarge
   const dispatch = useDispatch();
 
   const handleActionClick = (actionType) => {
+    if (['coup', 'assassin', 'captain'].includes(actionType) && !selectedTarget) {
+      alert('Please select a target to perform the action.');
+      return;
+    }
     dispatch(performAction(gameId, actionType, selectedTarget))
       .then(() => {
-        setSelectedTarget('');
       })
       .catch((error) => {
         console.error(`Action ${actionType} failed:`, error);
       });
+    setSelectedTarget('');
   };
 
   return (
-    <div className="action-buttons">
-      <button className="btn btn-coup" onClick={() => handleActionClick('coup')}>
+    <div className="d-flex flex-row gap-2 justify-content-center">
+      <button className="btn btn-danger" onClick={() => handleActionClick('coup')} style={{width: 'auto', height: '50px'}}>
         Coup
       </button>
-      <button className="btn btn-foreign-aid" onClick={() => handleActionClick('foreignAid')}>
+      <button className="btn btn-secondary" onClick={() => handleActionClick('foreignAid')} style={{width: 'auto', height: '50px'}}>
         Foreign Aid
       </button>
-      <button className="btn btn-income" onClick={() => handleActionClick('income')}>
+      <button className="btn btn-primary" onClick={() => handleActionClick('income')} style={{width: 'auto', height: '50px'}}>
         Income
       </button>
     </div>

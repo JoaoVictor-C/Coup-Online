@@ -19,13 +19,13 @@ import {
 import socketService from '../../services/socket';
 
 // Fetch Game State using Socket.IO
-export const fetchGame = (gameId) => (dispatch, getState) => {
+export const fetchGame = (roomName) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
     dispatch({ type: FETCH_GAME_START });
     const { userId } = getState().auth;
     const socket = socketService.getSocket();
 
-    socket.emit('getGame', { gameId, userId }, (response) => {
+    socket.emit('getGame', { roomName, userId }, (response) => {
       if (response.success) {
         dispatch({ type: FETCH_GAME_SUCCESS, payload: response.game });
         resolve(response.game);
@@ -38,15 +38,15 @@ export const fetchGame = (gameId) => (dispatch, getState) => {
 };
 
 // Join Game using Socket.IO
-export const joinGame = (gameId) => (dispatch, getState) => {
+export const joinGame = (roomName) => (dispatch, getState) => {
   const socket = socketService.getSocket();
   const { userId } = getState().auth;
 
   return new Promise((resolve, reject) => {
-    socket.emit('joinGame', { gameId, userId }, (response) => {
+    socket.emit('joinGame', { roomName, userId }, (response) => {
       if (response.success) {
         dispatch({ type: JOIN_GAME_SUCCESS, payload: response.game });
-        resolve({ gameId: response.game._id, status: response.game.status });
+        resolve({ gameId: response.game._id, status: response.game.status, roomName: response.game.roomName });
       } else {
         dispatch({ type: JOIN_GAME_ERROR, payload: response.message || 'Error joining game' });
         reject({ gameId: null, error: response.message || 'Error joining game' });
@@ -144,6 +144,7 @@ export const performChallenge = (gameId, challengerId) => (dispatch) => {
   });
 };
 
+
 // Block Action
 export const performBlock = (gameId, blockerId, actionType) => (dispatch) => {
   const socket = socketService.getSocket();
@@ -235,6 +236,10 @@ export const performChallengeSuccess = (gameId, cards) => (dispatch) => {
   });
 };
 
+export const removeGame = () => (dispatch) => {
+  dispatch({ type: FETCH_GAME_SUCCESS, payload: null });
+};
+
 // Play Again
 export const playAgain = (gameId) => (dispatch) => {
   const socket = socketService.getSocket();
@@ -250,7 +255,7 @@ export const playAgain = (gameId) => (dispatch) => {
   });
 };
 
-export const updateLastAction = (username, action, targetUserId, userId) => ({
+export const updateLastAction = (username, actionType, targetUserId, userId, message = '') => ({
   type: UPDATE_LAST_ACTION,
-  payload: { username, action, targetUserId, userId },
+  payload: { username, actionType, targetUserId, userId, message },
 });

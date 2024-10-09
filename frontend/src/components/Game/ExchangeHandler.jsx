@@ -1,7 +1,7 @@
     // Start of Selection
     import { useState } from 'react';
     import { useDispatch, useSelector } from 'react-redux';
-    import { selectExchangeCards } from '../../store/actions/gameActions';
+    import { selectExchangeCards, performChallengeSuccess } from '../../store/actions/gameActions';
     import Card from './Card';
     import '../../assets/styles/ExchangeHandler.css';
     
@@ -29,13 +29,23 @@
     
       const handleConfirm = () => {
         const selected = selectedCards.map(index => combinedCards[index]);
-        dispatch(selectExchangeCards(game._id, selected))
-          .then(() => {
-            setSelectedCards([]);
-          })
-          .catch((error) => {
-            console.error('Exchange selection failed:', error);
-          });
+        if (game.pendingAction?.type === 'challengeSuccess') {
+          dispatch(performChallengeSuccess(game._id, selected))
+            .then(() => {
+              setSelectedCards([]);
+            })
+            .catch((error) => {
+              console.error('Challenge success selection failed:', error);
+            });
+        } else {
+          dispatch(selectExchangeCards(game._id, selected))
+            .then(() => {
+              setSelectedCards([]);
+            })
+            .catch((error) => {
+              console.error('Exchange selection failed:', error);
+            });
+        }
       };
     
       return (
@@ -49,8 +59,9 @@
                 isRevealed={true}
                 isSelectable={true}
                 onClick={() => toggleCardSelection(index)}
-                className={selectedCards.includes(index) ? 'selected' : ''}
+                className={selectedCards.includes(index) ? 'border-warning border-2' : ''}
                 enabled={true}
+                style={{ cursor: 'pointer' }}
               />
             ))}
           </div>

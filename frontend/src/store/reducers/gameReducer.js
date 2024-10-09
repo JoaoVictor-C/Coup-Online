@@ -41,6 +41,7 @@ const initialState = {
     message: '',
   },
   lastAction: null,
+  roomName: null,
 };
 
 const gameReducer = (state = initialState, action) => {
@@ -50,9 +51,10 @@ const gameReducer = (state = initialState, action) => {
         ...state,
         lastAction: {
           username: action.payload.username,
-          action: action.payload.action,
+          action: action.payload.actionType, // Renamed for clarity
           targetUserId: action.payload.targetUserId,
           userId: action.payload.userId,
+          message: action.payload.message || '', // Added message field
         },
       };
     case FETCH_GAME_SUCCESS:
@@ -67,13 +69,15 @@ const gameReducer = (state = initialState, action) => {
             characters: player.characters,
             coins: player.coins,
             isAlive: player.isAlive,
-            isConnected: player.isConnected
+            isConnected: player.isConnected,
+            deadCharacters: player.deadCharacters,
           })),
           currentUserId: state.currentGame?.currentUserId || action.payload.currentUserId,
           centralTreasury: action.payload.centralTreasury || 1000,
           currentPlayerUsername: action.payload.currentPlayerUsername || '',
           winner: action.payload.winner || null,
           pendingAction: action.payload.pendingAction || null,
+          roomName: action.payload.roomName || null,
         },
         loading: false,
         error: null,
@@ -121,7 +125,8 @@ const gameReducer = (state = initialState, action) => {
           currentPlayerUsername: action.payload.currentPlayerUsername,
           winner: action.payload.winner,
           pendingAction: action.payload.pendingAction,
-          
+          status: action.payload.status,
+          roomName: action.payload.roomName,
         },
       };
     case PLAYER_DISCONNECTED:

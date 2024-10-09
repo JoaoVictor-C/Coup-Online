@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types';
 import Player from './Player';
 import { useDispatch } from 'react-redux';
-import { performAction, performExchange } from '../../store/actions/gameActions';
+import { performAction, performExchange, fetchGame } from '../../store/actions/gameActions';
+import { Container, Row, Col } from 'react-bootstrap'; // Import Bootstrap components
 
 const GameBoard = ({ game, currentUserId, selectedTarget, setSelectedTarget }) => {
   const dispatch = useDispatch();
@@ -20,35 +21,23 @@ const GameBoard = ({ game, currentUserId, selectedTarget, setSelectedTarget }) =
     switch (numPlayers) {
       case 2:
         return [
-          { left: '50%', top: '20%', transform: 'translate(-50%, -50%)' },
+          { left: '50%', top: '20%', transform: 'translate(-50%, -40%)', position: 'absolute' },
+          { left: '50%', top: '80%', transform: 'translate(-50%, -50%)', position: 'absolute' },
         ];
       case 3:
         return [
-          { left: '50%', top: '20%', transform: 'translate(-50%, -50%)' },
-          { left: '80%', top: '50%', transform: 'translate(-50%, -50%) rotate(90deg)' },
+          { left: '31%', top: '20%', transform: 'translate(-50%, -40%)', position: 'absolute' },
+          { left: '69%', top: '20%', transform: 'translate(-49%, -40%)', position: 'absolute' },
+          { left: '20%', top: '20%', transform: 'translate(-50%, -50%) rotate(-90deg)', position: 'absolute' },
         ];
       case 4:
         return [
-          { left: '20%', top: '50%', transform: 'translate(-50%, -50%) rotate(-90deg)' },
-          { left: '50%', top: '20%', transform: 'translate(-50%, -50%)' },
-          { left: '80%', top: '50%', transform: 'translate(-50%, -50%) rotate(90deg)' },
+          { left: '25%', top: '20%', transform: 'translate(-50%, -40%)', position: 'absolute' },
+          { left: '50%', top: '20%', transform: 'translate(-50%, -40%)', position: 'absolute' },
+          { left: '75%', top: '20%', transform: 'translate(-50%, -40%)', position: 'absolute' },
+          { left: '100%', top: '80%', transform: 'translate(-50%, -50%)', position: 'absolute' },
         ];
-      case 5:
-        return [
-          { left: '50%', top: '10%', transform: 'translate(-50%, -50%)' },
-          { left: '80%', top: '30%', transform: 'translate(-50%, -50%)' },
-          { left: '80%', top: '70%', transform: 'translate(-50%, -50%)' },
-          { left: '20%', top: '70%', transform: 'translate(-50%, -50%)' },
-        ];
-      case 6:
-        return [
-          { left: '50%', top: '10%', transform: 'translate(-50%, -50%)' },
-          { left: '80%', top: '30%', transform: 'translate(-50%, -50%)' },
-          { left: '80%', top: '70%', transform: 'translate(-50%, -50%)' },
-          { left: '50%', top: '90%', transform: 'translate(-50%, -50%)' },
-          { left: '20%', top: '70%', transform: 'translate(-50%, -50%)' },
-          { left: '20%', top: '30%', transform: 'translate(-50%, -50%)' },
-        ];
+      // Add more cases as needed
       default:
         // Fallback to circular positioning
         return otherPlayers.map((_, index) => {
@@ -72,11 +61,12 @@ const GameBoard = ({ game, currentUserId, selectedTarget, setSelectedTarget }) =
   };
 
   const handleAction = (actionType) => {
+    console.log('actionType', actionType);
     if (
-      ['coup', 'assassinate', 'steal'].includes(actionType) &&
+      ['coup', 'assassin', 'captain'].includes(actionType) &&
       !selectedTarget
     ) {
-      console.error('Please select a target player.');
+      alert('Please select a target to perform the action.');
       return;
     }
     actionType = actionType.toLowerCase();
@@ -111,49 +101,106 @@ const GameBoard = ({ game, currentUserId, selectedTarget, setSelectedTarget }) =
       });
   };
 
+  const handleCardSelection = (targetId) => {
+    if (game.players[game.currentPlayerIndex]?.playerProfile.user._id === currentUserId && targetId !== currentUserId) {
+      setSelectedTarget(targetId);
+    }
+  };
+
+  let currentPlayerStyle = {};
+
+  // If it is the current player turn, set the style to the current player style
+  if (game.players[game.currentPlayerIndex]?.playerProfile.user._id === currentUserId && !game.pendingAction) {
+    currentPlayerStyle = {
+      left: '75%',
+      bottom: '20px',
+      transform: 'translateX(-75%)',
+      position: 'absolute',
+    }
+  } else {
+    currentPlayerStyle = {
+      left: '50%',
+      bottom: '20px',
+      transform: 'translateX(-50%)',
+      position: 'absolute',
+    }
+  }
+
+
+  // Calculate accepted and required counts for the pending action
+  const acceptedCount = game.pendingAction?.acceptedPlayers?.length || 0;
+  const requiredCount = game.pendingAction?.requiredPlayers || game.players.length;
+
   return (
-    <div className="game-board">
-      <div className="players-container">
-        {/* Current Player */}
-        <Player
-          key={currentUserId}
-          player={game.players.find((p) => p.playerProfile.user._id === currentUserId)}
-          isCurrentPlayer={true}
-          isCurrentTurn={game.players[game.currentPlayerIndex]?.playerProfile.user._id === currentUserId}
-          style={{
-            left: '50%',
-            bottom: '20px',
-            transform: 'translateX(-50%)',
-          }}
-          handleCardClick={handleCardClick}
-          selectedTarget={selectedTarget}
-          game={game}
-        />
+    <Container fluid className="game-board">
+      {game.pendingAction && (
+        <div style={{
+          position: 'absolute',
+          bottom: '120px',
+          left: '20px',
+          zIndex: 1000,
+          padding: '10px',
+          backgroundColor: '#cce5ff',
+          border: '1px solid #b8daff',
+          borderRadius: '4px',
+          color: '#004085',
+          maxWidth: '300px'
+        }}>
+          {acceptedCount}/{requiredCount-1} players have accepted the pending action.
+        </div>
+      )}
+      <Row className="players-container">
+        <Col
+          xs={12}
+          md={6}
+          className="d-flex justify-content-center align-items-center mb-4"
+        >
+          <Player
+            key={currentUserId}
+            player={game.players.find((p) => p.playerProfile.user._id === currentUserId)}
+            isCurrentPlayer={true}
+            isCurrentTurn={game.players[game.currentPlayerIndex]?.playerProfile.user._id === currentUserId}
+            style={currentPlayerStyle}
+            handleCardClick={handleCardClick}
+            selectedTarget={selectedTarget}
+            setSelectedTarget={setSelectedTarget}
+            game={game}
+            handleCardSelection={handleCardSelection}
+          />
+        </Col>
 
         {/* Other Players */}
         {otherPlayers.map((player, index) => {
           const position = positions[index];
           return (
-            <Player
+            <Col
               key={player.playerProfile.user._id}
-              player={player}
-              isCurrentPlayer={false}
-              isCurrentTurn={game.players[game.currentPlayerIndex]?.playerProfile.user._id === player.playerProfile.user._id}
-              style={{
-                left: position.left,
-                top: position.top,
-                transform: position.transform,
-              }}
-              handleCardClick={handleCardClick}
-              selectedTarget={selectedTarget}
-              setSelectedTarget={setSelectedTarget}
-              nameOnBottom={false}
-              game={game}
-            />
+              xs={12}
+              md={6}
+              className="d-flex justify-content-center align-items-center mb-4"
+            >
+              <Player
+                player={player}
+                isCurrentPlayer={false}
+                isCurrentTurn={game.players[game.currentPlayerIndex]?.playerProfile.user._id === player.playerProfile.user._id}
+                style={{
+                  position: 'absolute', // Ensure absolute positioning
+                  left: position.left,
+                  top: position.top,
+                  transform: position.transform,
+                }}
+                handleCardClick={handleCardClick}
+                selectedTarget={selectedTarget}
+                setSelectedTarget={setSelectedTarget}
+                nameOnBottom={false}
+                game={game}
+                handleCardSelection={handleCardSelection}
+              />
+            </Col>
           );
         })}
-      </div>
-    </div>
+      </Row>
+    </Container>
   );
 };
 

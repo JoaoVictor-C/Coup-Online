@@ -1,7 +1,7 @@
 /* BEM Naming Convention Applied */
 
+/* CSS Variables for Theming */
 :root {
-    /* CSS Variables for Theming */
     --player-padding: 20px;
     --player-padding-mobile: 10px;
     --player-bg: #fff;
@@ -10,8 +10,9 @@
     --current-player-border: #ffd700;
     --current-player-bg: #fff;
     --other-player-border: #ccc;
-    --other-player-bg: #fff;
-    --current-turn-shadow: #00ff00;
+    --other-player-bg: #f0f0f0; /* Updated for better distinction */
+    --current-turn-shadow: 0 0 10px var(--current-turn-shadow-color);
+    --current-turn-shadow-color: #00ff00;
     --player-name-color: #333;
     --current-turn-color: #00d200;
     --hover-transform: translateY(-5px);
@@ -19,8 +20,17 @@
     --transition-duration: 0.3s;
     --action-card-border: #00aaff;
     --action-card-border-2: #00d200;
+    --selected-box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.745);
+    --actionable-border: #00aaff;
+    --disabled-opacity: 0.5;
 }
 
+.player-container-actions {
+    align-items: self-end;
+
+}
+
+/* Player Container */
 .player {
     display: flex;
     flex-direction: column;
@@ -29,40 +39,47 @@
     background-color: var(--player-bg);
     border-radius: var(--player-border-radius);
     box-shadow: var(--player-shadow);
-    transition: transform var(--transition-duration) ease, box-shadow var(--transition-duration) ease;
+    transition: transform var(--transition-duration) ease, box-shadow var(--transition-duration) ease, border var(--transition-duration) ease;
 }
 
+/* Current Player Style */
 .player--current-player {
     border: 2px solid var(--current-player-border);
     background-color: var(--current-player-bg);
 }
 
+/* Other Players Style */
 .player--other-player {
     border: 1px solid var(--other-player-border);
     background-color: var(--other-player-bg);
 }
 
+/* Current Turn Indicator */
 .player--current-turn {
-    box-shadow: 0 0 10px var(--current-turn-shadow);
+    box-shadow: var(--current-turn-shadow);
 }
 
+/* Hover Effects */
 .player:hover {
     transform: var(--hover-transform);
     box-shadow: var(--hover-shadow);
 }
 
+/* Player Information Section */
 .player__info {
     display: flex;
     align-items: center;
     margin-bottom: 10px;
 }
 
+/* Player Name */
 .player__name {
     font-size: 1.2em;
     color: var(--player-name-color);
     margin-right: 10px;
 }
 
+/* Player Cards Container */
 .player__cards {
     display: flex;
     flex-direction: column;
@@ -70,6 +87,7 @@
     align-items: center;
 }
 
+/* Active and Dead Cards */
 .player__active-cards,
 .player__dead-cards {
     display: flex;
@@ -82,12 +100,30 @@
     opacity: 0.6;
 }
 
+.player__action-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.player__action-cards {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+}
+
+
+
+/* Current Turn Indicator Text */
 .player__current-turn-indicator {
     margin-top: 10px;
     color: var(--current-turn-color);
     font-weight: bold;
 }
 
+/* Responsive Design for Tablets */
 @media (max-width: 768px) {
     .player {
         padding: var(--player-padding-mobile);
@@ -103,6 +139,7 @@
     }
 }
 
+/* Responsive Design for Mobile Devices */
 @media (max-width: 480px) {
     .player {
         padding: 5px;
@@ -118,41 +155,46 @@
     }
 }
 
-/* Highlight players with actionable cards */
+/* Highlight Players with Actionable Cards */
 .player--actionable {
-    border: 2px solid #00aaff; /* Highlight color for actionable players */
+    border: 2px solid var(--actionable-border); /* Highlight color for actionable players */
 }
 
-/* Styles for action cards */
+/* Styles for Action Cards */
 .action-card {
     border: 1px solid var(--action-card-border) !important;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, border 0.2s ease;
 }
 
+/* Selected State for Player */
 .selected {
-    box-shadow: 0 0 10px 3px rgba(255, 0, 0, 0.745);
+    box-shadow: var(--selected-box-shadow);
 }
 
+/* Hover Effects for Action Cards */
 .action-card:hover {
     transform: translateY(-5px);
     cursor: pointer;
     box-shadow: var(--hover-shadow);
 }
 
-/* Style for cards the player actually has */
+/* Style for Cards the Player Actually Has */
 .playerHasCard {
     border: 1px solid var(--action-card-border-2) !important;
 }
 
+/* Cursor Pointer Utility */
 .cursor-pointer {
     cursor: pointer;
 }
 
+/* Opacity for Disabled Elements */
 .opacity-50 {
-    opacity: 0.5;
+    opacity: var(--disabled-opacity);
 }
 
+/* Disabled State for Elements */
 .disabled {
     pointer-events: none;
-    opacity: 0.5;
+    opacity: var(--disabled-opacity);
 }

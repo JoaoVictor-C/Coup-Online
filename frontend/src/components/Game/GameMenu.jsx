@@ -4,7 +4,6 @@ const GameMenu = ({ onLeaveGame }) => {
   return (
     <div className="game-menu">
       <button onClick={onLeaveGame}>Leave Game</button>
-      {/* Add more menu options here */}
     </div>
   );
 };

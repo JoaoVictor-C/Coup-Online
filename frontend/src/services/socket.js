@@ -44,8 +44,8 @@ class SocketService {
         store.dispatch(gameStarted(gameId, currentPlayerIndex, players));
       });
 
-      this.socket.on('lastAction', ({ username, action, targetUserId, userId }) => {
-        store.dispatch(updateLastAction(username, action, targetUserId, userId));
+      this.socket.on('lastAction', ({ username, action, targetUserId, userId, message }) => {
+        store.dispatch(updateLastAction(username, action, targetUserId, userId, message));
       });
 
     }
@@ -86,6 +86,36 @@ class SocketService {
       clearTimeout(this.actionTimeouts[gameId]);
       delete this.actionTimeouts[gameId];
     }
+  }
+
+  /**
+   * Emit an event with a timeout.
+   * @param {string} event - The event name.
+   * @param {object} data - The data to send.
+   * @param {number} timeout - Timeout in milliseconds.
+   * @returns {Promise} - Resolves with response or rejects on timeout/error.
+   */
+  emitWithTimeout(event, data, timeout = 3000) {
+    return new Promise((resolve, reject) => {
+      let timeoutId = setTimeout(() => {
+        reject(new Error('Request timed out'));
+      }, timeout);
+
+      this.socket.emit(event, data, (response) => {
+        clearTimeout(timeoutId);
+        if (response.success) {
+          resolve(response);
+        } else {
+          reject(new Error(response.message || 'Error in response'));
+        }
+      });
+
+      // Handle socket errors
+      this.socket.once('error', (err) => {
+        clearTimeout(timeoutId);
+        reject(err);
+      });
+    });
   }
 }
 
