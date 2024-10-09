@@ -23,7 +23,7 @@ const ChallengeBlockHandler = () => {
 
   return (
     <div className="challenge-block-handler">
-      <div className="handler-content card p-4 shadow-sm">
+      <div className="handler-content card p-4 shadow-sm text-light">
         <h3>Action Blocked: {game.pendingAction.type} by {game.players.find(p => p.playerProfile.user._id === game.pendingAction.userId)?.playerProfile.user.username || 'Unknown'}</h3>
         <p>{blocker} has blocked your action with {game.pendingAction.claimedRole}.</p>
         <p>Do you want to accept the block or challenge it?</p>
