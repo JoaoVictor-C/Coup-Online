@@ -43,50 +43,50 @@ const gameSockets = (io, socket) => {
     // Handle disconnection
     socket.on('disconnect', async (reason) => {
         console.log(`Client disconnected: ${socket.id}, Reason: ${reason}`);
-        const gameId = userGames[socket.id].toString();
-        const userId = Object.keys(connectedUsers).find(key => connectedUsers[key] === socket.id);
-        if (gameId && userId) {
-            try {
-                const game = await Game.findById(gameId).populate({
-                    path: 'players.playerProfile',
-                    populate: { path: 'user' }
-                });
-                if (game) {
-                    const player = game.players.find(p => p.playerProfile.user._id.toString() === userId);
-                    if (player) {
-                        player.isConnected = false;
-                        if (game.players.filter(p => p.isAlive && p.isConnected).length <= 1) {
-                            game.status = 'finished';
-                            game.winner = game.players.find(p => p.isAlive && p.isConnected)?.playerProfile.user.username;
-                        }
-                        await game.save();
+        // const gameId = userGames[socket.id].toString();
+        // const userId = Object.keys(connectedUsers).find(key => connectedUsers[key] === socket.id);
+        // if (gameId && userId) {
+        //     try {
+        //         const game = await Game.findById(gameId).populate({
+        //             path: 'players.playerProfile',
+        //             populate: { path: 'user' }
+        //         });
+        //         if (game) {
+        //             const player = game.players.find(p => p.playerProfile.user._id.toString() === userId);
+        //             if (player) {
+        //                 player.isConnected = false;
+        //                 if (game.players.filter(p => p.isAlive && p.isConnected).length <= 1) {
+        //                     game.status = 'finished';
+        //                     game.winner = game.players.find(p => p.isAlive && p.isConnected)?.playerProfile.user.username;
+        //                 }
+        //                 await game.save();
 
-                        await emitGameUpdate(gameId, io);
-                        io.to(gameId).emit('playerDisconnected', { userId, reason });
+        //                 await emitGameUpdate(gameId, io);
+        //                 io.to(gameId).emit('playerDisconnected', { userId, reason });
 
-                        // Cleanup
-                        delete userGames[socket.id];
-                        delete connectedUsers[userId];
-                        const room = io.sockets.adapter.rooms.get(gameId);
-                        if (!room || room.size === 0) {
-                            if (!roomDeletionTimers[gameId]) {
-                                roomDeletionTimers[gameId] = setTimeout(async () => {
-                                    const currentRoom = io.sockets.adapter.rooms.get(gameId);
-                                    if (!currentRoom || currentRoom.size === 0) {
-                                        await Game.findByIdAndDelete(gameId);
-                                        console.log(`Game ${gameId} deleted after 10 minutes of no active users.`);
-                                        delete roomDeletionTimers[gameId];
-                                    }
-                                }, 10 * 60 * 1000); // 10 minutes
-                                console.log(`Scheduled deletion of game ${gameId} in 10 minutes.`);
-                            }
-                        }
-                    }
-                }
-            } catch (err) {
-                console.error('Error handling disconnection:', err);
-            }
-        }
+        //                 // Cleanup
+        //                 delete userGames[socket.id];
+        //                 delete connectedUsers[userId];
+        //                 const room = io.sockets.adapter.rooms.get(gameId);
+        //                 if (!room || room.size === 0) {
+        //                     if (!roomDeletionTimers[gameId]) {
+        //                         roomDeletionTimers[gameId] = setTimeout(async () => {
+        //                             const currentRoom = io.sockets.adapter.rooms.get(gameId);
+        //                             if (!currentRoom || currentRoom.size === 0) {
+        //                                 await Game.findByIdAndDelete(gameId);
+        //                                 console.log(`Game ${gameId} deleted after 10 minutes of no active users.`);
+        //                                 delete roomDeletionTimers[gameId];
+        //                             }
+        //                         }, 10 * 60 * 1000); // 10 minutes
+        //                         console.log(`Scheduled deletion of game ${gameId} in 10 minutes.`);
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     } catch (err) {
+        //         console.error('Error handling disconnection:', err);
+        //     }
+        // }
     });
 
     // Start Game Event
