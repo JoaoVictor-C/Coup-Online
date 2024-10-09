@@ -403,6 +403,29 @@ const emitGameUpdate = async (gameId, io) => {
     }
 };
 
+// Add this function to handle user reconnection
+const handleReconnection = async (gameId, userId, io, socket) => {
+    try {
+        const game = await Game.findById(gameId).populate({
+            path: 'players.playerProfile',
+            populate: { path: 'user' }
+        });
+
+        if (game) {
+            const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
+            if (player) {
+                player.isConnected = true;
+                await game.save();
+                await emitGameUpdate(gameId, io);
+                socket.join(gameId.toString());
+                io.to(gameId.toString()).emit('playerReconnected', { userId, message: 'Player has reconnected.' });
+            }
+        }
+    } catch (error) {
+        console.error('Error handling reconnection:', error);
+    }
+};
+
 // Export functions
 module.exports = {
     handleIncome,
@@ -421,5 +444,6 @@ module.exports = {
     emitGameUpdate,
     addUserToGame,
     startGameLogic,
-    formatGameData
+    formatGameData,
+    handleReconnection,
 };

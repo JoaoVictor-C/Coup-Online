@@ -23,7 +23,7 @@ const io = socketIo(server, {
     },
 });
 
-// Consolidated Middleware for Socket.IO Authentication
+// Middleware for Socket.IO Authentication
 io.use((socket, next) => {
     const token = socket.handshake.auth.token;
     if (!token) {
@@ -65,6 +65,11 @@ app.use(errorHandler);
 io.on('connection', (socket) => {
     console.log('New client connected: ', socket.id, 'User ID:', socket.user.id);
     gameSockets(io, socket);
+});
+
+// Handle Socket.IO errors globally
+io.on('error', (error) => {
+    console.error('Socket.IO error:', error);
 });
 
 // Start the server

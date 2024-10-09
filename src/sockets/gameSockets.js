@@ -13,9 +13,46 @@ const { handleChallengeAction, handleChallengeSuccess } = require('../handlers/c
 
 const connectedUsers = {}; // To track userId to socket.id
 const userGames = {}; // To track socket.id to gameId
+const reconnectTimeouts = {}; // To track userId to timeout
 
 
 const gameSockets = (io, socket) => {
+    // User Reconnection Handling
+    const userId = socket.user.id;
+    
+    // If user is reconnecting within the grace period
+    if (reconnectTimeouts[userId]) {
+        clearTimeout(reconnectTimeouts[userId]);
+        delete reconnectTimeouts[userId];
+        
+        // Update the socket.id in connectedUsers and userGames
+        const previousSocketId = connectedUsers[userId];
+        connectedUsers[userId] = socket.id;
+        
+        const gameId = userGames[previousSocketId];
+        if (gameId) {
+            userGames[socket.id] = gameId;
+            delete userGames[previousSocketId];
+            
+            // Rejoin the user to their game room
+            socket.join(gameId);
+            
+            // Mark the user as connected in the game
+            Game.findById(gameId).then(game => {
+                if (game) {
+                    const player = game.players.find(p => p.playerProfile.user._id.toString() === userId);
+                    if (player) {
+                        player.isConnected = true;
+                        game.save().then(() => emitGameUpdate(gameId, io));
+                    }
+                }
+            }).catch(err => console.error('Error during reconnection handling:', err));
+        }
+    } else {
+        // New connection
+        // Additional logic if needed
+    }
+
     // Create a game
     socket.on('createGame', async ({ playerCount }, callback) => {
         return await handleCreateGame(io, socket, playerCount, callback, connectedUsers, userGames);
@@ -55,27 +92,39 @@ const gameSockets = (io, socket) => {
                     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId);
                     if (player) {
                         player.isConnected = false;
-
+                        await game.save();
                         await emitGameUpdate(gameId, io);
                         io.to(gameId).emit('playerDisconnected', { userId, reason });
 
-                        // Cleanup
-                        delete userGames[socket.id];
-                        delete connectedUsers[userId];
-                        const room = io.sockets.adapter.rooms.get(gameId);
-                        if (!room || room.size === 0) {
-                            if (!roomDeletionTimers[gameId]) {
-                                roomDeletionTimers[gameId] = setTimeout(async () => {
-                                    const currentRoom = io.sockets.adapter.rooms.get(gameId);
-                                    if (!currentRoom || currentRoom.size === 0) {
-                                        await Game.findByIdAndDelete(gameId);
-                                        console.log(`Game ${gameId} deleted after 10 minutes of no active users.`);
-                                        delete roomDeletionTimers[gameId];
+                        // Set a reconnection grace period (e.g., 30 seconds)
+                        reconnectTimeouts[userId] = setTimeout(async () => {
+                            // After grace period, clean up if not reconnected
+                            const freshGame = await Game.findById(gameId);
+                            if (freshGame) {
+                                const currentSocketId = connectedUsers[userId];
+                                if (!currentSocketId) {
+                                    // User did not reconnect
+                                    delete userGames[socket.id];
+                                    delete connectedUsers[userId];
+                                    
+                                    const room = io.sockets.adapter.rooms.get(gameId);
+                                    if (!room || room.size === 0) {
+                                        if (!roomDeletionTimers[gameId]) {
+                                            roomDeletionTimers[gameId] = setTimeout(async () => {
+                                                const currentRoom = io.sockets.adapter.rooms.get(gameId);
+                                                if (!currentRoom || currentRoom.size === 0) {
+                                                    await Game.findByIdAndDelete(gameId);
+                                                    console.log(`Game ${gameId} deleted after 10 minutes of no active users.`);
+                                                    delete roomDeletionTimers[gameId];
+                                                }
+                                            }, 10 * 60 * 1000); // 10 minutes
+                                            console.log(`Scheduled deletion of game ${gameId} in 10 minutes.`);
+                                        }
                                     }
-                                }, 10 * 60 * 1000); // 10 minutes
-                                console.log(`Scheduled deletion of game ${gameId} in 10 minutes.`);
+                                }
                             }
-                        }
+                        }, 30000); // 30 seconds grace period
+                        console.log(`Started reconnection timer for user ${userId}`);
                     }
                 }
             } catch (err) {
@@ -145,6 +194,9 @@ const gameSockets = (io, socket) => {
         await emitGameUpdate(gameId, io);
         return response;
     });
+
+    emitGameUpdate(gameId, io);
 };
 
-module.exports = { gameSockets, connectedUsers, userGames };
+
+module.exports = { gameSockets, connectedUsers, userGames, reconnectTimeouts };
