@@ -33,11 +33,23 @@ const GamePage = () => {
   useEffect(() => { 
     if (userId && roomName) {
       setIsLoading(true);
-      dispatch(fetchGame(roomName))
-        .then(() => setIsLoading(false))
-        .catch(() => {
-          setIsLoading(false);
-        });
+      
+      const fetchData = () => {
+        dispatch(fetchGame(roomName))
+          .then(() => setIsLoading(false))
+          .catch(() => {
+            setIsLoading(false);
+          });
+      };
+      
+      // Initial fetch
+      fetchData();
+      
+      // Set interval to refetch every 3 seconds
+      const intervalId = setInterval(fetchData, 3000);
+      
+      // Cleanup interval on component unmount or when dependencies change
+      return () => clearInterval(intervalId);
     }
   }, [dispatch, roomName, userId]);
 
