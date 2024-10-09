@@ -132,10 +132,9 @@
       const showWaitActionContainer =
         pendingAction &&
         !isBlockPending &&
-        isUserPendingAction === false &&
         pendingAction.type !== 'exchange' && 
-        (pendingAction.type !== 'challengeSuccess' && isUserPendingAction) || 
-        (pendingAction.type === 'challengeSuccess' && !isUserPendingAction);
+        ((pendingAction.type !== 'challengeSuccess' && isUserPendingAction) ||
+        (pendingAction.type === 'challengeSuccess' && !isUserPendingAction));
     
       return (
         <Container fluid className="game-page">
