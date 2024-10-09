@@ -1,4 +1,3 @@
-    // Start of Selection
     import { useDispatch, useSelector } from 'react-redux';
     import { performBlock, performChallenge, acceptAction } from '../../store/actions/gameActions';
     import '../../assets/styles/BlockChallengeHandler.css';
@@ -45,13 +44,23 @@
           });
       };
     
+      const isAssassinate = game.pendingAction.type === 'assassinate';
+      const isTargetUser = game.pendingAction.targetUserId === currentUserId;
+      const canShowBlock = game.pendingAction.canBeBlocked && (!isAssassinate || isTargetUser);
+    
       return (
         <div className="block-challenge-handler">
           <div className="handler-content card p-4 shadow-sm text-light">
-            <h3>Action Available: {getActionName(game.pendingAction.type)} by {game.players.find(p => p.playerProfile.user._id === game.pendingAction.userId)?.playerProfile.user.username || 'Unknown'}</h3>
-            <p>Do you want to {game.pendingAction.canBeBlocked ? 'block' : ''} {game.pendingAction.canBeChallenged ? 'or challenge' : ''} this action?</p>
+            <h3>
+              Action Available: {getActionName(game.pendingAction.type)} by{' '}
+              {game.players.find(p => p.playerProfile.user._id === game.pendingAction.userId)?.playerProfile.user.username || 'Unknown'}
+            </h3>
+            <p>
+              Do you want to {game.pendingAction.canBeBlocked ? 'block' : ''}{' '}
+              {game.pendingAction.canBeChallenged ? 'or challenge' : ''} this action?
+            </p>
             <div className="handler-buttons d-flex justify-content-around mt-3">
-              {game.pendingAction?.canBeBlocked && (
+              {canShowBlock && (
                 <button
                   className="btn btn-warning"
                   onClick={handleBlock}

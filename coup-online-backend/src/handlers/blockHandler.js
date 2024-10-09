@@ -90,6 +90,12 @@ const handleRespondToBlock = async (io, socket, gameId, response, callback) => {
 
             // Check if blocker has the required role
             const requiredRoles = getBlockingRoles(action.type);
+            if (action.type === 'assassinate') {
+                if (blocker.playerProfile.user._id.toString() !== action.targetUserId.toString()) {
+                    return callback?.({ success: false, message: 'Only the target can block assassinate actions' });
+                }
+            }
+
             const hasRole = blocker.characters.some(char => requiredRoles.includes(char));
 
             if (hasRole) {
