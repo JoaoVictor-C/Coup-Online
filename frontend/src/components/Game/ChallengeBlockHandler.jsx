@@ -5,18 +5,17 @@ import '../../assets/styles/ChallengeBlockHandler.css';
 const ChallengeBlockHandler = () => {
   const dispatch = useDispatch();
   const game = useSelector((state) => state.game.currentGame);
-  const currentUserId = useSelector((state) => state.auth.userId);
   const blocker = game.players.find(p => p.playerProfile.user._id === game.pendingAction.blockerId)?.username || 'Unknown';
 
   const handleAcceptBlock = () => {
-    dispatch(respondToBlock(game._id, 'accept', currentUserId))
+    dispatch(respondToBlock(game._id, 'accept'))
       .catch((error) => {
         console.error('Accept Block failed:', error);
       });
   };
 
   const handleChallengeBlock = () => {
-    dispatch(respondToBlock(game._id, 'challenge', currentUserId))
+    dispatch(respondToBlock(game._id, 'challenge'))
       .catch((error) => {
         console.error('Challenge Block failed:', error);
       });
@@ -24,15 +23,15 @@ const ChallengeBlockHandler = () => {
 
   return (
     <div className="challenge-block-handler">
-      <div className="handler-content">
-        <h3>Action Blocked</h3>
-        <p>{blocker} has blocked your action.</p>
+      <div className="handler-content card p-4 shadow-sm">
+        <h3>Action Blocked: {game.pendingAction.type} by {game.players.find(p => p.playerProfile.user._id === game.pendingAction.userId)?.playerProfile.user.username || 'Unknown'}</h3>
+        <p>{blocker} has blocked your action with {game.pendingAction.claimedRole}.</p>
         <p>Do you want to accept the block or challenge it?</p>
-        <div className="handler-buttons">
-          <button className="btn btn-accept" onClick={handleAcceptBlock}>
+        <div className="handler-buttons d-flex justify-content-around mt-3">
+          <button className="btn btn-success" onClick={handleAcceptBlock}>
             Accept Block
           </button>
-          <button className="btn btn-challenge" onClick={handleChallengeBlock}>
+          <button className="btn btn-danger" onClick={handleChallengeBlock}>
             Challenge Block
           </button>
         </div>

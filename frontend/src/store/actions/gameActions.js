@@ -191,7 +191,7 @@ export const selectExchangeCards = (gameId, selectedCards) => (dispatch) => {
 };
 
 // Respond to Block Action
-export const respondToBlock = (gameId, response, userId) => (dispatch) => {
+export const respondToBlock = (gameId, response) => (dispatch) => {
   const socket = socketService.getSocket();
 
   return new Promise((resolve, reject) => {
