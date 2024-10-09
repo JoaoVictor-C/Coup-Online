@@ -33,15 +33,12 @@
       }, [authLoading, isAuthenticated, navigate]);
     
       useEffect(() => { 
-        console.log(`Fetching game for room: ${roomName}`);
-        console.log(`Old game: ${gameFromRedux}`);
         setIsLoading(true);
         dispatch(fetchGame(roomName, userId))
           .then(() => setIsLoading(false))
           .catch(() => {
             setIsLoading(false);
           });
-        console.log(`New game: ${gameFromRedux}`);
       }, [dispatch, roomName, userId, gameFromRedux]);
 
       useEffect(() => {
