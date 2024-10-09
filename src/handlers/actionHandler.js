@@ -185,8 +185,8 @@ const handleAcceptAction = async (io, socket, gameId, callback) => {
         action.acceptedPlayers.push(userId);
         await game.save();
 
-        // Determine required number of accepts
-        const requiredAccepts = game.players.length - 1; // All except acting player
+        // Determine required number of accepts excluding dead players
+        const requiredAccepts = game.players.filter(player => player.isAlive).length - 1;
 
         // Emit game update to all players
         await emitGameUpdate(gameId, io);
