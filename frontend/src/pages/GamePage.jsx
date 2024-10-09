@@ -12,9 +12,10 @@
     import BlockChallengeHandler from '../components/Game/BlockChallengeHandler';
     import ChallengeBlockHandler from '../components/Game/ChallengeBlockHandler';
     import WarningComponent from '../components/Game/WarningComponent';
-    import { Container } from 'react-bootstrap'; // Import Bootstrap Container
+    import { Container } from 'react-bootstrap';
     import GameOver from '../components/Game/GameOver';
-    
+    import { gameUpdate } from '../store/actions/gameActions';
+
     const GamePage = () => {
       const { roomName } = useParams();
       const dispatch = useDispatch();
@@ -32,15 +33,25 @@
       }, [authLoading, isAuthenticated, navigate]);
     
       useEffect(() => { 
-        if (userId && roomName) {
           setIsLoading(true);
           dispatch(fetchGame(roomName))
             .then(() => setIsLoading(false))
             .catch(() => {
               setIsLoading(false);
             });
-        }
-      }, [dispatch, roomName, userId]);
+      }, [dispatch, roomName]);
+
+      useEffect(() => {
+        const handleGameUpdate = (updatedGame) => {
+          dispatch(gameUpdate(updatedGame));
+        };
+
+        socketService.getSocket().on('gameUpdate', handleGameUpdate);
+
+        return () => {
+          socketService.getSocket().off('gameUpdate', handleGameUpdate);
+        };
+      }, [dispatch]);
     
       useEffect(() => {
         if (gameFromRedux && gameFromRedux.status === 'in_progress') {
