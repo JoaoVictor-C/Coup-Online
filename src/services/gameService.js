@@ -1,7 +1,6 @@
 const Game = require('../models/Game');
-const PlayerProfile = require('../models/PlayerProfile');
 const User = require('../models/User');
-const mongoose = require('mongoose');
+const { setActionTimeout, clearActionTimeout } = require('../services/timerService');
 
 // Utility Functions
 const shuffleArray = (array) => {
@@ -38,16 +37,6 @@ const removeRandomCharacter = (player) => {
     return player;
 };
 
-const updateAlivePlayers = (game) => {
-    game.players.forEach(player => {
-        if (player.characters.length === 0) {
-            player.isAlive = false;
-        } else {
-            player.isAlive = true;
-        }
-    });
-};
-
 const checkGameOver = async (game) => {
     try {
         const freshGame = await Game.findById(game._id)
@@ -74,8 +63,6 @@ const checkGameOver = async (game) => {
             });
 
             return true;
-        } else {
-            console.log(`Game continues with ${alivePlayers.length} players alive.`);
         }
 
         return false;
@@ -390,19 +377,34 @@ const advanceTurn = (game) => {
 };
 
 // Helper function to emit game updates
-const emitGameUpdate = async (gameId, userId) => {
+const emitGameUpdate = async (gameId, io) => {
     try {
-        const updatedGame = await Game.findById(gameId)
+        // Fetch the latest game state
+        const gameState = await Game.findById(gameId)
             .populate({
                 path: 'players.playerProfile',
                 populate: { path: 'user' }
             })
-            .lean(); // Use .lean() for better performance
-        const formattedGame = formatGameData(updatedGame, userId);
-        const room = io.sockets.adapter.rooms.get(gameId);
-        if (room && room.size > 0) {
-            io.to(gameId).emit('gameUpdate', formattedGame);
-            console.log(`Emitted gameUpdate to room ${gameId} for game ${gameId}`);
+            .lean();
+
+        if (!gameState) {
+            console.warn(`Game ${gameId} not found during emitGameUpdate.`);
+            return;
+        }
+        await checkGameOver(gameState);
+        
+        if (gameState.status === 'finished') {
+            clearActionTimeout(gameId);
+        }
+        const room = io.sockets.adapter.rooms.get(gameId.toString());
+        if (room) {
+            for (const socketId of room) {
+                const socketToEmit = io.sockets.sockets.get(socketId);
+                if (socketToEmit && socketToEmit.user && socketToEmit.user.id) {
+                    const formattedGame = formatGameData(gameState, socketToEmit.user.id);
+                    socketToEmit.emit('gameUpdate', formattedGame);
+                }
+            }
         } else {
             console.warn(`Attempted to emit to room ${gameId}, but it does not exist or has no members.`);
         }

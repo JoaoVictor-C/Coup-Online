@@ -109,10 +109,10 @@ const PlayerSchema = new mongoose.Schema({
         }
     }, { id: false });
 const GameSchema = new mongoose.Schema({
-    _id: {
-        type: mongoose.Schema.Types.ObjectId,
+    roomName: {
+        type: String,
         required: true,
-        default: () => new mongoose.Types.ObjectId(),
+        unique: true
     },
     players: {
         type: [PlayerSchema],
@@ -152,4 +152,5 @@ const GameSchema = new mongoose.Schema({
         default: null
     },
 }, { timestamps: true });
+
 module.exports = mongoose.model('Game', GameSchema);

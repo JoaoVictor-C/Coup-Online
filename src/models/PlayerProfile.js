@@ -17,6 +17,13 @@ const PlayerProfileSchema = new Schema(
             default: 2,
             min: 0,
         },
+        characters: [
+            {
+                type: String,
+                enum: ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa', 'hidden'],
+                default: 'hidden',
+            },
+        ],
         influences: {
             type: Number,
             default: 2,
