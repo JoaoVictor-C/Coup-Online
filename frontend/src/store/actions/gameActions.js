@@ -24,10 +24,11 @@ export const fetchGame = (roomName) => (dispatch, getState) => {
     dispatch({ type: FETCH_GAME_START });
     const { userId } = getState().auth;
     const socket = socketService.getSocket();
-
+    console.log(`Fetching game for room: ${roomName}`);
     socket.emit('getGame', { roomName, userId }, (response) => {
       if (response.success) {
         dispatch({ type: FETCH_GAME_SUCCESS, payload: response.game });
+        console.log(`Game fetched successfully: ${response.game}`);
         resolve(response.game);
       } else {
         dispatch({ type: FETCH_GAME_ERROR, payload: response.message || 'Error fetching game' });
