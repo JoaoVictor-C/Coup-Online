@@ -24,16 +24,30 @@ const initializeDeck = (playerCount) => {
     return shuffleArray(deck);
 };
 
-
 const removeRandomCharacter = (player) => {
-    if (player.characters.length > 0) {
-        const randomIndex = Math.floor(Math.random() * player.characters.length);
-        const removedCharacter = player.characters.splice(randomIndex, 1)[0];
-        player.deadCharacters.push(removedCharacter);
-        if (player.characters.length === 0) {
-            player.isAlive = false;
-        }
+    if (!player) {
+        console.error('removeRandomCharacter: Player is undefined or null.');
+        return player;
     }
+
+    if (!Array.isArray(player.characters) || player.characters.length === 0) {
+        console.warn(`removeRandomCharacter: Player ${player.username} has no characters to remove.`);
+        return player;
+    }
+
+    const randomIndex = Math.floor(Math.random() * player.characters.length);
+    const removedCharacter = player.characters.splice(randomIndex, 1)[0];
+
+    if (!Array.isArray(player.deadCharacters)) {
+        player.deadCharacters = [];
+    }
+    player.deadCharacters.push(removedCharacter);
+
+    if (player.characters.length === 0) {
+        player.isAlive = false;
+        console.log(`Player ${player.username} has been eliminated from the game.`);
+    }
+
     return player;
 };
 
@@ -47,18 +61,24 @@ const checkGameOver = async (game) => {
             .lean();
 
         const alivePlayers = freshGame.players.filter(player => player.isAlive);
+        const totalPlayers = freshGame.players.length;
 
-        if (alivePlayers.length <= 1 && freshGame.status === 'in_progress' && freshGame.players.length != 1) {
-            if (alivePlayers.length === 1) {
-                freshGame.winner = alivePlayers[0].username;
-                console.log(`Game Over! Winner: ${freshGame.winner}`);
+        if (freshGame.status !== 'in_progress') {
+            return false;
+        }
+
+        if (alivePlayers.length <= 1 && totalPlayers !== 1) {
+            const winner = alivePlayers.length === 1 ? alivePlayers[0].username : null;
+
+            if (winner) {
+                console.log(`Game Over! Winner: ${winner}`);
             } else {
                 console.log('Game Over! No winners.');
             }
 
             await Game.findByIdAndUpdate(game._id, {
                 status: 'finished',
-                winner: alivePlayers.length === 1 ? alivePlayers[0].username : null,
+                winner: winner,
                 acceptedPlayers: []
             });
 
