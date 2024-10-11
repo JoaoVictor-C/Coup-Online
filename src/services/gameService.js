@@ -288,6 +288,26 @@ const handleSteal = async (game, userId, targetUserId) => {
     return { success: true, message: 'Steal action successful' };
 };
 
+const getDiscardedCards = (combinedCards, selectedCards) => {
+    const selectedCounts = {};
+    selectedCards.forEach(card => {
+        selectedCounts[card] = (selectedCounts[card] || 0) + 1;
+    });
+
+    const discarded = [];
+    const tempSelectedCounts = { ...selectedCounts };
+
+    combinedCards.forEach(card => {
+        if (tempSelected_counts[card] > 0) {
+            tempSelected_counts[card]--;
+            // Keep the card
+        } else {
+            discarded.push(card);
+        }
+    });
+
+    return discarded;
+};
 
 const handleExchange = async (game, userId, selectedCards) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
@@ -329,7 +349,7 @@ const handleExchange = async (game, userId, selectedCards) => {
     player.characters = selectedCards;
 
     // Determine the cards to return to the deck
-    const cardsToReturn = combinedCards.filter(card => !selectedCards.includes(card));
+    const cardsToReturn = getDiscardedCards(combinedCards, selectedCards);
 
     // Shuffle and return the unused cards to the deck
     game.deck = shuffleArray([...game.deck, ...cardsToReturn]);
