@@ -1,3 +1,4 @@
+// Start of Selection
 const Game = require('../models/Game');
 const { emitGameUpdate, handleExchange, advanceTurn } = require('../services/gameService');
 const { setActionTimeout, clearActionTimeout } = require('../services/timerService');
@@ -101,6 +102,10 @@ const handleExchangeAction = async (io, socket, gameId, callback) => {
                         const result = await handleExchange(finalGame, userId, selectedCards);
 
                         if (result.success) {
+                            // Return unselected cards to the deck
+                            const discardedCards = finalGame.pendingAction.exchange.combinedCards.filter(card => !selectedCards.includes(card));
+                            finalGame.deck.push(...discardedCards);
+                            
                             finalGame.pendingAction = null;
                             advanceTurn(finalGame);
                             await finalGame.save();
@@ -151,6 +156,11 @@ const handleSelectExchangeCards = async (io, socket, gameId, selectedCards, call
         const result = await handleExchange(game, userId, selectedCards);
 
         if (result.success) {
+            // Return unselected cards to the deck
+            const combinedCards = game.pendingAction.exchange.combinedCards;
+            const discardedCards = combinedCards.filter(card => !selectedCards.includes(card));
+            game.deck.push(...discardedCards);
+
             game.pendingAction = null;
             advanceTurn(game);
             await game.save();

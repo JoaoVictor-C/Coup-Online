@@ -1,3 +1,4 @@
+// Start of Selection
 const Game = require('../models/Game');
 const { emitGameUpdate, removeRandomCharacter, advanceTurn, executeAction } = require('../services/gameService');
 
@@ -38,7 +39,6 @@ const handleChallengeAction = async (io, socket, gameId, callback) => {
         // Mark the action as challenged
         action.challenged = true;
 
-        // Start of Selection
         if (hasRole) { // Challenger is wrong
             // Challenger loses an influence
             if (action.type === 'assassinate') {
@@ -58,16 +58,15 @@ const handleChallengeAction = async (io, socket, gameId, callback) => {
             const newCard = game.deck.shift();
             
             // Add the new card to the challenged player's characters
-            const cards = [...challengedPlayer.characters, newCard];
+            const combinedCards = [...challengedPlayer.characters, newCard];
             
             // Set up exchange combinedCards for user selection
             action.originalAction = game.pendingAction.type;
             action.type = 'challengeSuccess';
             action.exchange = {
-                combinedCards: cards
+                combinedCards: combinedCards
             };
             action.challengerId = challengerId;
-            
             
             await game.save();
             await emitGameUpdate(gameId, io);
@@ -156,9 +155,16 @@ const handleChallengeSuccess = async (io, socket, gameId, cards, callback) => {
             player.isAlive = false;
         }
 
+        // Return other cards to the deck
+        const combinedCards = pendingAction.exchange.combinedCards;
+        const discardedCards = combinedCards.filter(card => !cards.includes(card));
+        game.deck.push(...discardedCards);
+
         // Change the type of the pending action to the original action
         pendingAction.type = pendingAction.originalAction;
         delete pendingAction.originalAction;
+        delete pendingAction.exchange;
+        delete pendingAction.challengerId;
 
         const result = await executeAction(game, pendingAction);
         if (result.success) {
