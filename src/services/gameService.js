@@ -190,9 +190,6 @@ const startGameLogic = async (gameId, userId, io) => {
 const handleIncome = async (game, userId) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
     if (player && player.isAlive) {
-        if (game.centralTreasury < 1) {
-            return { success: false, message: 'Not enough funds in the treasury' };
-        }
         game.centralTreasury -= 1;
         player.coins += 1;
         game = await Game.findByIdAndUpdate(game._id, game, { new: true });
@@ -204,9 +201,6 @@ const handleIncome = async (game, userId) => {
 const handleForeignAid = async (game, userId) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
     if (player && player.isAlive) {
-        if (game.centralTreasury < 2) {
-            return { success: false, message: 'Not enough funds in the treasury' };
-        }
         game.centralTreasury -= 2;
         player.coins += 2;
         game = await Game.findByIdAndUpdate(game._id, game, { new: true });
@@ -236,9 +230,6 @@ const handleCoup = async (game, userId, targetUserId) => {
 const handleTaxes = async (game, userId) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
     if (player && player.isAlive) {
-        if (game.centralTreasury < 3) {
-            return { success: false, message: 'Not enough funds in the treasury' };
-        }
         game.centralTreasury -= 3;
         player.coins += 3;
         game = await Game.findByIdAndUpdate(game._id, game, { new: true });

@@ -33,10 +33,6 @@ const handleExchangeAction = async (io, socket, gameId, callback) => {
             return callback?.({ success: false, message: 'Player not found or not alive' });
         }
 
-        if (game.deck.length < 2) {
-            return callback?.({ success: false, message: 'Not enough cards in the deck to exchange' });
-        }
-
         // Draw two cards from the deck
         const newCards = game.deck.splice(0, 2);
 

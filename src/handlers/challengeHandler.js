@@ -52,6 +52,7 @@ const handleChallengeAction = async (io, socket, gameId, callback) => {
             // Card Exchange Mechanism
             // Draw a new card from the deck
             if (game.deck.length === 0) {
+                console.log('DEBUG LOG 1')
                 return callback?.({ success: false, message: 'No more cards in the deck to exchange.' });
             }
             const newCard = game.deck.shift();

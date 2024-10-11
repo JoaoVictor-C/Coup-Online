@@ -17,42 +17,6 @@ const reconnectTimeouts = {}; // To track userId to timeout
 
 
 const gameSockets = (io, socket) => {
-    // User Reconnection Handling
-    const userId = socket.user.id;
-    
-    // If user is reconnecting within the grace period
-    if (reconnectTimeouts[userId]) {
-        clearTimeout(reconnectTimeouts[userId]);
-        delete reconnectTimeouts[userId];
-        
-        // Update the socket.id in connectedUsers and userGames
-        const previousSocketId = connectedUsers[userId];
-        connectedUsers[userId] = socket.id;
-        
-        const gameId = userGames[previousSocketId];
-        if (gameId) {
-            userGames[socket.id] = gameId;
-            delete userGames[previousSocketId];
-            
-            // Rejoin the user to their game room
-            socket.join(gameId);
-            
-            // Mark the user as connected in the game
-            Game.findById(gameId).then(game => {
-                if (game) {
-                    const player = game.players.find(p => p.playerProfile.user._id.toString() === userId);
-                    if (player) {
-                        player.isConnected = true;
-                        game.save().then(() => emitGameUpdate(gameId, io));
-                    }
-                }
-            }).catch(err => console.error('Error during reconnection handling:', err));
-        }
-    } else {
-        // New connection
-        // Additional logic if needed
-    }
-
     // Create a game
     socket.on('createGame', async ({ playerCount }, callback) => {
         return await handleCreateGame(io, socket, playerCount, callback, connectedUsers, userGames);
