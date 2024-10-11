@@ -194,8 +194,6 @@ const gameSockets = (io, socket) => {
         await emitGameUpdate(gameId, io);
         return response;
     });
-
-    emitGameUpdate(gameId, io);
 };
 
 
