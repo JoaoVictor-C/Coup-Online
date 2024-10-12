@@ -61,24 +61,18 @@ const checkGameOver = async (game) => {
             .lean();
 
         const alivePlayers = freshGame.players.filter(player => player.isAlive);
-        const totalPlayers = freshGame.players.length;
 
-        if (freshGame.status !== 'in_progress') {
-            return false;
-        }
-
-        if (alivePlayers.length <= 1 && totalPlayers !== 1) {
-            const winner = alivePlayers.length === 1 ? alivePlayers[0].username : null;
-
-            if (winner) {
-                console.log(`Game Over! Winner: ${winner}`);
+        if (alivePlayers.length <= 1 && freshGame.status === 'in_progress' && freshGame.players.length != 1) {
+            if (alivePlayers.length === 1) {
+                freshGame.winner = alivePlayers[0].username;
+                console.log(`Game Over! Winner: ${freshGame.winner}`);
             } else {
                 console.log('Game Over! No winners.');
             }
 
             await Game.findByIdAndUpdate(game._id, {
                 status: 'finished',
-                winner: winner,
+                winner: alivePlayers.length === 1 ? alivePlayers[0].username : null,
                 acceptedPlayers: []
             });
 
@@ -288,26 +282,6 @@ const handleSteal = async (game, userId, targetUserId) => {
     return { success: true, message: 'Steal action successful' };
 };
 
-const getDiscardedCards = (combinedCards, selectedCards) => {
-    const selectedCounts = {};
-    selectedCards.forEach(card => {
-        selectedCounts[card] = (selectedCounts[card] || 0) + 1;
-    });
-
-    const discarded = [];
-    const tempSelectedCounts = { ...selectedCounts };
-
-    combinedCards.forEach(card => {
-        if (tempSelected_counts[card] > 0) {
-            tempSelected_counts[card]--;
-            // Keep the card
-        } else {
-            discarded.push(card);
-        }
-    });
-
-    return discarded;
-};
 
 const handleExchange = async (game, userId, selectedCards) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
@@ -348,8 +322,15 @@ const handleExchange = async (game, userId, selectedCards) => {
     // Update player's characters
     player.characters = selectedCards;
 
-    // Determine the cards to return to the deck
-    const cardsToReturn = getDiscardedCards(combinedCards, selectedCards);
+    // Determine the cards to return to the deck, handling duplicates properly
+    const tempCombinedCards = [...combinedCards];
+    selectedCards.forEach(card => {
+        const index = tempCombinedCards.indexOf(card);
+        if (index !== -1) {
+            tempCombinedCards.splice(index, 1);
+        }
+    });
+    const cardsToReturn = tempCombinedCards;
 
     // Shuffle and return the unused cards to the deck
     game.deck = shuffleArray([...game.deck, ...cardsToReturn]);
