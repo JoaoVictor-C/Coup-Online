@@ -10,17 +10,20 @@ const UserSchema = new Schema(
             trim: true,
             minlength: 3,
             maxlength: 30,
+            index: true // Indexed for faster queries
         },
         password: {
             type: String,
             required: true,
             minlength: 6,
+            select: false // Do not return password by default
         },
         email: {
             type: String,
             required: true,
             unique: true,
             trim: true,
+            index: true // Indexed for faster queries
         },
         playerProfile: {
             type: Schema.Types.ObjectId,

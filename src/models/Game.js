@@ -3,11 +3,13 @@ const PlayerSchema = new mongoose.Schema({
     playerProfile: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'PlayerProfile',
-        required: true
+        required: true,
+        index: true // Added index
     },
     username: {
         type: String,
-        required: true
+        required: true,
+        index: true // Added index
     },
     coins: {
         type: Number,
@@ -34,7 +36,7 @@ const PlayerSchema = new mongoose.Schema({
     const PendingActionSchema = new mongoose.Schema({
         type: {
             type: String,
-            enum: ['income', 'foreignAid', 'coup', 'steal', 'taxes', 'assassinate', 'exchange', 'challengeSuccess', 'challengeSuccessSelection'], // Added 'challengeSuccessSelection'
+            enum: ['income', 'foreignAid', 'coup', 'steal', 'taxes', 'assassinate', 'exchange', 'challengeSuccess', 'challengeSuccessSelection'],
             required: true
         },
         userId: {
@@ -112,7 +114,8 @@ const GameSchema = new mongoose.Schema({
     roomName: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        index: true // Added index
     },
     players: {
         type: [PlayerSchema],
@@ -129,7 +132,8 @@ const GameSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['waiting', 'in_progress', 'finished'],
-        default: 'waiting'
+        default: 'waiting',
+        index: true // Added index
     },
     maxPlayers: {
         type: Number,
