@@ -292,7 +292,7 @@ const handleExchange = async (game, userId, selectedCards) => {
         return { success: false, message: 'No pending exchange action' };
     }
 
-    const combinedCards = game.pendingAction.exchange.combinedCards;
+    const combinedCards = game.pendingAction.exchange.combinedCards; // All the cards given to the player
 
     // If the player originally has 1 card, combinedRule = 3; if 2, combinedRule = 4
     const combinedRule = player.characters.length === 1 ? 3 : 4;
@@ -312,33 +312,27 @@ const handleExchange = async (game, userId, selectedCards) => {
         return { success: false, message: `You must select ${combinedRule - 2} cards to keep` };
     }
 
-    // Validate selected cards and handle duplicates
-    const remainingCards = [...combinedCards];
-    for (const card of selectedCards) {
-        const index = remainingCards.indexOf(card);
-        if (index === -1) {
-            return { success: false, message: 'Invalid card selection' };
-        }
-        remainingCards.splice(index, 1);
-    }
-
-    // Remove selected cards from the deck, handling duplicates
-    const updatedDeck = [...game.deck];
-    for (const card of selectedCards) {
-        const deckIndex = updatedDeck.indexOf(card);
-        if (deckIndex !== -1) {
-            updatedDeck.splice(deckIndex, 1);
-        } else {
-            return { success: false, message: `Selected card '${card}' not found in the deck` };
-        }
-    }
-    game.deck = updatedDeck;
-
     // Update player's characters
     player.characters = selectedCards;
 
+    const cardCountMap = selectedCards.reduce((acc, card) => {
+        acc[card] = (acc[card] || 0) + 1;
+        return acc;
+    }, {});
+    
+    for (const [card, count] of Object.entries(cardCountMap)) {
+        for (let i = 0; i < count; i++) {
+            const index = combinedCards.indexOf(card);
+            if (index !== -1) {
+                combinedCards.splice(index, 1);
+            } else {
+                break; // Prevent removing more instances than available
+            }
+        }
+    }
+
     // Shuffle and return the unused cards to the deck
-    game.deck = shuffleArray([...game.deck, ...remainingCards]);
+    game.deck = shuffleArray([...game.deck, ...combinedCards]);
 
     return { success: true, message: 'Exchange action successful' };
 };
