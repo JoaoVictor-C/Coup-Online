@@ -156,11 +156,6 @@ const handleSelectExchangeCards = async (io, socket, gameId, selectedCards, call
         const result = await handleExchange(game, userId, selectedCards);
 
         if (result.success) {
-            // Return unselected cards to the deck
-            const combinedCards = game.pendingAction.exchange.combinedCards;
-            const discardedCards = combinedCards.filter(card => !selectedCards.includes(card));
-            game.deck.push(...discardedCards);
-
             game.pendingAction = null;
             advanceTurn(game);
             await game.save();

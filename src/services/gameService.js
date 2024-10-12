@@ -282,6 +282,7 @@ const handleSteal = async (game, userId, targetUserId) => {
     return { success: true, message: 'Steal action successful' };
 };
 
+// Start of Selection
 const handleExchange = async (game, userId, selectedCards) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
     if (!player || !player.isAlive) {
@@ -292,7 +293,7 @@ const handleExchange = async (game, userId, selectedCards) => {
         return { success: false, message: 'No pending exchange action' };
     }
 
-    const combinedCards = game.pendingAction.exchange.combinedCards; // All the cards given to the player
+    const combinedCards = [...game.pendingAction.exchange.combinedCards]; // Clone to avoid mutating the original array
 
     // If the player originally has 1 card, combinedRule = 3; if 2, combinedRule = 4
     const combinedRule = player.characters.length === 1 ? 3 : 4;
@@ -308,26 +309,17 @@ const handleExchange = async (game, userId, selectedCards) => {
         return { success: false, message: 'Invalid number of cards for exchange' };
     }
 
-    if (!selectedCards || selectedCards.length !== combinedRule - 2) {
-        return { success: false, message: `You must select ${combinedRule - 2} cards to keep` };
-    }
-
-    // Update player's characters
+    // Update player's characters with the selected cards
     player.characters = selectedCards;
 
-    const cardCountMap = selectedCards.reduce((acc, card) => {
-        acc[card] = (acc[card] || 0) + 1;
-        return acc;
-    }, {});
-    
-    for (const [card, count] of Object.entries(cardCountMap)) {
-        for (let i = 0; i < count; i++) {
-            const index = combinedCards.indexOf(card);
-            if (index !== -1) {
-                combinedCards.splice(index, 1);
-            } else {
-                break; // Prevent removing more instances than available
-            }
+    // Remove one instance of each selected card from combinedCards
+    for (const card of selectedCards) {
+        const index = combinedCards.indexOf(card);
+        if (index !== -1) {
+            combinedCards.splice(index, 1);
+        } else {
+            // This should not happen, but handle gracefully
+            return { success: false, message: `Selected card "${card}" is not available in the combined cards` };
         }
     }
 
@@ -393,7 +385,7 @@ const emitGameUpdate = async (gameId, io) => {
             return;
         }
         await checkGameOver(gameState);
-        
+
         if (gameState.status === 'finished') {
             clearActionTimeout(gameId);
         }
