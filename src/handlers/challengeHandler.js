@@ -1,6 +1,6 @@
 // Start of Selection
 const Game = require('../models/Game');
-const { emitGameUpdate, removeRandomCharacter, advanceTurn, executeAction } = require('../services/gameService');
+const { emitGameUpdate, removeRandomCharacter, advanceTurn, executeAction, shuffleArray } = require('../services/gameService');
 
 const handleChallengeAction = async (io, socket, gameId, callback) => {
     try {
@@ -138,8 +138,11 @@ const handleChallengeSuccess = async (io, socket, gameId, cards, callback) => {
             return callback({ success: false, message: 'Invalid cards format. Cards should be an array.' });
         }
 
-        if (cards.length !== player.characters.length) {
-            return callback({ success: false, message: `You must select exactly ${player.characters.length} card(s).` });
+        const combinedCards = pendingAction.exchange.combinedCards;
+        const originalCardCount = player.characters.length;
+
+        if (cards.length !== originalCardCount) {
+            return callback({ success: false, message: `You must select exactly ${originalCardCount} card(s).` });
         }
 
         const validRoles = ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa'];
@@ -156,9 +159,19 @@ const handleChallengeSuccess = async (io, socket, gameId, cards, callback) => {
         }
 
         // Return other cards to the deck
-        const combinedCards = pendingAction.exchange.combinedCards;
-        const discardedCards = combinedCards.filter(card => !cards.includes(card));
-        game.deck.push(...discardedCards);
+        // Remove one instance of each selected card from combinedCards
+        for (const card of cards) {
+            const index = combinedCards.indexOf(card);
+            if (index !== -1) {
+                combinedCards.splice(index, 1);
+            } else {
+                // This should not happen, but handle gracefully
+                return callback({ success: false, message: `Selected card "${card}" is not available in the combined cards` });
+            }
+        }
+
+        // Shuffle and return the unused cards to the deck
+        game.deck = shuffleArray([...game.deck, ...combinedCards]);
 
         // Change the type of the pending action to the original action
         pendingAction.type = pendingAction.originalAction;
