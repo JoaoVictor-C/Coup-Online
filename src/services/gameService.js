@@ -282,7 +282,6 @@ const handleSteal = async (game, userId, targetUserId) => {
     return { success: true, message: 'Steal action successful' };
 };
 
-
 const handleExchange = async (game, userId, selectedCards) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
     if (!player || !player.isAlive) {
@@ -295,7 +294,7 @@ const handleExchange = async (game, userId, selectedCards) => {
 
     const combinedCards = game.pendingAction.exchange.combinedCards;
 
-    // If the player originally has 1 card combinedRule = 3, if 2 combinedRule = 4
+    // If the player originally has 1 card, combinedRule = 3; if 2, combinedRule = 4
     const combinedRule = player.characters.length === 1 ? 3 : 4;
 
     if (combinedRule === 3 && selectedCards.length !== 1) {
@@ -309,31 +308,37 @@ const handleExchange = async (game, userId, selectedCards) => {
         return { success: false, message: 'Invalid number of cards for exchange' };
     }
 
-    if (!selectedCards || selectedCards.length !== combinedRule-2) {
-        return { success: false, message: `You must select ${combinedRule-2} cards to keep` };
+    if (!selectedCards || selectedCards.length !== combinedRule - 2) {
+        return { success: false, message: `You must select ${combinedRule - 2} cards to keep` };
     }
 
-    // Validate selected cards
-    const isValidSelection = selectedCards.every(card => combinedCards.includes(card));
-    if (!isValidSelection) {
-        return { success: false, message: 'Invalid card selection' };
+    // Validate selected cards and handle duplicates
+    const remainingCards = [...combinedCards];
+    for (const card of selectedCards) {
+        const index = remainingCards.indexOf(card);
+        if (index === -1) {
+            return { success: false, message: 'Invalid card selection' };
+        }
+        remainingCards.splice(index, 1);
     }
+
+    // Remove selected cards from the deck, handling duplicates
+    const updatedDeck = [...game.deck];
+    for (const card of selectedCards) {
+        const deckIndex = updatedDeck.indexOf(card);
+        if (deckIndex !== -1) {
+            updatedDeck.splice(deckIndex, 1);
+        } else {
+            return { success: false, message: `Selected card '${card}' not found in the deck` };
+        }
+    }
+    game.deck = updatedDeck;
 
     // Update player's characters
     player.characters = selectedCards;
 
-    // Determine the cards to return to the deck, handling duplicates properly
-    const tempCombinedCards = [...combinedCards];
-    selectedCards.forEach(card => {
-        const index = tempCombinedCards.indexOf(card);
-        if (index !== -1) {
-            tempCombinedCards.splice(index, 1);
-        }
-    });
-    const cardsToReturn = tempCombinedCards;
-
     // Shuffle and return the unused cards to the deck
-    game.deck = shuffleArray([...game.deck, ...cardsToReturn]);
+    game.deck = shuffleArray([...game.deck, ...remainingCards]);
 
     return { success: true, message: 'Exchange action successful' };
 };
