@@ -50,7 +50,7 @@ const gameSockets = (io, socket) => {
             try {
                 const game = await Game.findById(gameId).populate({
                     path: 'players.playerProfile',
-                    populate: { path: 'user' }
+                    populate: { path: 'user', select: 'username email' }
                 });
                 if (game) {
                     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId);
@@ -71,7 +71,7 @@ const gameSockets = (io, socket) => {
                                     delete userGames[socket.id];
                                     delete connectedUsers[userId];
                                     
-                                    const room = io.sockets.adapter.rooms.get(gameId);
+                                    const room = io.sockets.adapter.rooms.get(gameId.toString());
                                     if (!room || room.size === 0) {
                                         if (!roomDeletionTimers[gameId]) {
                                             roomDeletionTimers[gameId] = setTimeout(async () => {

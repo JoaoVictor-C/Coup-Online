@@ -1,22 +1,26 @@
-const actionTimeouts = {};
+const actionTimers = new Map();
 
-// Set a timeout for a specific game action
-const setActionTimeout = (gameId, callback, delay) => {
-    if (actionTimeouts[gameId]) {
-        clearTimeout(actionTimeouts[gameId]);
+// Set Action Timeout
+const setActionTimeout = (gameId, timeoutDuration, callback) => {
+    if (actionTimers.has(gameId)) {
+        clearTimeout(actionTimers.get(gameId));
     }
-    actionTimeouts[gameId] = setTimeout(() => {
-        delete actionTimeouts[gameId];
+    const timer = setTimeout(() => {
         callback();
-    }, delay);
+        actionTimers.delete(gameId);
+    }, timeoutDuration);
+    actionTimers.set(gameId, timer);
 };
 
-// Clear the timeout for a specific game action
+// Clear Action Timeout
 const clearActionTimeout = (gameId) => {
-    if (actionTimeouts[gameId]) {
-        clearTimeout(actionTimeouts[gameId]);
-        delete actionTimeouts[gameId];
+    if (actionTimers.has(gameId)) {
+        clearTimeout(actionTimers.get(gameId));
+        actionTimers.delete(gameId);
     }
 };
 
-module.exports = { setActionTimeout, clearActionTimeout };
+module.exports = {
+    setActionTimeout,
+    clearActionTimeout,
+};

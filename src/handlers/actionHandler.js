@@ -8,7 +8,7 @@ const handleAction = async (io, socket, gameId, actionType, targetUserId, callba
         const userId = socket.user.id;
         const game = await Game.findById(gameId).populate({
             path: 'players.playerProfile',
-            populate: { path: 'user' }
+            populate: { path: 'user', select: 'username email' }
         });
         if (!game) {
             return callback?.({ success: false, message: 'Game not found' });

@@ -1,64 +1,60 @@
 const { initializeDeck, addUserToGame, emitGameUpdate } = require('../services/gameService');
-const PlayerProfile = require('../models/PlayerProfile');
 const Game = require('../models/Game');
+const PlayerProfile = require('../models/PlayerProfile');
 
 const handleCreateGame = async (io, socket, playerCount, callback, connectedUsers, userGames) => {
     try {
-        const userId = socket.user.id; // Extracted from authenticated socket
-        const playerProfile = await PlayerProfile.findOne({ user: userId }).populate('user');
+        // Validate playerCount
+        if (playerCount < 2 || playerCount > 6) {
+            return callback({ success: false, message: 'Player count must be between 2 and 6.' });
+        }
+
+        const userId = socket.user.id;
+        const playerProfile = await PlayerProfile.findOne({ user: userId })
+            .populate('user', 'username email')
+            .lean();
 
         if (!playerProfile) {
-            return callback({ success: false, message: 'Player profile not found' });
+            return callback({ success: false, message: 'Player profile not found.' });
         }
 
-        // Initialize the deck based on the number of players
+        // Initialize and shuffle the deck
         const deck = initializeDeck(playerCount);
 
-        // Generate a random room name 5 random capital letters, is need to be unique
-        let roomName = '';
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        do {
-            roomName = '';
-            for (let i = 0; i < 4; i++) {
-                roomName += characters.charAt(Math.floor(Math.random() * characters.length));
-            }
-        } while (await Game.exists({ roomName: roomName }));
-
+        // Create new game
         const newGame = new Game({
-            roomName: roomName,
-            maxPlayers: playerCount,
-            status: 'waiting',
+            roomName: `room_${Date.now()}`, // Generate unique roomName
             players: [],
             deck: deck,
-            centralTreasury: 1000, // Initial treasury value, adjust as needed
+            maxPlayers: playerCount,
+            status: 'waiting',
+            centralTreasury: 1000,
+            currentPlayerIndex: 0,
         });
 
-        await newGame.save();
-
-        // Add the creator to the game
-        const addUserResult = await addUserToGame(newGame, playerProfile);
-        if (!addUserResult.success) {
-            return callback({ success: false, message: addUserResult.message });
+        // Add creator to the game
+        const result = await addUserToGame(newGame, playerProfile);
+        if (!result.success) {
+            return callback({ success: false, message: result.message });
         }
 
-        const populatedGame = await Game.findById(newGame._id).populate({
-            path: 'players.playerProfile',
-            populate: { path: 'user' }
-        });
+        // Save the game
+        await newGame.save();
 
-        await populatedGame.save();
-
-        socket.join(populatedGame._id.toString());
+        // Update tracking objects
         connectedUsers[userId] = socket.id;
-        userGames[socket.id] = populatedGame._id.toString();
+        userGames[socket.id] = newGame._id.toString();
 
-        // Emit game update to all players in the room
-        await emitGameUpdate(populatedGame._id, io);
+        // Join Socket.IO room
+        socket.join(newGame.roomName);
 
-        callback({ success: true, game: populatedGame });
-    } catch (err) {
-        console.error(err);
-        callback({ success: false, message: 'Server Error' });
+        // Emit game update
+        await emitGameUpdate(newGame._id, io);
+
+        callback({ success: true, game: newGame });
+    } catch (error) {
+        console.error('createGame Error:', error);
+        callback({ success: false, message: 'Server Error while creating game.' });
     }
 };
 
