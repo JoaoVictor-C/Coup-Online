@@ -6,7 +6,7 @@ const handleRestartGame = async (io, socket, gameId, callback) => {
     try {
         const game = await Game.findById(gameId).populate({
             path: 'players.playerProfile',
-            populate: { path: 'user', select: 'username email' }
+            populate: { path: 'user' }
         });
 
         if (!game) {
@@ -22,19 +22,21 @@ const handleRestartGame = async (io, socket, gameId, callback) => {
             player.coins = 2;
             player.isAlive = true;
             player.isConnected = true;
-            player.characters = []; 
+            player.characters = []; // Will reassign characters below
             player.deadCharacters = [];
         });
 
-        // Initialize new deck and assign characters
+        // Reinitialize the deck
         game.deck = initializeDeck(game.maxPlayers);
-        const charactersPerPlayer = Math.floor(game.deck.length / game.players.length);
+
+        // Assign new characters to players
         game.players.forEach(player => {
+            const charactersPerPlayer = game.maxPlayers <= 4 ? 2 : 3;
             const newCharacters = game.deck.splice(0, charactersPerPlayer);
             player.characters = newCharacters;
         });
 
-        game.centralTreasury = 1000;
+        game.centralTreasury = 1000; // Reset treasury
         game.status = 'in_progress';
         game.currentPlayerIndex = 0;
         game.currentPlayerUsername = '';

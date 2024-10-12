@@ -3,15 +3,18 @@ const { formatGameData } = require('../services/gameService');
 
 const handleGetGame = async (io, socket, roomName, userId, callback) => {
     try {
-        const game = await Game.findOne({ roomName })
-            .populate({
-                path: 'players.playerProfile',
-                populate: { path: 'user', select: 'username email' } // Select only necessary fields
-            })
-            .lean(); // Use lean for better performance
+        const game = await Game.findOne({ roomName }).populate({
+            path: 'players.playerProfile',
+            populate: { path: 'user' }
+        }).lean();
 
         if (!game) {
             return callback({ success: false, message: 'Game not found' });
+        }
+
+        const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
+        if (!player) {
+            return callback({ success: false, message: 'Access denied: You are not a participant of this game.' });
         }
 
         const formattedGame = formatGameData(game, userId);

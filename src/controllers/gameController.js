@@ -16,9 +16,7 @@ const createGame = async (req, res) => {
             return res.status(400).json({ message: 'Invalid player count. Must be between 2 and 6.' });
         }
         // Retrieve the player's profile
-        const playerProfile = await PlayerProfile.findOne({ user: userId })
-            .populate('user', 'username email') // Select only necessary fields
-            .lean(); // Use lean for better performance
+        const playerProfile = await PlayerProfile.findOne({ user: userId }).populate('user').lean();
         if (!playerProfile) {
             return res.status(404).json({ message: 'Player profile not found' });
         }
@@ -42,17 +40,18 @@ const createGame = async (req, res) => {
         if (!result.success) {
             return res.status(result.status).json({ message: result.message });
         }
-        // Populate necessary fields
+        // Ensure the returned game is lean and populated
         const populatedGame = await Game.findById(result.game._id)
             .populate({
                 path: 'players.playerProfile',
-                populate: { path: 'user', select: 'username email' }
+                populate: { path: 'user' }
             })
-            .lean(); // Use lean for better performance
-        res.status(201).json({ message: 'Game created successfully', game: populatedGame });
-    } catch (error) {
-        console.error('createGame Error:', error);
-        res.status(500).json({ message: 'Server Error', error: error.message });
+            .lean();
+        const formattedGame = formatGameData(populatedGame, userId);
+        res.status(201).json(formattedGame);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 
@@ -63,14 +62,21 @@ const getGameState = async (req, res) => {
         const game = await Game.findById(gameId)
             .populate({
                 path: 'players.playerProfile',
-                populate: { path: 'user', select: 'username email' }
+                populate: { path: 'user' }
             })
-            .lean(); // Use lean for better performance
+            .lean();
+
         if (!game) {
             return res.status(404).json({ message: 'Game not found' });
         }
+
+        const player = game.players.find(p => p.playerProfile.user._id.toString() === userId);
+        if (!player) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
         const formattedGame = formatGameData(game, userId);
-        res.status(200).json({ game: formattedGame });
+        res.status(200).json(formattedGame);
     } catch (error) {
         console.error('getGameState Error:', error);
         res.status(500).json({ message: 'Server Error', error: error.message });
@@ -81,12 +87,10 @@ const handleDisconnection = async (req, res) => {
     try {
         const { gameId } = req.params;
         const userId = req.user.id;
-        const game = await Game.findById(gameId)
-            .populate({
-                path: 'players.playerProfile',
-                populate: { path: 'user', select: 'username email' }
-            })
-            .lean(); // Use lean for better performance
+        const game = await Game.findById(gameId).populate({
+            path: 'players.playerProfile',
+            populate: { path: 'user' }
+        }).lean();
         if (!game) {
             return res.status(404).json({ message: 'Game not found' });
         }
@@ -95,16 +99,14 @@ const handleDisconnection = async (req, res) => {
             return res.status(404).json({ message: 'Player not found in the game' });
         }
         // Mark player as disconnected
-        await Game.findByIdAndUpdate(gameId, { 'players.$[elem].isConnected': false }, {
-            arrayFilters: [{ 'elem.playerProfile': player.playerProfile._id }],
-            new: true
-        });
-        // Check if game should be finished
-        const updatedGame = await Game.findById(gameId).lean();
-        const connectedPlayers = updatedGame.players.filter(p => p.isAlive && p.isConnected);
+        player.isConnected = false;
+        // Handle game status if necessary
+        const connectedPlayers = game.players.filter(p => p.isAlive && p.isConnected);
         if (connectedPlayers.length <= 1) {
-            await Game.findByIdAndUpdate(gameId, { status: 'finished', winner: connectedPlayers[0]?.playerProfile.username || null });
+            game.status = 'finished';
+            game.winner = connectedPlayers[0]?.playerProfile;
         }
+        await game.save();
         res.status(200).json({ message: 'Player marked as disconnected from the game' });
         // Optionally notify other players via Socket.IO
         const io = req.app.get('io');
