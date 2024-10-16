@@ -1,0 +1,6 @@
+@CoupGameBackend_HostAddress = http://localhost:5132
+
+GET {{CoupGameBackend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
