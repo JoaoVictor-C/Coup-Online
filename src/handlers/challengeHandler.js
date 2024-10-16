@@ -1,5 +1,6 @@
+// Start of Selection
 const Game = require('../models/Game');
-const { emitGameUpdate, removeRandomCharacter, advanceTurn, executeAction } = require('../services/gameService');
+const { emitGameUpdate, removeRandomCharacter, advanceTurn, executeAction, shuffleArray } = require('../services/gameService');
 
 const handleChallengeAction = async (io, socket, gameId, callback) => {
     try {
@@ -38,7 +39,6 @@ const handleChallengeAction = async (io, socket, gameId, callback) => {
         // Mark the action as challenged
         action.challenged = true;
 
-        // Start of Selection
         if (hasRole) { // Challenger is wrong
             // Challenger loses an influence
             if (action.type === 'assassinate') {
@@ -52,21 +52,21 @@ const handleChallengeAction = async (io, socket, gameId, callback) => {
             // Card Exchange Mechanism
             // Draw a new card from the deck
             if (game.deck.length === 0) {
+                console.log('DEBUG LOG 1')
                 return callback?.({ success: false, message: 'No more cards in the deck to exchange.' });
             }
             const newCard = game.deck.shift();
             
             // Add the new card to the challenged player's characters
-            const cards = [...challengedPlayer.characters, newCard];
+            const combinedCards = [...challengedPlayer.characters, newCard];
             
             // Set up exchange combinedCards for user selection
             action.originalAction = game.pendingAction.type;
             action.type = 'challengeSuccess';
             action.exchange = {
-                combinedCards: cards
+                combinedCards: combinedCards
             };
             action.challengerId = challengerId;
-            
             
             await game.save();
             await emitGameUpdate(gameId, io);
@@ -138,8 +138,11 @@ const handleChallengeSuccess = async (io, socket, gameId, cards, callback) => {
             return callback({ success: false, message: 'Invalid cards format. Cards should be an array.' });
         }
 
-        if (cards.length !== player.characters.length) {
-            return callback({ success: false, message: `You must select exactly ${player.characters.length} card(s).` });
+        const combinedCards = pendingAction.exchange.combinedCards;
+        const originalCardCount = player.characters.length;
+
+        if (cards.length !== originalCardCount) {
+            return callback({ success: false, message: `You must select exactly ${originalCardCount} card(s).` });
         }
 
         const validRoles = ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa'];
@@ -155,9 +158,26 @@ const handleChallengeSuccess = async (io, socket, gameId, cards, callback) => {
             player.isAlive = false;
         }
 
+        // Return other cards to the deck
+        // Remove one instance of each selected card from combinedCards
+        for (const card of cards) {
+            const index = combinedCards.indexOf(card);
+            if (index !== -1) {
+                combinedCards.splice(index, 1);
+            } else {
+                // This should not happen, but handle gracefully
+                return callback({ success: false, message: `Selected card "${card}" is not available in the combined cards` });
+            }
+        }
+
+        // Shuffle and return the unused cards to the deck
+        game.deck = shuffleArray([...game.deck, ...combinedCards]);
+
         // Change the type of the pending action to the original action
         pendingAction.type = pendingAction.originalAction;
         delete pendingAction.originalAction;
+        delete pendingAction.exchange;
+        delete pendingAction.challengerId;
 
         const result = await executeAction(game, pendingAction);
         if (result.success) {

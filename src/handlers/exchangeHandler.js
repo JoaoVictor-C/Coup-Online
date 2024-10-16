@@ -1,3 +1,4 @@
+// Start of Selection
 const Game = require('../models/Game');
 const { emitGameUpdate, handleExchange, advanceTurn } = require('../services/gameService');
 const { setActionTimeout, clearActionTimeout } = require('../services/timerService');
@@ -31,10 +32,6 @@ const handleExchangeAction = async (io, socket, gameId, callback) => {
 
         if (!player || !player.isAlive) {
             return callback?.({ success: false, message: 'Player not found or not alive' });
-        }
-
-        if (game.deck.length < 2) {
-            return callback?.({ success: false, message: 'Not enough cards in the deck to exchange' });
         }
 
         // Draw two cards from the deck
@@ -105,6 +102,10 @@ const handleExchangeAction = async (io, socket, gameId, callback) => {
                         const result = await handleExchange(finalGame, userId, selectedCards);
 
                         if (result.success) {
+                            // Return unselected cards to the deck
+                            const discardedCards = finalGame.pendingAction.exchange.combinedCards.filter(card => !selectedCards.includes(card));
+                            finalGame.deck.push(...discardedCards);
+                            
                             finalGame.pendingAction = null;
                             advanceTurn(finalGame);
                             await finalGame.save();

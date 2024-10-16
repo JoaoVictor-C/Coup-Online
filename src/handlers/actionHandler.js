@@ -71,7 +71,7 @@ const handleAction = async (io, socket, gameId, actionType, targetUserId, callba
                     userId: currentPlayer.playerProfile.user._id.toString(),
                     action: actionType,
                     targetUserId: targetUserId || null,
-                    message: actionType === 'income' ? 'Gained 1 coin.' : `Performed a coup on ${targetUsername}.`,
+                    message: actionType === 'income' ? 'Gained 1 coin.' : `Performed a coup on ${targetUsername || undefined}.`,
                 });
             }
             return callback?.({ success: true, message: 'Action executed successfully' });

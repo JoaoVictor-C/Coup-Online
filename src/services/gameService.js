@@ -24,16 +24,30 @@ const initializeDeck = (playerCount) => {
     return shuffleArray(deck);
 };
 
-
 const removeRandomCharacter = (player) => {
-    if (player.characters.length > 0) {
-        const randomIndex = Math.floor(Math.random() * player.characters.length);
-        const removedCharacter = player.characters.splice(randomIndex, 1)[0];
-        player.deadCharacters.push(removedCharacter);
-        if (player.characters.length === 0) {
-            player.isAlive = false;
-        }
+    if (!player) {
+        console.error('removeRandomCharacter: Player is undefined or null.');
+        return player;
     }
+
+    if (!Array.isArray(player.characters) || player.characters.length === 0) {
+        console.warn(`removeRandomCharacter: Player ${player.username} has no characters to remove.`);
+        return player;
+    }
+
+    const randomIndex = Math.floor(Math.random() * player.characters.length);
+    const removedCharacter = player.characters.splice(randomIndex, 1)[0];
+
+    if (!Array.isArray(player.deadCharacters)) {
+        player.deadCharacters = [];
+    }
+    player.deadCharacters.push(removedCharacter);
+
+    if (player.characters.length === 0) {
+        player.isAlive = false;
+        console.log(`Player ${player.username} has been eliminated from the game.`);
+    }
+
     return player;
 };
 
@@ -190,9 +204,6 @@ const startGameLogic = async (gameId, userId, io) => {
 const handleIncome = async (game, userId) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
     if (player && player.isAlive) {
-        if (game.centralTreasury < 1) {
-            return { success: false, message: 'Not enough funds in the treasury' };
-        }
         game.centralTreasury -= 1;
         player.coins += 1;
         game = await Game.findByIdAndUpdate(game._id, game, { new: true });
@@ -204,9 +215,6 @@ const handleIncome = async (game, userId) => {
 const handleForeignAid = async (game, userId) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
     if (player && player.isAlive) {
-        if (game.centralTreasury < 2) {
-            return { success: false, message: 'Not enough funds in the treasury' };
-        }
         game.centralTreasury -= 2;
         player.coins += 2;
         game = await Game.findByIdAndUpdate(game._id, game, { new: true });
@@ -236,9 +244,6 @@ const handleCoup = async (game, userId, targetUserId) => {
 const handleTaxes = async (game, userId) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
     if (player && player.isAlive) {
-        if (game.centralTreasury < 3) {
-            return { success: false, message: 'Not enough funds in the treasury' };
-        }
         game.centralTreasury -= 3;
         player.coins += 3;
         game = await Game.findByIdAndUpdate(game._id, game, { new: true });
@@ -277,7 +282,7 @@ const handleSteal = async (game, userId, targetUserId) => {
     return { success: true, message: 'Steal action successful' };
 };
 
-
+// Start of Selection
 const handleExchange = async (game, userId, selectedCards) => {
     const player = game.players.find(p => p.playerProfile.user._id.toString() === userId.toString());
     if (!player || !player.isAlive) {
@@ -288,9 +293,9 @@ const handleExchange = async (game, userId, selectedCards) => {
         return { success: false, message: 'No pending exchange action' };
     }
 
-    const combinedCards = game.pendingAction.exchange.combinedCards;
+    const combinedCards = [...game.pendingAction.exchange.combinedCards]; // Clone to avoid mutating the original array
 
-    // If the player originally has 1 card combinedRule = 3, if 2 combinedRule = 4
+    // If the player originally has 1 card, combinedRule = 3; if 2, combinedRule = 4
     const combinedRule = player.characters.length === 1 ? 3 : 4;
 
     if (combinedRule === 3 && selectedCards.length !== 1) {
@@ -304,24 +309,22 @@ const handleExchange = async (game, userId, selectedCards) => {
         return { success: false, message: 'Invalid number of cards for exchange' };
     }
 
-    if (!selectedCards || selectedCards.length !== combinedRule-2) {
-        return { success: false, message: `You must select ${combinedRule-2} cards to keep` };
-    }
-
-    // Validate selected cards
-    const isValidSelection = selectedCards.every(card => combinedCards.includes(card));
-    if (!isValidSelection) {
-        return { success: false, message: 'Invalid card selection' };
-    }
-
-    // Update player's characters
+    // Update player's characters with the selected cards
     player.characters = selectedCards;
 
-    // Determine the cards to return to the deck
-    const cardsToReturn = combinedCards.filter(card => !selectedCards.includes(card));
+    // Remove one instance of each selected card from combinedCards
+    for (const card of selectedCards) {
+        const index = combinedCards.indexOf(card);
+        if (index !== -1) {
+            combinedCards.splice(index, 1);
+        } else {
+            // This should not happen, but handle gracefully
+            return { success: false, message: `Selected card "${card}" is not available in the combined cards` };
+        }
+    }
 
     // Shuffle and return the unused cards to the deck
-    game.deck = shuffleArray([...game.deck, ...cardsToReturn]);
+    game.deck = shuffleArray([...game.deck, ...combinedCards]);
 
     return { success: true, message: 'Exchange action successful' };
 };
@@ -382,7 +385,7 @@ const emitGameUpdate = async (gameId, io) => {
             return;
         }
         await checkGameOver(gameState);
-        
+
         if (gameState.status === 'finished') {
             clearActionTimeout(gameId);
         }
