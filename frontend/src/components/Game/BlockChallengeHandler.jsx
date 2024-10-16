@@ -51,10 +51,20 @@
       return (
         <div className="block-challenge-handler">
           <div className="handler-content card p-4 shadow-sm text-light">
-            <h3>
-              Action Available: {getActionName(game.pendingAction.type)} by{' '}
-              {game.players.find(p => p.playerProfile.user._id === game.pendingAction.userId)?.playerProfile.user.username || 'Unknown'}
-            </h3>
+            <h3 className="mb-3">Action Pending:</h3>
+            <p className="lead">
+              <strong>{game.players.find(p => p.playerProfile.user._id === game.pendingAction.userId)?.playerProfile.user.username || 'Unknown'}</strong>
+              {' '}is attempting to{' '}
+              <strong>{getActionName(game.pendingAction.type).toLowerCase()}</strong>
+              {game.pendingAction.targetUserId && (
+                <>
+                  {' '}against{' '}
+                  <strong>
+                    {game.players.find(p => p.playerProfile.user._id === game.pendingAction.targetUserId)?.playerProfile.user.username || 'Unknown'}
+                  </strong>
+                </>
+              )}
+            </p>
             <p>
               Do you want to {game.pendingAction.canBeBlocked ? 'block' : ''}{' '}
               {game.pendingAction.canBeChallenged ? 'or challenge' : ''} this action?
