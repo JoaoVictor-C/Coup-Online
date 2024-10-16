@@ -32,8 +32,8 @@ const handleChallengeAction = async (io, socket, gameId, callback) => {
             return callback?.({ success: false, message: 'Challenger not found or not alive' });
         }
         
-        // Check if the challenged player actually has the claimed role
-        const hasRole = challengedPlayer.characters.includes(challengedRole);
+        // Check if the challenged player actually has the claimed role and the character is alive
+        const hasRole = challengedPlayer.characters.includes(challengedRole) && !challengedPlayer.deadCharacters.includes(challengedRole);
 
         // Mark the action as challenged
         action.challenged = true;
