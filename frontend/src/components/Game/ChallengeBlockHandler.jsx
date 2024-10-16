@@ -24,14 +24,19 @@ const ChallengeBlockHandler = () => {
   return (
     <div className="challenge-block-handler">
       <div className="handler-content card p-4 shadow-sm text-light">
-        <h3>Action Blocked: {game.pendingAction.type} by {game.players.find(p => p.playerProfile.user._id === game.pendingAction.userId)?.playerProfile.user.username || 'Unknown'}</h3>
-        <p>{blocker} has blocked your action with {game.pendingAction.claimedRole}.</p>
+        <h3>
+          Action Blocked: {game.pendingAction.type} by{' '}
+          {game.players.find(p => p.playerProfile.user._id === game.pendingAction.userId)?.playerProfile.user.username || 'Unknown'}
+        </h3>
+        <p>
+          {blocker} has blocked your action with {game.pendingAction.claimedRole}.
+        </p>
         <p>Do you want to accept the block or challenge it?</p>
         <div className="handler-buttons d-flex justify-content-around mt-3">
-          <button className="btn btn-success" onClick={handleAcceptBlock}>
+          <button className="btn btn-success btn-lg" onClick={handleAcceptBlock} title="Proceed despite the block">
             Accept Block
           </button>
-          <button className="btn btn-danger" onClick={handleChallengeBlock}>
+          <button className="btn btn-danger btn-lg" onClick={handleChallengeBlock} title="Challenge the validity of the block">
             Challenge Block
           </button>
         </div>
