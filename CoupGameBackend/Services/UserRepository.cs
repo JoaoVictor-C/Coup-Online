@@ -1,5 +1,4 @@
 using CoupGameBackend.Models;
-using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 
 namespace CoupGameBackend.Services
@@ -8,16 +7,14 @@ namespace CoupGameBackend.Services
     {
         private readonly IMongoCollection<User> _users;
 
-        public UserRepository(IConfiguration configuration)
+        public UserRepository(IMongoDatabase database)
         {
-            var client = new MongoClient(configuration.GetConnectionString("MongoDB"));
-            var database = client.GetDatabase("CoupGameDB");
             _users = database.GetCollection<User>("Users");
         }
 
         public async Task<User> GetByUsernameAsync(string username)
         {
-            return await _users.Find(u => u.Username == username).FirstOrDefaultAsync();
+            return await _users.Find(u => u.Username.ToLower() == username.ToLower()).FirstOrDefaultAsync();
         }
 
         public async Task<User> GetByIdAsync(string id)
@@ -28,6 +25,24 @@ namespace CoupGameBackend.Services
         public async Task CreateAsync(User user)
         {
             await _users.InsertOneAsync(user);
+        }
+
+        public async Task UpdateAsync(User user)
+        {
+            var result = await _users.ReplaceOneAsync(u => u.Id == user.Id, user);
+            if (result.ModifiedCount == 0)
+            {
+                throw new InvalidOperationException("Failed to update the user.");
+            }
+        }
+
+        public async Task DeleteAsync(string id)
+        {
+            var result = await _users.DeleteOneAsync(u => u.Id == id);
+            if (result.DeletedCount == 0)
+            {
+                throw new InvalidOperationException("Failed to delete the user.");
+            }
         }
     }
 }

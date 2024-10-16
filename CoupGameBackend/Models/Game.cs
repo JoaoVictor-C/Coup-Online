@@ -11,16 +11,22 @@ namespace CoupGameBackend.Models
 
         public string GameName { get; set; } = string.Empty;
 
+        [BsonElement("PlayerCount")]
         public int PlayerCount { get; set; }
 
+        [BsonElement("Players")]
         public List<Player> Players { get; set; } = new List<Player>();
 
+        [BsonElement("CreatedBy")]
         public string CreatedBy { get; set; } = string.Empty;
 
+        [BsonElement("CreatedAt")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        [BsonElement("CurrentState")]
         public GameState CurrentState { get; set; } = GameState.WaitingForPlayers;
 
+        [BsonElement("CentralDeck")]
         public List<Card> CentralDeck { get; set; } = new List<Card>();
 
         // Add additional fields as necessary

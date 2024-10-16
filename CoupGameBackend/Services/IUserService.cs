@@ -1,7 +1,10 @@
 using CoupGameBackend.Models;
 
-public interface IUserService
+namespace CoupGameBackend.Services
 {
-    Task<string> Authenticate(string username, string password);
-    Task<string> Register(string username, string password, string email);
+    public interface IUserService
+    {
+        Task<string> Authenticate(string username, string password);
+        Task<string> Register(string username, string password, string email);
+    }
 }

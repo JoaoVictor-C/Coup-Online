@@ -1,5 +1,4 @@
 using CoupGameBackend.Models;
-using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 
 namespace CoupGameBackend.Services
@@ -8,10 +7,8 @@ namespace CoupGameBackend.Services
     {
         private readonly IMongoCollection<Game> _games;
 
-        public GameRepository(IConfiguration configuration)
+        public GameRepository(IMongoDatabase database)
         {
-            var client = new MongoClient(configuration.GetConnectionString("MongoDB"));
-            var database = client.GetDatabase("CoupGameDB");
             _games = database.GetCollection<Game>("Games");
         }
 
@@ -28,12 +25,20 @@ namespace CoupGameBackend.Services
 
         public async Task UpdateGameAsync(Game game)
         {
-            await _games.ReplaceOneAsync(g => g.Id == game.Id, game);
+            var result = await _games.ReplaceOneAsync(g => g.Id == game.Id, game);
+            if (result.ModifiedCount == 0)
+            {
+                throw new InvalidOperationException("Failed to update the game.");
+            }
         }
 
         public async Task DeleteGameAsync(string gameId)
         {
-            await _games.DeleteOneAsync(g => g.Id == gameId);
+            var result = await _games.DeleteOneAsync(g => g.Id == gameId);
+            if (result.DeletedCount == 0)
+            {
+                throw new InvalidOperationException("Failed to delete the game.");
+            }
         }
     }
 }

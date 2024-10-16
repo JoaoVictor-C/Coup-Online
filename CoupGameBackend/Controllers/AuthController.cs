@@ -22,44 +22,57 @@ namespace CoupGameBackend.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            if (request == null)
+            if (request == null || string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
             {
-                return BadRequest(new { message = "Invalid request." });
+                return BadRequest(new { message = "Username and password are required." });
             }
 
-            var token = await _userService.Authenticate(request.Username, request.Password);
+            try
+            {
+                var token = await _userService.Authenticate(request.Username, request.Password);
+                if (token == null)
+                    return Unauthorized(new { message = "Invalid credentials" });
 
-            if (token == null)
-                return Unauthorized(new { message = "Invalid credentials" });
-
-            return Ok(new { token });
+                return Ok(new { token });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { message = "Invalid username or password." });
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                return StatusCode(500, new { message = "An error occurred while processing your request.", details = ex.Message });
+            }
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            if (request == null)
+            if (request == null || string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password) || string.IsNullOrEmpty(request.Email))
             {
-                return BadRequest(new { message = "Invalid request." });
+                return BadRequest(new { message = "Username, email, and password are required." });
             }
 
-            // Check if username or email already exists
-            var existingUser = await _userRepository.GetByUsernameAsync(request.Username);
-            if (existingUser != null)
-                return BadRequest(new { message = "Username already exists" });
-
-            // Hash the password
-            var passwordHash = ComputeSha256Hash(request.Password);
-
-            var user = new User
+            try
             {
-                Username = request.Username,
-                Email = request.Email,
-                PasswordHash = passwordHash
-            };
+                var registrationResult = await _userService.Register(request.Username, request.Password, request.Email);
+                if (registrationResult == "Registration successful. You can now log in.")
+                {
+                    return Ok(new { message = registrationResult });
+                }
 
-            await _userRepository.CreateAsync(user);
-            return Ok(new { message = "Registration successful" });
+                return BadRequest(new { message = "Registration failed." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                return StatusCode(500, new { message = "An error occurred while processing your request.", details = ex.Message });
+            }
         }
 
         private string ComputeSha256Hash(string rawData)

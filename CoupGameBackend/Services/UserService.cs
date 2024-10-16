@@ -43,6 +43,12 @@ namespace CoupGameBackend.Services
             if (string.IsNullOrEmpty(secret))
                 throw new InvalidOperationException("JWT Secret is not configured.");
 
+            // Ensure the secret is at least 16 bytes (128 bits) long
+            if (Encoding.UTF8.GetByteCount(secret) < 16)
+            {
+                throw new InvalidOperationException("JWT Secret must be at least 16 characters long.");
+            }
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -50,16 +56,38 @@ namespace CoupGameBackend.Services
                 issuer: jwtSettings["Issuer"],
                 audience: jwtSettings["Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(5),
+                expires: DateTime.UtcNow.AddHours(24),
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public Task<string> Register(string username, string password, string email)
+        public async Task<string> Register(string username, string password, string email)
         {
-            // Since registration logic is handled in AuthController, return a completed task
-            return Task.FromResult("Registration successful");
+            // Validate input
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(email))
+                throw new ArgumentException("Username, password, and email are required.");
+
+            // Check if username already exists
+            var existingUser = await _userRepository.GetByUsernameAsync(username);
+            if (existingUser != null)
+                throw new ArgumentException("Username already exists.");
+
+            // Optionally, validate email format or uniqueness
+
+            var passwordHash = ComputeSha256Hash(password);
+
+            var user = new User
+            {
+                Username = username,
+                Email = email,
+                PasswordHash = passwordHash,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _userRepository.CreateAsync(user);
+
+            return "Registration successful. You can now log in.";
         }
 
         private string ComputeSha256Hash(string rawData)

@@ -3,8 +3,30 @@ using CoupGameBackend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using MongoDB.Driver;
+using MongoDB.Bson;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure MongoClientSettings with ServerApi
+var mongoConnectionString = builder.Configuration.GetConnectionString("MongoDB");
+if (string.IsNullOrEmpty(mongoConnectionString))
+{
+    throw new InvalidOperationException("MongoDB connection string is not configured.");
+}
+
+var mongoSettings = MongoClientSettings.FromConnectionString(mongoConnectionString);
+mongoSettings.ServerApi = new ServerApi(ServerApiVersion.V1);
+
+// Register MongoClient as a Singleton
+builder.Services.AddSingleton<IMongoClient>(s => new MongoClient(mongoSettings));
+
+// Register Database as a Singleton
+builder.Services.AddSingleton(s =>
+{
+    var client = s.GetRequiredService<IMongoClient>();
+    return client.GetDatabase("CoupOnline");
+});
 
 // Add services to the container.
 
@@ -13,7 +35,7 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secret = jwtSettings["Secret"];
 if (string.IsNullOrEmpty(secret))
 {
-    throw new InvalidOperationException("JWT Secret is not configured.");
+    throw new InvalidOperationException("JWT Secret is not configured properly.");
 }
 
 builder.Services.AddAuthentication(options =>
@@ -62,11 +84,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add custom services
+// Register Repositories and Services
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<IGameRepository, GameRepository>();
-builder.Services.AddSingleton<IGameService, GameService>();
-builder.Services.AddSingleton<IUserService, UserService>();
+builder.Services.AddScoped<IUserService, UserService>(); // Changed to Scoped for better management
+builder.Services.AddScoped<IGameService, GameService>(); // Changed to Scoped for better management
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -80,6 +102,22 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Connection verification
+try
+{
+    var mongoClient = app.Services.GetRequiredService<IMongoClient>();
+    var mongoDatabase = mongoClient.GetDatabase("CoupOnline");
+    var command = new BsonDocument("ping", 1);
+    mongoDatabase.RunCommand<BsonDocument>(command);
+    Console.WriteLine("✅ Successfully connected to MongoDB!");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ MongoDB connection failed: {ex.Message}");
+    // Optionally, terminate the application if the database connection is critical
+    Environment.Exit(-1);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -1,6 +1,47 @@
 @CoupGameBackend_HostAddress = http://localhost:5132
 
-GET {{CoupGameBackend_HostAddress}}/weatherforecast/
-Accept: application/json
+# Login Request
+POST {{CoupGameBackend_HostAddress}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+###
+
+# Register Request
+POST {{CoupGameBackend_HostAddress}}/api/Auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "testuser@example.com",
+  "password": "password123"
+}
+
+###
+
+# Create Game Request
+POST {{CoupGameBackend_HostAddress}}/api/Game/create
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "playerCount": 4,
+  "gameName": "BattleRoyale"
+}
+
+###
+
+# Join Game Request
+POST {{CoupGameBackend_HostAddress}}/api/Game/join
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "gameId": "GAME_ID_HERE"
+}
 
 ###
