@@ -107,5 +107,22 @@ namespace CoupGameBackend.Services
                 return builder.ToString();
             }
         }
+
+        public async Task<User> GetCurrentUser(string token)
+        {
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secret = jwtSettings["Secret"];
+            if (string.IsNullOrEmpty(secret))
+                throw new InvalidOperationException("JWT Secret is not configured.");
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenDecoded = tokenHandler.ReadJwtToken(token);
+            var userId = tokenDecoded.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
+            var user = await _userRepository.GetByIdAsync(userId);
+            return user;
+        }
     }
 }

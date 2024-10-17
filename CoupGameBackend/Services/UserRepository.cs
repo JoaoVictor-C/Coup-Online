@@ -44,5 +44,10 @@ namespace CoupGameBackend.Services
                 throw new InvalidOperationException("Failed to delete the user.");
             }
         }
+
+        public async Task<User> GetUserByUsername(string username)
+        {
+            return await _users.Find(u => u.Username == username).FirstOrDefaultAsync();
+        }
     }
 }

@@ -2,6 +2,8 @@ using CoupGameBackend.Models;
 using CoupGameBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace CoupGameBackend.Controllers
 {
@@ -10,11 +12,17 @@ namespace CoupGameBackend.Controllers
     [Authorize]
     public class GameController : ControllerBase
     {
-        private readonly IGameService _gameService;
+        private readonly IGameService gameService;
+        private readonly IUserService userService;
+        private readonly IUserRepository userRepository;
+        private readonly IGameRepository gameRepository;
 
-        public GameController(IGameService gameService)
+        public GameController(IGameService gameService, IUserService userService, IUserRepository userRepository, IGameRepository gameRepository)
         {
-            _gameService = gameService;
+            this.gameService = gameService;
+            this.userService = userService;
+            this.userRepository = userRepository;
+            this.gameRepository = gameRepository;
         }
 
         [HttpPost("create")]
@@ -25,7 +33,7 @@ namespace CoupGameBackend.Controllers
                 return BadRequest(new { message = "Invalid game creation request." });
             }
 
-            var userId = User.FindFirst("sub")?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized(new { message = "User ID is missing." });
@@ -33,8 +41,19 @@ namespace CoupGameBackend.Controllers
 
             try
             {
-                var game = await _gameService.CreateGame(userId, request);
-                return Ok(game);
+                var user = await userRepository.GetByIdAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                var game = await gameService.CreateGame(userId, request);
+
+                return Ok(new { game.Id, game.RoomCode, game.GameName, game.IsPrivate, game.PlayerCount, game.CreatedAt });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -48,10 +67,10 @@ namespace CoupGameBackend.Controllers
         {
             if (request == null || string.IsNullOrEmpty(request.GameId))
             {
-                return BadRequest(new { message = "GameId is required." });
+                return BadRequest(new { message = "GameId or RoomCode is required to join a game." });
             }
 
-            var userId = User.FindFirst("sub")?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized(new { message = "User ID is missing." });
@@ -59,36 +78,37 @@ namespace CoupGameBackend.Controllers
 
             try
             {
-                var game = await _gameService.JoinGame(userId, request.GameId);
-                if (game == null)
-                    return BadRequest(new { message = "Failed to join game." });
+                var game = await gameService.JoinGame(userId, request.GameId);
 
-                return Ok(game);
+                if (game.Players.Any(p => p.UserId == userId))
+                {
+                    return Ok(new { message = "Joined the game successfully as a player.", game.Id, game.RoomCode, game.GameName, game.IsPrivate, game.PlayerCount, game.CreatedAt });
+                }
+                else
+                {
+                    return Ok(new { message = "Joined the game successfully as a spectator.", game.Id, game.RoomCode, game.GameName, game.IsPrivate, game.PlayerCount, game.CreatedAt });
+                }
             }
-            catch (ArgumentException ex)
+            catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
             catch (Exception ex)
             {
                 // Log exception
-                return StatusCode(500, new { message = "An error occurred while attempting to join the game.", details = ex.Message });
+                return StatusCode(500, new { message = "An error occurred while joining the game.", details = ex.Message });
             }
         }
 
-        [HttpGet("{gameId}")]
-        public async Task<IActionResult> GetGameState(string gameId)
+        [HttpPost("reconnect")]
+        public async Task<IActionResult> ReconnectToGame([FromBody] ReconnectRequest request)
         {
-            if (string.IsNullOrEmpty(gameId))
+            if (request == null || string.IsNullOrEmpty(request.GameId))
             {
-                return BadRequest(new { message = "GameId is required." });
+                return BadRequest(new { message = "GameId is required to reconnect." });
             }
 
-            var userId = User.FindFirst("sub")?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized(new { message = "User ID is missing." });
@@ -96,46 +116,21 @@ namespace CoupGameBackend.Controllers
 
             try
             {
-                var game = await _gameService.GetGameState(gameId, userId);
-                if (game == null)
-                    return NotFound(new { message = "Game not found or access denied." });
+                var result = await gameService.ReconnectToGame(request.GameId, userId, null);
 
-                return Ok(game);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new { message = ex.Message });
+                if (result.IsSuccess)
+                {
+                    return Ok(new { message = "Reconnected successfully." });
+                }
+                else
+                {
+                    return BadRequest(new { message = result.Message });
+                }
             }
             catch (Exception ex)
             {
                 // Log exception
-                return StatusCode(500, new { message = "An error occurred while retrieving the game state.", details = ex.Message });
-            }
-        }
-
-        [HttpPost("action")]
-        public async Task<IActionResult> PerformAction([FromBody] GameActionRequest request)
-        {
-            if (request == null || string.IsNullOrEmpty(request.GameId) || string.IsNullOrEmpty(request.Action))
-            {
-                return BadRequest(new { message = "GameId and Action are required." });
-            }
-
-            var userId = User.FindFirst("sub")?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(new { message = "User ID is missing." });
-            }
-
-            try
-            {
-                var result = await _gameService.PerformAction(request.GameId, userId, request.Action, request.Parameters);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                return StatusCode(500, new { message = "An error occurred while performing the action.", details = ex.Message });
+                return StatusCode(500, new { message = "An error occurred while reconnecting.", details = ex.Message });
             }
         }
 
@@ -147,7 +142,7 @@ namespace CoupGameBackend.Controllers
                 return BadRequest(new { message = "GameId is required." });
             }
 
-            var userId = User.FindFirst("sub")?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized(new { message = "User ID is missing." });
@@ -155,9 +150,15 @@ namespace CoupGameBackend.Controllers
 
             try
             {
-                var result = await _gameService.HandleDisconnection(gameId, userId);
-                if (!result)
-                    return BadRequest(new { message = "Failed to handle disconnection." });
+                var user = await userRepository.GetByIdAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                var result = await gameService.HandleDisconnection(gameId, userId);
+                if (!result.IsSuccess)
+                    return BadRequest(new { message = result.Message });
 
                 return Ok(new { message = "Player disconnected successfully." });
             }
@@ -171,6 +172,11 @@ namespace CoupGameBackend.Controllers
 
     public class JoinGameRequest
     {
+        public string GameId { get; set; } = string.Empty; // Can be either GameId or RoomCode
+    }
+
+    public class ReconnectRequest
+    {
         public string GameId { get; set; } = string.Empty;
     }
 
@@ -178,6 +184,6 @@ namespace CoupGameBackend.Controllers
     {
         public string GameId { get; set; } = string.Empty;
         public string Action { get; set; } = string.Empty;
-        public dynamic Parameters { get; set; } = new { };
+        public ActionParameters? Parameters { get; set; }
     }
 }

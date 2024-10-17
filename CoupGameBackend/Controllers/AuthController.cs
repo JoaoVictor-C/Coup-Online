@@ -30,10 +30,11 @@ namespace CoupGameBackend.Controllers
             try
             {
                 var token = await _userService.Authenticate(request.Username, request.Password);
+                var user = await _userRepository.GetUserByUsername(request.Username);
                 if (token == null)
                     return Unauthorized(new { message = "Invalid credentials" });
 
-                return Ok(new { token });
+                return Ok(new { token, user });
             }
             catch (UnauthorizedAccessException)
             {
@@ -56,13 +57,8 @@ namespace CoupGameBackend.Controllers
 
             try
             {
-                var registrationResult = await _userService.Register(request.Username, request.Password, request.Email);
-                if (registrationResult == "Registration successful. You can now log in.")
-                {
-                    return Ok(new { message = registrationResult });
-                }
-
-                return BadRequest(new { message = "Registration failed." });
+                var result = await _userService.Register(request.Username, request.Password, request.Email);
+                return Ok(new { message = result });
             }
             catch (ArgumentException ex)
             {
@@ -71,8 +67,16 @@ namespace CoupGameBackend.Controllers
             catch (Exception ex)
             {
                 // Log exception
-                return StatusCode(500, new { message = "An error occurred while processing your request.", details = ex.Message });
+                return StatusCode(500, new { message = "An error occurred while registering the user.", details = ex.Message });
             }
+        }
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var user = await _userService.GetCurrentUser(token);
+            return Ok(user);
         }
 
         private string ComputeSha256Hash(string rawData)

@@ -1,5 +1,8 @@
 using CoupGameBackend.Models;
 using MongoDB.Driver;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CoupGameBackend.Services
 {
@@ -7,8 +10,10 @@ namespace CoupGameBackend.Services
     {
         private readonly IMongoCollection<Game> _games;
 
-        public GameRepository(IMongoDatabase database)
+        public GameRepository(IConfiguration configuration)
         {
+            var client = new MongoClient(configuration.GetConnectionString("MongoDB"));
+            var database = client.GetDatabase("CoupGameDB");
             _games = database.GetCollection<Game>("Games");
         }
 
@@ -18,27 +23,49 @@ namespace CoupGameBackend.Services
             return game;
         }
 
+        public async Task DeleteGameAsync(string gameId)
+        {
+            await _games.DeleteOneAsync(g => g.Id == gameId);
+        }
+
+        public async Task<IEnumerable<Game>> GetPublicGamesAsync()
+        {
+            return await _games.Find(g => !g.IsPrivate).ToListAsync();
+        }
+
+        public async Task<Game?> GetGameByIdOrCodeAsync(string idOrCode)
+        {
+            return await _games.Find(g => g.Id == idOrCode || g.RoomCode == idOrCode).FirstOrDefaultAsync();
+        }
+
         public async Task<Game> GetGameByIdAsync(string gameId)
         {
             return await _games.Find(g => g.Id == gameId).FirstOrDefaultAsync();
         }
 
-        public async Task UpdateGameAsync(Game game)
+        public async Task<Game> GetGameByRoomCodeAsync(string roomCode)
         {
-            var result = await _games.ReplaceOneAsync(g => g.Id == game.Id, game);
-            if (result.ModifiedCount == 0)
-            {
-                throw new InvalidOperationException("Failed to update the game.");
-            }
+            return await _games.Find(g => g.RoomCode == roomCode).FirstOrDefaultAsync();
         }
 
-        public async Task DeleteGameAsync(string gameId)
+        public async Task<string> GetGameIdForUser(string userId)
         {
-            var result = await _games.DeleteOneAsync(g => g.Id == gameId);
-            if (result.DeletedCount == 0)
-            {
-                throw new InvalidOperationException("Failed to delete the game.");
-            }
+            var game = await _games.Find(g => g.Players.Any(p => p.UserId == userId)).FirstOrDefaultAsync();
+            return game?.Id ?? string.Empty;
+        }
+
+        public async Task<IEnumerable<Game>> SearchGamesAsync(string query)
+        {
+            var filter = Builders<Game>.Filter.Or(
+                Builders<Game>.Filter.Regex(g => g.GameName, new MongoDB.Bson.BsonRegularExpression(query, "i")),
+                Builders<Game>.Filter.Regex(g => g.RoomCode, new MongoDB.Bson.BsonRegularExpression(query, "i"))
+            );
+            return await _games.Find(filter).ToListAsync();
+        }
+
+        public async Task UpdateGameAsync(Game game)
+        {
+            await _games.ReplaceOneAsync(g => g.Id == game.Id, game);
         }
     }
 }

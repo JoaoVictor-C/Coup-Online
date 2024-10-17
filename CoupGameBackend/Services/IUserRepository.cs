@@ -10,5 +10,7 @@ namespace CoupGameBackend.Services
         // Future enhancements
         Task UpdateAsync(User user);
         Task DeleteAsync(string id);
+        Task<User> GetUserByUsername(string username);
+
     }
 }
