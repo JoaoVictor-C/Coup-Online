@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "/ft9zUV7YoT3wD1mj8UBdau6/W0TEnRlE3ijaXnluIX/dHxIa0mvs/GnQoYC2Zix+5sOFQ+sM+iu2H+IoOWguA==",
+  "dgSpecHash": "X/PhgLRQwJia20bU59cvomx+DGbwQb+AHkN/Qrpdxl0+orYlLdnvrJPQ7hin9nq2D1pmeeXpZnZWH63zcD2SRA==",
   "success": true,
-  "projectFilePath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\CoupGameBackend.csproj",
+  "projectFilePath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\coup-online-backend\\CoupGameBackend.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\fabio\\.nuget\\packages\\awssdk.core\\3.7.100.14\\awssdk.core.3.7.100.14.nupkg.sha512",
     "C:\\Users\\fabio\\.nuget\\packages\\awssdk.securitytoken\\3.7.100.14\\awssdk.securitytoken.3.7.100.14.nupkg.sha512",

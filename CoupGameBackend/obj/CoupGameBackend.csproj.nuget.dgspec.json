@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\CoupGameBackend.csproj": {}
+    "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\coup-online-backend\\CoupGameBackend.csproj": {}
   },
   "projects": {
-    "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\CoupGameBackend.csproj": {
+    "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\coup-online-backend\\CoupGameBackend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\CoupGameBackend.csproj",
+        "projectUniqueName": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\coup-online-backend\\CoupGameBackend.csproj",
         "projectName": "CoupGameBackend",
-        "projectPath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\CoupGameBackend.csproj",
+        "projectPath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\coup-online-backend\\CoupGameBackend.csproj",
         "packagesPath": "C:\\Users\\fabio\\.nuget\\packages\\",
-        "outputPath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\obj\\",
+        "outputPath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\coup-online-backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\fabio\\AppData\\Roaming\\NuGet\\NuGet.Config"
