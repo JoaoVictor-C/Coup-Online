@@ -68,7 +68,6 @@ namespace CoupGameBackend.Services
         }
 
         // Start of Selection
-        // Start of Selection        
         public async Task<IActionResult> PerformAction(string gameId, string userId, string action, ActionParameters parameters)
         {
             var game = await GetGameAsync(gameId);
@@ -78,7 +77,7 @@ namespace CoupGameBackend.Services
             var player = game.Players.FirstOrDefault(p => p.UserId == userId);
             if (player == null || !player.IsActive)
                 return new UnauthorizedResult();
-            Console.WriteLine($"Performing action: {action}");
+            Console.WriteLine($"Performing action: {action} on {gameId} for {userId} with {parameters}");
             // Implement action handling with strong typing
             switch (action.ToLower())
             {
@@ -118,36 +117,29 @@ namespace CoupGameBackend.Services
                     // Implement a timeout for block/challenge
                     _ = Task.Run(async () =>
                     {
-                        try
+                        await Task.Delay(TimeSpan.FromSeconds(15)); // Wait for 15 seconds
+                        if (!pendingForeignAid.IsActionResolved)
                         {
-                            await Task.Delay(TimeSpan.FromSeconds(15)); // Remove CancellationToken
-                            if (!pendingForeignAid.IsActionResolved)
+                            // No block or challenge, execute the action
+                            player.Coins += 2;
+
+                            // Log the action
+                            var actionLogForeignAid = new ActionLog
                             {
-                                // No block or challenge, execute the action
-                                player.Coins += 2;
+                                Timestamp = DateTime.UtcNow,
+                                PlayerId = userId,
+                                Action = "Foreign Aid"
+                            };
+                            game.ActionsHistory.Add(actionLogForeignAid);
 
-                                // Log the action
-                                var actionLogForeignAid = new ActionLog
-                                {
-                                    Timestamp = DateTime.UtcNow,
-                                    PlayerId = userId,
-                                    Action = "Foreign Aid"
-                                };
-                                game.ActionsHistory.Add(actionLogForeignAid);
+                            pendingForeignAid.IsActionResolved = true;
+                            PendingActions.TryRemove(gameId, out _);
+                            await _hubContext.Clients.Group(gameId).SendAsync("ForeignAidTaken", userId);
 
-                                pendingForeignAid.IsActionResolved = true;
-                                PendingActions.TryRemove(gameId, out _);
-                                await _hubContext.Clients.Group(gameId).SendAsync("ForeignAidTaken", userId);
-
-                                // Update turn and game state
-                                UpdateTurn(game);
-                                await _gameRepository.UpdateGameAsync(game);
-                                await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
-                            }
-                        }
-                        catch (TaskCanceledException)
-                        {
-                            // Handle the task cancellation if needed
+                            // Update turn and game state
+                            UpdateTurn(game);
+                            await _gameRepository.UpdateGameAsync(game);
+                            await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
                         }
                     });
                     return new OkResult();
@@ -229,37 +221,30 @@ namespace CoupGameBackend.Services
                         // Implement a timeout for block/challenge
                         _ = Task.Run(async () =>
                         {
-                            try
+                            await Task.Delay(TimeSpan.FromSeconds(15)); // Wait for 15 seconds
+                            if (!pendingSteal.IsActionResolved)
                             {
-                                await Task.Delay(TimeSpan.FromSeconds(15)); // Remove CancellationToken
-                                if (!pendingSteal.IsActionResolved)
+                                // No block or challenge, execute the action
+                                player.Coins += 2;
+                                targetStealPlayer.Coins -= 2;
+
+                                // Log the action
+                                var actionLogSteal = new ActionLog
                                 {
-                                    // No block or challenge, execute the action
-                                    player.Coins += 2;
-                                    targetStealPlayer.Coins -= 2;
+                                    Timestamp = DateTime.UtcNow,
+                                    PlayerId = userId,
+                                    Action = $"Steal from {stealParams.TargetUserId}"
+                                };
+                                game.ActionsHistory.Add(actionLogSteal);
 
-                                    // Log the action
-                                    var actionLogSteal = new ActionLog
-                                    {
-                                        Timestamp = DateTime.UtcNow,
-                                        PlayerId = userId,
-                                        Action = $"Steal from {stealParams.TargetUserId}"
-                                    };
-                                    game.ActionsHistory.Add(actionLogSteal);
+                                pendingSteal.IsActionResolved = true;
+                                PendingActions.TryRemove(gameId, out _);
+                                await _hubContext.Clients.Group(gameId).SendAsync("StealExecuted", userId, stealParams.TargetUserId);
 
-                                    pendingSteal.IsActionResolved = true;
-                                    PendingActions.TryRemove(gameId, out _);
-                                    await _hubContext.Clients.Group(gameId).SendAsync("StealExecuted", userId, stealParams.TargetUserId);
-
-                                    // Update turn and game state
-                                    UpdateTurn(game);
-                                    await _gameRepository.UpdateGameAsync(game);
-                                    await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
-                                }
-                            }
-                            catch (TaskCanceledException)
-                            {
-                                // Handle the task cancellation if needed
+                                // Update turn and game state
+                                UpdateTurn(game);
+                                await _gameRepository.UpdateGameAsync(game);
+                                await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
                             }
                         });
                         return new OkResult();
@@ -300,45 +285,38 @@ namespace CoupGameBackend.Services
                         // Implement a timeout for block/challenge
                         _ = Task.Run(async () =>
                         {
-                            try
+                            await Task.Delay(TimeSpan.FromSeconds(15)); // Wait for 15 seconds
+                            if (!pendingAssassinate.IsActionResolved)
                             {
-                                await Task.Delay(TimeSpan.FromSeconds(15)); // Remove CancellationToken
-                                if (!pendingAssassinate.IsActionResolved)
+                                // No block or challenge, execute the action
+                                var targetPlayer = game.Players.FirstOrDefault(p => p.UserId == assassinateParams.TargetUserId);
+                                if (targetPlayer != null)
                                 {
-                                    // No block or challenge, execute the action
-                                    var targetPlayer = game.Players.FirstOrDefault(p => p.UserId == assassinateParams.TargetUserId);
-                                    if (targetPlayer != null)
+                                    targetPlayer.Influences -= 1;
+                                    if (targetPlayer.Influences <= 0)
                                     {
-                                        targetPlayer.Influences -= 1;
-                                        if (targetPlayer.Influences <= 0)
-                                        {
-                                            targetPlayer.IsActive = false;
-                                            // Notify players about elimination
-                                            await _hubContext.Clients.Group(game.Id).SendAsync("PlayerEliminated", assassinateParams.TargetUserId);
-                                        }
-
-                                        // Log the action
-                                        var actionLogAssassinate = new ActionLog
-                                        {
-                                            Timestamp = DateTime.UtcNow,
-                                            PlayerId = userId,
-                                            Action = $"Assassinate on {assassinateParams.TargetUserId}"
-                                        };
-                                        game.ActionsHistory.Add(actionLogAssassinate);
+                                        targetPlayer.IsActive = false;
+                                        // Notify players about elimination
+                                        await _hubContext.Clients.Group(game.Id).SendAsync("PlayerEliminated", assassinateParams.TargetUserId);
                                     }
-                                    pendingAssassinate.IsActionResolved = true;
-                                    PendingActions.TryRemove(gameId, out _);
-                                    await _hubContext.Clients.Group(game.Id).SendAsync("AssassinateExecuted", userId, assassinateParams.TargetUserId);
 
-                                    // Update turn and game state
-                                    UpdateTurn(game);
-                                    await _gameRepository.UpdateGameAsync(game);
-                                    await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
+                                    // Log the action
+                                    var actionLogAssassinate = new ActionLog
+                                    {
+                                        Timestamp = DateTime.UtcNow,
+                                        PlayerId = userId,
+                                        Action = $"Assassinate on {assassinateParams.TargetUserId}"
+                                    };
+                                    game.ActionsHistory.Add(actionLogAssassinate);
                                 }
-                            }
-                            catch (TaskCanceledException)
-                            {
-                                // Handle the task cancellation if needed
+                                pendingAssassinate.IsActionResolved = true;
+                                PendingActions.TryRemove(gameId, out _);
+                                await _hubContext.Clients.Group(game.Id).SendAsync("AssassinateExecuted", userId, assassinateParams.TargetUserId);
+
+                                // Update turn and game state
+                                UpdateTurn(game);
+                                await _gameRepository.UpdateGameAsync(game);
+                                await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
                             }
                         });
                         return new OkResult();
@@ -367,9 +345,7 @@ namespace CoupGameBackend.Services
             var currentIndex = activePlayers.FindIndex(p => p.UserId == game.CurrentTurnUserId);
             var nextIndex = (currentIndex + 1) % activePlayers.Count;
             game.CurrentTurnUserId = activePlayers[nextIndex].UserId;
-            Console.WriteLine($"Updated turn to: {game.CurrentTurnUserId}");
         }
-
 
         public async Task<(bool IsSuccess, string Message)> ChallengeAction(string gameId, string challengerId, string challengedUserId)
         {
