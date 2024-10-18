@@ -52,8 +52,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ game, currentUserId, onActionSele
 
   const handleActionSelect = (action: Action) => {
     setPendingAction(action);
-    onActionSelect(action);
     closeActionModal();
+    onActionSelect(action);
   };
 
   const renderTooltip = (props: any) => (

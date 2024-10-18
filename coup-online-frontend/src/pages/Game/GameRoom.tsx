@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
-import { Game, ActionLog, Player } from '@utils/types';
+import { Game, ActionLog, Action, ActionParameters } from '@utils/types';
 import { SIGNALR_HUB_URL } from '@utils/constants';
 import { Container, Spinner, Alert, Modal, Button } from 'react-bootstrap';
 import GameBoard from './GameBoard';
 import GameLobby from './GameLobby';
 import { getToken } from '@utils/auth';
-import roomService from '@services/roomService';
 import authService from '@services/authService';
-import { Action } from '@utils/types';
 
 const GameRoom: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,8 +55,8 @@ const GameRoom: React.FC = () => {
           console.log('Connected to GameHub');
           if (isSpectator) {
             await connection.invoke('SwitchToSpectator', id);
-          } else {
-            await connection.invoke('Reconnect', id);
+          } else if (currentUserId) {
+            await connection.invoke('Reconnect', id, currentUserId);
           }
           await connection.invoke('GetGameState', id);
         })
@@ -230,15 +228,32 @@ const GameRoom: React.FC = () => {
   }, [connection, id, game, isSpectator, currentUserId]);
 
   const handleActionSelect = async (action: Action) => {
-    if (game && connection) {
+    if (game && connection && currentUserId) {
       try {
-        await connection.invoke('PerformAction', game.id, action.type, action.targetUserId || '');
+        let parameters: ActionParameters | undefined;
+        switch (action.type) {
+          case 'assassinate':
+          case 'steal':
+          case 'coup':
+            parameters = { targetUserId: action.targetUserId || '' };
+            break;
+          case 'income':
+          case 'foreign_aid':
+          case 'tax':
+          case 'exchange':
+            parameters = undefined;
+            break;
+          default:
+            parameters = undefined;
+        }
+
+        await connection.invoke('PerformAction', game.id, currentUserId, action.type, parameters);
       } catch (err: any) {
         console.error('Failed to perform action:', err);
         setError('Failed to perform action. Please try again.');
       }
     } else {
-      console.error('Game or connection is not available');
+      console.error('Game, connection, or user ID is not available');
       setError('Unable to perform action. Please try again.');
     }
   };
@@ -252,9 +267,9 @@ const GameRoom: React.FC = () => {
   };
 
   const performSwitchToSpectator = async () => {
-    if (connection && game) {
+    if (connection && game && currentUserId) {
       try {
-        await connection.invoke('SwitchToSpectator', game.id);
+        await connection.invoke('SwitchToSpectator', game.id, currentUserId);
         await connection.invoke('GetGameState', id)
           .catch(err => console.error(err));
         setIsSpectator(true);
@@ -280,9 +295,9 @@ const GameRoom: React.FC = () => {
   };
 
   const handleRejoinAsPlayer = async () => {
-    if (connection && game) {
+    if (connection && game && currentUserId) {
       try {
-        await connection.invoke('RejoinAsPlayer', game.id);
+        await connection.invoke('RejoinAsPlayer', game.id, currentUserId);
         await connection.invoke('GetGameState', id)
           .catch(err => console.error(err));
         setIsSpectator(false);

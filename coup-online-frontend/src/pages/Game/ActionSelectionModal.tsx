@@ -12,7 +12,13 @@ interface ActionSelectionModalProps {
   currentUserId: string;
 }
 
-const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({ show, onHide, onSelectAction, game, currentUserId }) => {
+const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
+  show,
+  onHide,
+  onSelectAction,
+  game,
+  currentUserId,
+}) => {
   const [showTargetModal, setShowTargetModal] = useState(false);
   const [selectedAction, setSelectedAction] = useState<Action | null>(null);
 
@@ -33,6 +39,7 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({ show, onHid
       onSelectAction({ ...selectedAction, targetUserId });
       setSelectedAction(null);
       setShowTargetModal(false);
+      onHide(); // Ensure modal is closed after target selection
     }
   };
 
@@ -140,13 +147,15 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({ show, onHid
       </Modal>
 
       {/* Target Selection Modal */}
-      <TargetSelectionModal
-        show={showTargetModal}
-        onHide={handleCloseTargetModal}
-        onSelectTarget={handleTargetSelect}
-        game={game}
-        currentUserId={currentUserId}
-      />
+      {selectedAction && (
+        <TargetSelectionModal
+          show={showTargetModal}
+          onHide={handleCloseTargetModal}
+          onSelectTarget={handleTargetSelect}
+          game={game}
+          currentUserId={currentUserId}
+        />
+      )}
     </>
   );
 };
