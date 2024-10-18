@@ -78,7 +78,7 @@ namespace CoupGameBackend.Services
             var player = game.Players.FirstOrDefault(p => p.UserId == userId);
             if (player == null || !player.IsActive)
                 return new UnauthorizedResult();
-
+            Console.WriteLine($"Performing action: {action}");
             // Implement action handling with strong typing
             switch (action.ToLower())
             {
@@ -367,7 +367,9 @@ namespace CoupGameBackend.Services
             var currentIndex = activePlayers.FindIndex(p => p.UserId == game.CurrentTurnUserId);
             var nextIndex = (currentIndex + 1) % activePlayers.Count;
             game.CurrentTurnUserId = activePlayers[nextIndex].UserId;
+            Console.WriteLine($"Updated turn to: {game.CurrentTurnUserId}");
         }
+
 
         public async Task<(bool IsSuccess, string Message)> ChallengeAction(string gameId, string challengerId, string challengedUserId)
         {

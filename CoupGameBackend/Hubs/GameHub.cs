@@ -75,7 +75,7 @@ namespace CoupGameBackend.Hubs
             }
 
             var result = await _gameService.PerformAction(game.Id, userId, action, new ConcreteActionParameters { TargetUserId = targetId ?? string.Empty });
-
+            Console.WriteLine(result);
             if (result is OkResult)
             {
                 await Clients.Group(game.Id).SendAsync("ActionPerformed", new ActionLog
