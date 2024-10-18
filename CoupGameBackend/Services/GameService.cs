@@ -67,6 +67,7 @@ namespace CoupGameBackend.Services
             }
         }
 
+        // Start of Selection
         public async Task<IActionResult> PerformAction(string gameId, string userId, string action, ActionParameters parameters)
         {
             var game = await GetGameAsync(gameId);
@@ -91,7 +92,12 @@ namespace CoupGameBackend.Services
                         Action = "Income"
                     };
                     game.ActionsHistory.Add(actionLogIncome);
-                    break;
+
+                    // Update turn and game state
+                    UpdateTurn(game);
+                    await _gameRepository.UpdateGameAsync(game);
+                    await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
+                    return new OkResult();
 
                 case "foreign_aid":
                     // Foreign Aid can be blocked by Duke
@@ -130,10 +136,10 @@ namespace CoupGameBackend.Services
                             PendingActions.TryRemove(gameId, out _);
                             await _hubContext.Clients.Group(gameId).SendAsync("ForeignAidTaken", userId);
 
-                            // Update turn
+                            // Update turn and game state
                             UpdateTurn(game);
-
                             await _gameRepository.UpdateGameAsync(game);
+                            await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
                         }
                     });
                     return new OkResult();
@@ -178,9 +184,11 @@ namespace CoupGameBackend.Services
                         return new BadRequestObjectResult(new { message = "Invalid action parameters for Coup." });
                     }
 
-                    // Update turn after coup
+                    // Update turn and game state after coup
                     UpdateTurn(game);
-                    break;
+                    await _gameRepository.UpdateGameAsync(game);
+                    await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
+                    return new OkResult();
 
                 case "steal":
                     if (parameters is StealActionParameters stealParams)
@@ -233,10 +241,10 @@ namespace CoupGameBackend.Services
                                 PendingActions.TryRemove(gameId, out _);
                                 await _hubContext.Clients.Group(gameId).SendAsync("StealExecuted", userId, stealParams.TargetUserId);
 
-                                // Update turn
+                                // Update turn and game state
                                 UpdateTurn(game);
-
                                 await _gameRepository.UpdateGameAsync(game);
+                                await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
                             }
                         });
                         return new OkResult();
@@ -303,12 +311,12 @@ namespace CoupGameBackend.Services
                                 }
                                 pendingAssassinate.IsActionResolved = true;
                                 PendingActions.TryRemove(gameId, out _);
-                                await _hubContext.Clients.Group(gameId).SendAsync("AssassinateExecuted", userId, assassinateParams.TargetUserId);
+                                await _hubContext.Clients.Group(game.Id).SendAsync("AssassinateExecuted", userId, assassinateParams.TargetUserId);
 
-                                // Update turn
+                                // Update turn and game state
                                 UpdateTurn(game);
-
                                 await _gameRepository.UpdateGameAsync(game);
+                                await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
                             }
                         });
                         return new OkResult();
@@ -326,21 +334,17 @@ namespace CoupGameBackend.Services
                 default:
                     return new BadRequestObjectResult(new { message = "Invalid action." });
             }
-
-            // Update turn after performing the action
-            UpdateTurn(game);
-
-            await _gameRepository.UpdateGameAsync(game);
-            // Notify all players about the action
-            await _hubContext.Clients.Group(game.Id).SendAsync("ActionPerformed", new { userId, action, parameters });
-            return new OkResult();
         }
 
         private void UpdateTurn(Game game)
         {
-            var currentIndex = game.Players.FindIndex(p => p.UserId == game.CurrentTurnUserId);
-            var nextIndex = (currentIndex + 1) % game.Players.Count;
-            game.CurrentTurnUserId = game.Players[nextIndex].UserId;
+            var activePlayers = game.Players.Where(p => p.IsActive).ToList();
+            if (!activePlayers.Any())
+                return;
+
+            var currentIndex = activePlayers.FindIndex(p => p.UserId == game.CurrentTurnUserId);
+            var nextIndex = (currentIndex + 1) % activePlayers.Count;
+            game.CurrentTurnUserId = activePlayers[nextIndex].UserId;
         }
 
         public async Task<(bool IsSuccess, string Message)> ChallengeAction(string gameId, string challengerId, string challengedUserId)
@@ -576,7 +580,7 @@ namespace CoupGameBackend.Services
                 PlayerCount = request.PlayerCount,
                 IsPrivate = request.IsPrivate,
                 CreatedBy = userId,
-                LeaderId = userId, 
+                LeaderId = userId,
                 RoomCode = GenerateRoomCode()
             };
 
@@ -596,7 +600,7 @@ namespace CoupGameBackend.Services
             ShuffleDeck(game.CentralDeck);
 
             await _gameRepository.CreateGameAsync(game);
-            
+
             // Notify clients if necessary
             await _hubContext.Clients.All.SendAsync("GameCreated", new { gameId = game.Id });
 
@@ -929,7 +933,7 @@ namespace CoupGameBackend.Services
             // Initialize game state
             game.IsStarted = true;
             game.IsGameOver = false;
-            game.CurrentTurnUserId = game.Players.First().UserId; 
+            game.CurrentTurnUserId = game.Players.First().UserId;
             game.CentralDeck = InitializeDeck();
             // Deal cards to players
             foreach (var player in game.Players)
@@ -1156,7 +1160,7 @@ namespace CoupGameBackend.Services
                     ScheduleGameDeletion(gameId);
                 }
             }
-            
+
 
             CheckGameOver(game);
             // Update the game state in the repository

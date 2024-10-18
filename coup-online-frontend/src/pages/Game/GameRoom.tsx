@@ -229,9 +229,17 @@ const GameRoom: React.FC = () => {
     }
   }, [connection, id, game, isSpectator, currentUserId]);
 
-  const handleActionSelect = (action: Action) => {
-    if (game) {
-      console.log('todo');
+  const handleActionSelect = async (action: Action) => {
+    if (game && connection) {
+      try {
+        await connection.invoke('PerformAction', game.id, action.type, action.targetUserId || '');
+      } catch (err: any) {
+        console.error('Failed to perform action:', err);
+        setError('Failed to perform action. Please try again.');
+      }
+    } else {
+      console.error('Game or connection is not available');
+      setError('Unable to perform action. Please try again.');
     }
   };
 
