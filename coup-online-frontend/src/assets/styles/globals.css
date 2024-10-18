@@ -11,7 +11,8 @@ body {
   text-align: center;
 }
 
-.header, .footer {
+.header,
+.footer {
   background-color: #282c34;
   padding: 1rem;
   color: white;

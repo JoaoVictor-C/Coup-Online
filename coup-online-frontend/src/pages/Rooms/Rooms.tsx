@@ -1,10 +1,11 @@
- // Start of Selection
 import React, { useEffect, useState } from 'react';
 import { Container, Table, Button, Form, Row, Col, Alert, Spinner } from 'react-bootstrap';
 import roomService from '@services/roomService';
 import { Game } from '@utils/types';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import authService from '@services/authService';
+import { getToken } from '@utils/auth';
 
 const Rooms: React.FC = () => {
   const [rooms, setRooms] = useState<Game[]>([]);
@@ -13,7 +14,17 @@ const Rooms: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [lastSearchTime, setLastSearchTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState<string>('Last search: N/A');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const token = getToken();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const user = await authService.getUser(token || '');
+      setCurrentUserId(user.id);
+    };
+    getUser();
+  }, [token]);
 
   useEffect(() => {
     fetchRooms();
@@ -58,8 +69,14 @@ const Rooms: React.FC = () => {
   const handleJoin = async (room: Game) => {
     try {
       const game = await roomService.joinRoom(room.id);
-      navigate(`/game/${game.roomCode}`);
+      console.log(game);
+      const isSpectator = game.spectators.some(spectator => spectator.userId === currentUserId) || game.players?.length >= room.playerCount;
+      navigate(`/${isSpectator ? 'spectator' : 'game'}/${game.roomCode}`);
     } catch (err: any) {
+      if (err.response?.data?.message === "Game not found.") {
+        fetchRooms();
+      }
+      console.log(err);
       setError(err.response?.data?.message || 'Failed to join the game. Please try again.');
     }
   };
@@ -134,15 +151,12 @@ const Rooms: React.FC = () => {
                   <td>{room.roomCode}</td>
                   <td>{room.players.length} / {room.playerCount}</td>
                   <td>
-                    {room.players.length >= room.playerCount ? (
-                      <Button variant="secondary" onClick={() => handleJoin(room)}>
-                        Spectate
-                      </Button>
-                    ) : (
-                      <Button variant="primary" onClick={() => handleJoin(room)}>
-                        Join
-                      </Button>
-                    )}
+                    <Button 
+                      variant={room.players.length >= room.playerCount ? "secondary" : "primary"} 
+                      onClick={() => handleJoin(room)}
+                    >
+                      {room.players.length >= room.playerCount ? "Spectate" : "Join"}
+                    </Button>
                   </td>
                 </tr>
               ))

@@ -15,7 +15,7 @@ const Header: React.FC = () => {
           <Nav className="ms-auto">
             {user ? (
               <>
-                <Nav.Link as={NavLink} to="/rooms">Rooms</Nav.Link> {/* Added Rooms link */}
+                <Nav.Link as={NavLink} to="/rooms">Rooms</Nav.Link>
                 <Nav.Link disabled>Hello, {user.username}</Nav.Link>
                 <Button variant="outline-light" onClick={logout} className="ms-2">
                   Logout

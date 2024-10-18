@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { API_BASE_URL } from '@utils/constants';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL
+  baseURL: API_BASE_URL
 });
 
 // Add a request interceptor to include the token
