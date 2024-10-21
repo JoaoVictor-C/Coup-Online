@@ -131,6 +131,7 @@ namespace CoupGameBackend.Services
             return (false, "No pending reconnection found or reconnection window has expired.");
         }
 
+        // Start of Selection
         public async Task<(bool IsSuccess, string Message)> HandleDisconnection(string gameId, string userId)
         {
             var game = await _gameRepository.GetGameAsync(gameId);
@@ -138,6 +139,7 @@ namespace CoupGameBackend.Services
             {
                 return (false, "Game not found.");
             }
+
             var player = game.Players.FirstOrDefault(p => p.UserId == userId);
             if (player != null)
             {
@@ -198,6 +200,13 @@ namespace CoupGameBackend.Services
                             // Reconnection occurred, do nothing
                             PendingDisconnections.TryRemove(timeoutKey, out _);
                         }
+                        catch (Exception ex)
+                        {
+                            // Log the exception (assuming a logger is available)
+                            // _logger.LogError(ex, $"Error handling disconnection for user {userId} in game {gameId}.");
+                            Console.WriteLine($"Error handling disconnection timeout: {ex.Message}");
+                            PendingDisconnections.TryRemove(timeoutKey, out _);
+                        }
                     });
                 }
 
@@ -213,7 +222,10 @@ namespace CoupGameBackend.Services
                 await _gameRepository.UpdateGameAsync(game);
 
                 // Remove the spectator's connection
-                await RemoveUserConnection(userId, UserConnections.ContainsKey(userId) ? UserConnections[userId] : string.Empty);
+                if (UserConnections.TryGetValue(userId, out var connectionId))
+                {
+                    await RemoveUserConnection(userId, connectionId);
+                }
 
                 // Notify others about spectator departure
                 await _hubContext.Clients.Group(gameId).SendAsync("SpectatorDisconnected", userId);
