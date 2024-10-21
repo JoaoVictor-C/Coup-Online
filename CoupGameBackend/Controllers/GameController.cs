@@ -14,19 +14,36 @@ namespace CoupGameBackend.Controllers
     [Authorize]
     public class GameController : ControllerBase
     {
-        private readonly IGameService gameService;
-        private readonly IUserService userService;
-        private readonly IUserRepository userRepository;
-        private readonly IGameRepository gameRepository;
-        private readonly IHubContext<GameHub> hubContext;
+        private readonly IGameService _gameService;
+        private readonly IUserService _userService;
+        private readonly IUserRepository _userRepository;
+        private readonly IGameRepository _gameRepository;
+        private readonly IConnectionService _connectionService;
+        private readonly IHubContext<GameHub> _hubContext;
+        private readonly IChallengeService _challengeService;
+        private readonly IActionService _actionService;
+        private readonly ITurnService _turnService;
 
-        public GameController(IGameService gameService, IUserService userService, IUserRepository userRepository, IGameRepository gameRepository, IHubContext<GameHub> hubContext)
+        public GameController(
+            IGameService gameService,
+            IUserService userService,
+            IUserRepository userRepository,
+            IGameRepository gameRepository,
+            IHubContext<GameHub> hubContext,
+            IConnectionService connectionService,
+            IChallengeService challengeService,
+            IActionService actionService,
+            ITurnService turnService)
         {
-            this.gameService = gameService;
-            this.userService = userService;
-            this.userRepository = userRepository;
-            this.gameRepository = gameRepository;
-            this.hubContext = hubContext;
+            _gameService = gameService;
+            _userService = userService;
+            _userRepository = userRepository;
+            _gameRepository = gameRepository;
+            _hubContext = hubContext;
+            _connectionService = connectionService;
+            _challengeService = challengeService;
+            _actionService = actionService;
+            _turnService = turnService;
         }
 
         [HttpPost("create")]
@@ -43,11 +60,11 @@ namespace CoupGameBackend.Controllers
                 return Unauthorized(new { message = "User ID is missing." });
             }
 
-            var existingGameId = await gameRepository.GetGameIdForUser(userId);
+            var existingGameId = await _gameRepository.GetGameIdForUser(userId);
             if (!string.IsNullOrEmpty(existingGameId))
             {
                 // Kick the user from the existing game
-                var leaveResult = await gameService.LeaveGameAsync(existingGameId, userId);
+                var leaveResult = await _connectionService.LeaveGameAsync(existingGameId, userId);
                 if (!leaveResult.IsSuccess)
                 {
                     return StatusCode(500, new { message = "Failed to leave the previous game.", details = leaveResult.Message });
@@ -56,13 +73,13 @@ namespace CoupGameBackend.Controllers
 
             try
             {
-                var user = await userRepository.GetByIdAsync(userId);
+                var user = await _userRepository.GetByIdAsync(userId);
                 if (user == null)
                 {
                     return NotFound(new { message = "User not found." });
                 }
 
-                var game = await gameService.CreateGame(userId, request);
+                var game = await _gameService.CreateGame(userId, request);
 
                 return Ok(new { game.Id, game.RoomCode, game.GameName, game.IsPrivate, game.PlayerCount, game.CreatedAt, game.LeaderId, game.IsStarted });
             }
@@ -91,11 +108,11 @@ namespace CoupGameBackend.Controllers
                 return Unauthorized(new { message = "User ID is missing." });
             }
 
-            var existingGameId = await gameRepository.GetGameIdForUser(userId);
+            var existingGameId = await _gameRepository.GetGameIdForUser(userId);
             if (!string.IsNullOrEmpty(existingGameId))
             {
                 // Kick the user from the existing game
-                var leaveResult = await gameService.LeaveGameAsync(existingGameId, userId);
+                var leaveResult = await _connectionService.LeaveGameAsync(existingGameId, userId);
                 if (!leaveResult.IsSuccess)
                 {
                     return StatusCode(500, new { message = "Failed to leave the previous game.", details = leaveResult.Message });
@@ -104,22 +121,21 @@ namespace CoupGameBackend.Controllers
 
             try
             {
-                var gameId = await gameService.GetGameIdAsync(request.GameIdOrCode);
+                var gameId = await _gameRepository.GetGameIdAsync(request.GameIdOrCode);
                 if (string.IsNullOrEmpty(gameId))
                 {
                     return BadRequest(new { message = "Invalid game ID or room code." });
                 }
-
-                var game = await gameService.JoinGame(userId, gameId);
+                var game = await _connectionService.JoinGame(userId, gameId);
 
                 if (game.Players.Any(p => p.UserId == userId))
                 {
-                    await hubContext.Clients.Group(game.Id).SendAsync("PlayerJoined", userId);
+                    await _hubContext.Clients.Group(game.Id).SendAsync("PlayerJoined", userId);
                     return Ok(new { message = "Joined the game successfully as a player.", game.Id, game.RoomCode, game.GameName, game.IsPrivate, game.PlayerCount, game.CreatedAt, game.LeaderId, game.IsStarted, game.Spectators, game.Players });
                 }
                 else
                 {
-                    await hubContext.Clients.Group(game.Id).SendAsync("SpectatorJoined", userId);
+                    await _hubContext.Clients.Group(game.Id).SendAsync("SpectatorJoined", userId);
                     return Ok(new { message = "Joined the game successfully as a spectator.", game.Id, game.RoomCode, game.GameName, game.IsPrivate, game.PlayerCount, game.CreatedAt, game.LeaderId, game.IsStarted, game.Spectators, game.Players });
                 }
             }
@@ -133,56 +149,11 @@ namespace CoupGameBackend.Controllers
             }
             catch (Exception ex)
             {
-                // Log exception
+                Console.WriteLine($"JoinGame: An error occurred while joining the game. {ex.Message}");
                 return StatusCode(500, new { message = "An error occurred while joining the game.", details = ex.Message });
             }
         }
 
-        [HttpPost("disconnect")]
-        public async Task<IActionResult> Disconnect([FromBody] DisconnectRequest request)
-        {
-            if (request == null || string.IsNullOrEmpty(request.GameIdOrCode))
-            {
-                return BadRequest(new { message = "GameId or RoomCode is required." });
-            }
-
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(new { message = "User ID is missing." });
-            }
-
-            try
-            {
-                var user = await userRepository.GetByIdAsync(userId);
-                if (user == null)
-                {
-                    return NotFound(new { message = "User not found." });
-                }
-
-                var gameId = await gameService.GetGameIdAsync(request.GameIdOrCode);
-                if (string.IsNullOrEmpty(gameId))
-                {
-                    return BadRequest(new { message = "Invalid game ID or room code." });
-                }
-
-                var result = await gameService.HandleDisconnection(gameId, userId);
-                if (!result.IsSuccess)
-                    return BadRequest(new { message = result.Message });
-
-                return Ok(new { message = "Player disconnected successfully." });
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                return StatusCode(500, new { message = "An error occurred while handling disconnection.", details = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Starts the game. Only the game leader can perform this action.
-        /// POST: api/game/start
-        /// </summary>
         [HttpPost("start")]
         public async Task<IActionResult> StartGame([FromBody] StartGameRequest request)
         {
@@ -199,16 +170,16 @@ namespace CoupGameBackend.Controllers
 
             try
             {
-                var gameId = await gameService.GetGameIdAsync(request.GameIdOrCode);
+                var gameId = await _gameRepository.GetGameIdAsync(request.GameIdOrCode);
                 if (string.IsNullOrEmpty(gameId))
                 {
                     return BadRequest(new { message = "Invalid game ID or room code." });
                 }
 
-                var result = await gameService.StartGameAsync(gameId, userId);
+                var result = await _gameService.StartGameAsync(gameId, userId);
                 if (result.IsSuccess)
                 {
-                    var game = await gameRepository.GetGameByIdAsync(gameId);
+                    var game = await _gameRepository.GetGameAsync(gameId);
                     return Ok(new { message = result.Message, gameId = gameId, game.IsStarted, game.LeaderId });
                 }
                 else
@@ -243,16 +214,16 @@ namespace CoupGameBackend.Controllers
 
             try
             {
-                var gameId = await gameService.GetGameIdAsync(request.GameIdOrCode);
+                var gameId = await _gameRepository.GetGameIdAsync(request.GameIdOrCode);
                 if (string.IsNullOrEmpty(gameId))
                 {
                     return BadRequest(new { message = "Invalid game ID or room code." });
                 }
 
-                var result = await gameService.RestartGameAsync(gameId, userId);
+                var result = await _gameService.RestartGameAsync(gameId, userId);
                 if (result.IsSuccess)
                 {
-                    var game = await gameRepository.GetGameByIdAsync(gameId);
+                    var game = await _gameRepository.GetGameAsync(gameId);
                     return Ok(new { message = result.Message, gameId = gameId, game.IsStarted, game.LeaderId });
                 }
                 else
@@ -286,13 +257,13 @@ namespace CoupGameBackend.Controllers
 
             try
             {
-                var gameId = await gameService.GetGameIdAsync(request.GameIdOrCode);
+                var gameId = await _gameRepository.GetGameIdAsync(request.GameIdOrCode);
                 if (string.IsNullOrEmpty(gameId))
                 {
                     return BadRequest(new { message = "Invalid game ID or room code." });
                 }
 
-                var result = await gameService.SwitchToSpectatorAsync(gameId, userId);
+                var result = await _gameService.SwitchToSpectatorAsync(gameId, userId);
                 if (result.IsSuccess)
                 {
                     return Ok(new { message = result.Message });

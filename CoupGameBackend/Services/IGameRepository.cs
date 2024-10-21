@@ -7,16 +7,15 @@ namespace CoupGameBackend.Services
     public interface IGameRepository
     {
         Task<Game> CreateGameAsync(Game game);
-        Task<Game> GetGameByIdAsync(string gameId);
-        Task<Game> GetGameByRoomCodeAsync(string roomCode);
         Task<Game?> GetGameByIdOrCodeAsync(string idOrCode);
         Task<string> GetGameIdForUser(string userId);
         Task UpdateGameAsync(Game game);
         Task DeleteGameAsync(string gameId);
-        
-        // New Methods
         Task<IEnumerable<Game>> GetPublicGamesAsync();
         Task<IEnumerable<Game>> SearchGamesAsync(string query);
         Task RestartGameAsync(string gameId);
+        Task<Game?> GetGameAsync(string gameId);
+        Task<string> GetGameIdAsync(string gameIdOrCode);
+        Task<string> GetUsernameAsync(string userId);
     }
 }

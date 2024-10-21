@@ -6,6 +6,9 @@ using System.Text;
 using MongoDB.Driver;
 using MongoDB.Bson;
 using Microsoft.OpenApi.Models;
+using CoupGameBackend.Models;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Conventions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +29,7 @@ builder.Services.AddSingleton<IMongoClient>(s => new MongoClient(mongoSettings))
 builder.Services.AddSingleton(s =>
 {
     var client = s.GetRequiredService<IMongoClient>();
-    return client.GetDatabase("CoupOnline");
+    return client.GetDatabase("CoupGameDB");
 });
 
 // Add services to the container.
@@ -117,19 +120,31 @@ builder.Services.AddSwaggerGen(c =>
 // Register Repositories and Services
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<IGameRepository, GameRepository>();
-builder.Services.AddScoped<IUserService, UserService>(); // Changed to Scoped for better management
-builder.Services.AddScoped<IGameService, GameService>(); // Changed to Scoped for better management
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IGameService, GameService>();
+
+// Register new services
+builder.Services.AddScoped<IActionService, ActionService>();
+builder.Services.AddScoped<IConnectionService, ConnectionService>();
+builder.Services.AddScoped<ITurnService, TurnService>();
+builder.Services.AddScoped<IChallengeService, ChallengeService>();
+builder.Services.AddScoped<IGameStateService, GameStateService>();
+builder.Services.AddSingleton<ISchedulingService, SchedulingService>();
 
 // Configure CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",
         corsPolicyBuilder => corsPolicyBuilder
-            .WithOrigins("https://coup-online-nu.vercel.app", "http://localhost:3000", "http://localhost:5173")
+            .WithOrigins("https://coup-online-nu.vercel.app", "http://localhost:3000")
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials());
 });
+
+// Register MongoDB class maps
+RegisterMongoClassMaps();
 
 var app = builder.Build();
 
@@ -169,3 +184,41 @@ app.MapControllers();
 app.MapHub<GameHub>("/gameHub");
 
 app.Run();
+
+void RegisterMongoClassMaps()
+{
+    // Apply camel case convention globally
+    var conventionPack = new ConventionPack { new CamelCaseElementNameConvention() };
+    ConventionRegistry.Register("CamelCase", conventionPack, t => true);
+
+    if (!BsonClassMap.IsClassMapRegistered(typeof(ActionParameters)))
+    {
+        BsonClassMap.RegisterClassMap<ActionParameters>(cm =>
+        {
+            cm.AutoMap();
+            cm.SetIsRootClass(true);
+            cm.SetDiscriminator("ActionParameters");
+        });
+    }
+
+    RegisterConcreteClassMap<CoupActionParameters>("Coup");
+    RegisterConcreteClassMap<StealActionParameters>("Steal");
+    RegisterConcreteClassMap<AssassinateActionParameters>("Assassinate");
+    RegisterConcreteClassMap<ExchangeActionParameters>("Exchange");
+    RegisterConcreteClassMap<ForeignAidActionParameters>("ForeignAid");
+    RegisterConcreteClassMap<TaxActionParameters>("Tax");
+    RegisterConcreteClassMap<BlockActionParameters>("Block");
+    RegisterConcreteClassMap<ConcreteActionParameters>("Concrete");
+}
+
+void RegisterConcreteClassMap<T>(string discriminator) where T : ActionParameters
+{
+    if (!BsonClassMap.IsClassMapRegistered(typeof(T)))
+    {
+        BsonClassMap.RegisterClassMap<T>(cm =>
+        {
+            cm.AutoMap();
+            cm.SetDiscriminator(discriminator);
+        });
+    }
+}

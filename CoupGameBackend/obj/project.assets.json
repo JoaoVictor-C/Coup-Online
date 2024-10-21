@@ -3379,11 +3379,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\coup-online-backend\\CoupGameBackend.csproj",
+      "projectUniqueName": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\CoupGameBackend.csproj",
       "projectName": "CoupGameBackend",
-      "projectPath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\coup-online-backend\\CoupGameBackend.csproj",
+      "projectPath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\CoupGameBackend.csproj",
       "packagesPath": "C:\\Users\\fabio\\.nuget\\packages\\",
-      "outputPath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\coup-online-backend\\obj\\",
+      "outputPath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\fabio\\AppData\\Roaming\\NuGet\\NuGet.Config"

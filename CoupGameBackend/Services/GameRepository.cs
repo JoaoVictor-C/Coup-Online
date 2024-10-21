@@ -9,12 +9,13 @@ namespace CoupGameBackend.Services
     public class GameRepository : IGameRepository
     {
         private readonly IMongoCollection<Game> _games;
-
-        public GameRepository(IConfiguration configuration)
+        private readonly IUserRepository _userRepository;
+        public GameRepository(IConfiguration configuration, IUserRepository userRepository)
         {
             var client = new MongoClient(configuration.GetConnectionString("MongoDB"));
             var database = client.GetDatabase("CoupGameDB");
             _games = database.GetCollection<Game>("Games");
+            _userRepository = userRepository;
         }
 
         public async Task<Game> CreateGameAsync(Game game)
@@ -38,19 +39,14 @@ namespace CoupGameBackend.Services
             return await _games.Find(g => g.Id == idOrCode || g.RoomCode == idOrCode).FirstOrDefaultAsync();
         }
 
-        public async Task<Game> GetGameByIdAsync(string gameId)
-        {
-            return await _games.Find(g => g.Id == gameId).FirstOrDefaultAsync();
-        }
-
-        public async Task<Game> GetGameByRoomCodeAsync(string roomCode)
+        public async Task<Game?> GetGameByRoomCodeAsync(string roomCode)
         {
             return await _games.Find(g => g.RoomCode == roomCode).FirstOrDefaultAsync();
         }
 
         public async Task<string> GetGameIdForUser(string userId)
         {
-            var game = await _games.Find(g => g.Players.Any(p => p.UserId == userId)).FirstOrDefaultAsync();
+            var game = await _games.Find(g => g.Players.Any(p => p.UserId == userId) || g.Spectators.Any(s => s.UserId == userId)).FirstOrDefaultAsync();
             return game?.Id ?? string.Empty;
         }
 
@@ -89,7 +85,6 @@ namespace CoupGameBackend.Services
                 game.CentralDeck = InitializeDeck(); // Implement deck initialization logic
                 await UpdateGameAsync(game);
             }
-            Console.WriteLine(JsonConvert.SerializeObject(game));
         }
 
         /// <summary>
@@ -109,6 +104,35 @@ namespace CoupGameBackend.Services
             }
 
             return deck;
+        }
+
+        private bool IsRoomCode(string input)
+        {
+            return input.Length == 4 && input.All(char.IsLetter);
+        }
+
+        public async Task<Game?> GetGameAsync(string idOrCode)
+        {
+            if (IsRoomCode(idOrCode))
+            {
+                return await GetGameByRoomCodeAsync(idOrCode);
+            }
+            else
+            {
+                return await GetGameByIdOrCodeAsync(idOrCode);
+            }
+        }
+
+        public async Task<string> GetUsernameAsync(string userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            return user?.Username ?? "Unknown";
+        }
+
+        public async Task<string> GetGameIdAsync(string gameIdOrCode)
+        {
+            var game = await GetGameAsync(gameIdOrCode);
+            return game?.Id ?? string.Empty;
         }
     }
 }
