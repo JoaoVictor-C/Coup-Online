@@ -1,7 +1,7 @@
-export const SIGNALR_HUB_URL = process.env.NODE_ENV === 'production'
-  ? process.env.VITE_APP_SIGNALR_HUB_URL
-  : 'http://localhost:5000/gameHub';
+export const SIGNALR_HUB_URL = import.meta.env.DEV
+  ? import.meta.env.VITE_APP_SIGNALR_HUB_URL_DEVELOPMENT
+  : import.meta.env.VITE_APP_SIGNALR_HUB_URL;
 
-export const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? process.env.VITE_APP_API_BASE_URL
-  : 'http://localhost:5000/api';
+export const API_BASE_URL = import.meta.env.DEV
+  ? import.meta.env.VITE_APP_API_BASE_URL_DEVELOPMENT
+  : import.meta.env.VITE_APP_API_BASE_URL;
