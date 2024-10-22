@@ -3,6 +3,7 @@ using CoupGameBackend.Models;
 using Microsoft.AspNetCore.SignalR;
 using CoupGameBackend.Hubs;
 using System.Linq;
+using System.Text.Json;
 
 namespace CoupGameBackend.Services
 {
@@ -59,6 +60,7 @@ namespace CoupGameBackend.Services
                 RoomCode = game.RoomCode,
                 CreatedAt = game.CreatedAt,
                 LeaderId = game.LeaderId,
+                WinnerId = game.WinnerId,
                 Players = game.Players.Select(p => new Player
                 {
                     Username = p.Username,
@@ -91,6 +93,7 @@ namespace CoupGameBackend.Services
             int currentIndex = activePlayers.FindIndex(p => p.UserId == game.CurrentTurnUserId);
             int nextIndex = (currentIndex + 1) % activePlayers.Count;
             game.CurrentTurnUserId = activePlayers[nextIndex].UserId;
+            Console.WriteLine($"Updated turn to {game.CurrentTurnUserId}");
         }
 
         public string GetRoleForAction(string actionType)

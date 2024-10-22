@@ -63,7 +63,7 @@ namespace CoupGameBackend.Services
                 return game;
             }
 
-            if (game.Players.Count >= game.PlayerCount)
+            if (game.Players.Count >= game.PlayerCount || game.IsStarted)
             {
                 // Game is full; add as spectator
                 game.Spectators.Add(new Spectator { UserId = userId });

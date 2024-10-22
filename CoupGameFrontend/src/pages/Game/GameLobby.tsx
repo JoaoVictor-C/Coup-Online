@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Game } from '@utils/types';
 import { Button, Container, Alert, Card, ListGroup, Badge, Row, Col } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface GameLobbyProps {
   game: Game;
@@ -37,29 +37,32 @@ const GameLobby: React.FC<GameLobbyProps> = ({ game, currentUserId, onSwitchToSp
                   Players ({game.players.length}/{game.playerCount})
                 </Card.Text>
                 <ListGroup variant="flush" className="mb-4">
-                  {game.players.map((player, index) => (
-                    <motion.div
-                      key={`player-${player.userId}`}
-                      initial={{ opacity: 0, x: -50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <ListGroup.Item className="d-flex justify-content-between align-items-center py-3">
-                        <span>
-                          <i className="bi bi-person-circle me-2"></i>
-                          {player.username}
-                        </span>
-                        {!player.isActive && (
-                          <Badge bg="danger" pill>
-                            Inactive
-                          </Badge>
-                        )}
-                        {player.userId === game.leaderId && (
-                          <Badge bg="success" pill>Leader</Badge>
-                        )}
-                      </ListGroup.Item>
-                    </motion.div>
-                  ))}
+                  <AnimatePresence>
+                    {game.players.map((player, index) => (
+                      <motion.div
+                        key={`player-${player.userId}`}
+                        initial={{ opacity: 0, x: -50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 50 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <ListGroup.Item className="d-flex justify-content-between align-items-center py-3">
+                          <span>
+                            <i className="bi bi-person-circle me-2"></i>
+                            {player.username}
+                          </span>
+                          {!player.isActive && (
+                            <Badge bg="danger" pill>
+                              Inactive
+                            </Badge>
+                          )}
+                          {player.userId === game.leaderId && (
+                            <Badge bg="success" pill>Leader</Badge>
+                          )}
+                        </ListGroup.Item>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </ListGroup>
                 {!isSpectator && game.leaderId === currentUserId && (
                   <div className="d-grid gap-3">
@@ -117,21 +120,40 @@ const GameLobby: React.FC<GameLobbyProps> = ({ game, currentUserId, onSwitchToSp
       {game.spectators.length > 0 && (
         <Row className="justify-content-center mt-4 w-50">
           <Col md={8} lg={6}>
-            <Card className="bg-light">
-              <Card.Body>
-                <Card.Title as="h5" className="text-center mb-3">
-                  Spectators ({game.spectators.length})
-                </Card.Title>
-                <ListGroup variant="flush">
-                  {game.spectators.map((spectator, index) => (
-                    <ListGroup.Item key={`spectator-${spectator.userId}`} className="bg-light">
-                      <i className="bi bi-eye me-2"></i>
-                      {spectator.username}
-                    </ListGroup.Item>
-                  ))}
-                </ListGroup>
-              </Card.Body>
-            </Card>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="bg-light shadow-sm">
+                <Card.Header className="bg-secondary text-white">
+                  <h5 className="mb-0 text-center">
+                    <i className="bi bi-binoculars me-2"></i>
+                    Spectators ({game.spectators.length})
+                  </h5>
+                </Card.Header>
+                <Card.Body>
+                  <ListGroup variant="flush">
+                    <AnimatePresence>
+                      {game.spectators.map((spectator) => (
+                        <motion.div
+                          key={`spectator-${spectator.userId}`}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <ListGroup.Item className="d-flex align-items-center bg-light">
+                            <i className="bi bi-eye me-3 text-muted"></i>
+                            <span>{spectator.username}</span>
+                          </ListGroup.Item>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </ListGroup>
+                </Card.Body>
+              </Card>
+            </motion.div>
           </Col>
         </Row>
       )}

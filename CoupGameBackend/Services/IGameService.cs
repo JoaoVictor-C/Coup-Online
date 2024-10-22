@@ -14,6 +14,7 @@ namespace CoupGameBackend.Services
         void CancelScheduledDeletion(string gameId);
         Task<(bool IsSuccess, string Message)> StartGameAsync(string gameId, string userId);
         Task<(bool IsSuccess, string Message)> RestartGameAsync(string gameId, string userId);
+        Task<(bool IsSuccess, string Message)> ResetGameAsync(string gameId, string userId);
         Task<(bool IsSuccess, string Message)> SwitchToSpectatorAsync(string gameId, string userId);
         bool HasPendingAction(string gameId);
         PendingAction? GetPendingAction(string gameId);

@@ -496,9 +496,12 @@ namespace CoupGameBackend.Services
         private async Task<(bool IsSuccess, string Message)> HandlePassResponse(Game game, string userId)
         {
             // Logic for passing the action
-            game.PendingAction.IsActionResolved = true;
-            game.PendingAction.Responses.Add(userId, "pass");
-
+            if (!game.PendingAction.Responses.ContainsKey(userId))
+            {
+                game.PendingAction.Responses.Add(userId, "pass");
+            } else {
+                return (false, "You already passed.");
+            }
             // Log the pass action
             game.ActionsHistory.Add(new ActionLog
             {
@@ -507,15 +510,16 @@ namespace CoupGameBackend.Services
                 Action = "Pass"
             });
 
-            int activePlayerCount = game.Players.Count(p => p.Influences > 0) - 1;
+            int activePlayerCount = game.Players.Count(p => p.Influences > 0 && p.IsActive) - 1;
+            Console.WriteLine($"Active player count: {activePlayerCount}, Responses count: {game.PendingAction.Responses.Count}");
             if (game.PendingAction.Responses.Count == activePlayerCount)
             {
                 await HandleActionAsync(game, game.PendingAction);
-            }
-            if (game.PendingAction.ActionType != "exchangeSelect")
-            {
-                Console.WriteLine(game.PendingAction.ActionType);
-                game.PendingAction = null;
+                game.PendingAction.IsActionResolved = true;
+                if (game.PendingAction.ActionType != "exchangeSelect")
+                {
+                    game.PendingAction = null;
+                }
             }
 
             await _gameRepository.UpdateGameAsync(game);
@@ -526,7 +530,6 @@ namespace CoupGameBackend.Services
 
         private async Task<(bool IsSuccess, string Message)> HandleBlockResponse(Game game, string userId, string? blockOption)
         {
-            Console.WriteLine($"Handling block response for game {game.Id} by user {userId} with block option {blockOption}");
             // Logic for blocking the action
             var challengeResult = await _challengeService.HandleBlockAsync(game, userId, blockOption);
 
@@ -574,7 +577,6 @@ namespace CoupGameBackend.Services
 
                 if (challengeResult.HasRole == true)
                 {
-                    await HandleActionAsync(game, game.PendingAction, false);
                     await ExecuteDrawCardAsync(game, game.PendingAction);
                 }
                 else
@@ -621,6 +623,9 @@ namespace CoupGameBackend.Services
             var returnCardAction = new PendingAction
             {
                 ActionType = "ReturnCard",
+                OriginalActionType = pendingAction.ActionType,
+                TargetId = pendingAction.TargetId,
+                Parameters = pendingAction.Parameters,
                 InitiatorId = player.UserId,
                 IsActionResolved = false,
                 Responses = new Dictionary<string, string>()
@@ -674,10 +679,20 @@ namespace CoupGameBackend.Services
             };
             game.ActionsHistory.Add(actionLog);
 
-            // Resolve the pending action
-            game.PendingAction = null;
+            // Return the action to its original state
+            game.PendingAction.ActionType = game.PendingAction.OriginalActionType;
 
-            _gameStateService.UpdateTurn(game);
+            // Execute the action
+            await HandleActionAsync(game, game.PendingAction, false);
+
+            // Resolve the pending action
+            Console.WriteLine(game.PendingAction.ActionType);
+            if (game.PendingAction.ActionType != "exchangeSelect")
+            {
+                game.PendingAction = null;
+                _gameStateService.UpdateTurn(game);
+            }
+
             await _gameRepository.UpdateGameAsync(game);
 
             // Notify all players about the card return
@@ -727,9 +742,6 @@ namespace CoupGameBackend.Services
             var blockOption = blockParameters.BlockOption;
             bool blockerHasCard = blocker.Hand.Any(c => c.Name.ToLower() == blockOption.ToLower() && !c.IsRevealed);
 
-            // Blocker card:
-            Console.WriteLine($"Blocker has card: {blockerHasCard}, card: {blockOption}");
-
             if (blockerHasCard)
             {
                 // Challenger loses an influence
@@ -751,6 +763,7 @@ namespace CoupGameBackend.Services
                     var returnCardAction = new PendingAction
                     {
                         ActionType = "ReturnCard",
+                        OriginalActionType = game.PendingAction.OriginalActionType,
                         InitiatorId = blocker.UserId,
                         IsActionResolved = false,
                         Responses = new Dictionary<string, string>()
@@ -792,14 +805,16 @@ namespace CoupGameBackend.Services
                     IsActionResolved = false
                 };
 
-                await HandleActionAsync(game, game.PendingAction);
+                await HandleActionAsync(game, game.PendingAction, false);
 
-                game.PendingAction = null;
+                Console.WriteLine(game.PendingAction.ActionType);
+                if (game.PendingAction.ActionType != "exchangeSelect")
+                {
+                    game.PendingAction = null;
+                }
 
                 await _gameStateService.CheckGameOver(game);
-
                 _gameStateService.UpdateTurn(game);
-
                 await _gameRepository.UpdateGameAsync(game);
                 await _hubContext.Clients.Group(game.Id.ToString()).SendAsync("ChallengeSucceeded", blocker.Username, cardToReveal?.Name);
                 return (true, "Challenge succeeded. Blocker lost an influence. Original action to be executed.");

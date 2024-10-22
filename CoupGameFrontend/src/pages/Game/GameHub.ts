@@ -1,10 +1,11 @@
-import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
+import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { SIGNALR_HUB_URL } from '@utils/constants';
 import { ActionResponse, Game, GameAction } from '@utils/types';
 
 class GameHub {
     private connection: HubConnection | null = null;
-
+    private reconnectAttempts: number = 10;
+    private reconnectInterval: number = 1000;
     constructor(token: string) {
         this.connection = new HubConnectionBuilder()
             .withUrl(`${SIGNALR_HUB_URL}?access_token=${token}`)
@@ -25,6 +26,15 @@ class GameHub {
         try {
             await this.connection?.stop();
             console.log('Disconnected from GameHub');
+            // Try 5 times to reconnect
+            for (let i = 0; i < this.reconnectAttempts; i++) {
+                await this.connect();
+                await new Promise(resolve => setTimeout(resolve, this.reconnectInterval));
+                if (this.connection?.state === HubConnectionState.Connected) {
+                    console.log('Reconnected to GameHub');
+                    break;
+                }
+            }
         } catch (err) {
             console.error('Error disconnecting:', err);
         }

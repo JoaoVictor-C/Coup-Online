@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Game, CardImages, Action, backCard, cardImages, ActionResponse, PendingAction, Player, Card } from '@utils/types';
+import { Game, CardImages, Action, backCard, cardImages, ActionResponse, PendingAction, Player, Card, Spectator } from '@utils/types';
 import { Button, Modal, Container, Row, Col, Card as BootstrapCard, ListGroup, Badge, Tooltip, OverlayTrigger, Spinner, Alert } from 'react-bootstrap';
 import { FaCoins, FaUserShield } from 'react-icons/fa';
 import { motion } from 'framer-motion';
@@ -20,6 +20,7 @@ interface GameBoardProps {
   respondToBlock: (gameId: string, isChallenge: boolean) => void;
   respondToExchangeSelect: (gameId: string, card1: string, card2: string) => void;
   onReturnToLobby: () => void;
+  spectators: Spectator[];
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -33,7 +34,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
   handleRespondToPendingAction,
   respondToReturnCard,
   respondToBlock,
-  respondToExchangeSelect
+  respondToExchangeSelect,
+  spectators
 }) => {
   const currentUser = game.players.find(p => p.userId === currentUserId);
   const isGameOver = game.isGameOver;
@@ -70,7 +72,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   const handleActionSelect = (action: Action) => {
-    // For actions requiring a target, ensure TargetUserId is set
     if (action.actionType === 'coup' || action.actionType === 'steal' || action.actionType === 'assassinate') {
       if (!action.targetUserId) {
         alert('Please select a target for this action.');
@@ -117,7 +118,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   }, [game, setGameState, currentUserId]);
 
   useEffect(() => {
-    if (game.pendingAction && game.pendingAction.actionType === "ReturnCard" && game.pendingAction.initiatorId === currentUserId	) {
+    if (game.pendingAction && game.pendingAction.actionType === "ReturnCard" && game.pendingAction.initiatorId === currentUserId) {
       const player = game.players.find(p => p.userId === currentUserId);
       if (player) {
         setCardsToReturn(player.hand);
@@ -125,7 +126,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
       }
     }
   }, [game, currentUserId]);
-
 
   useEffect(() => {
     if (game.pendingAction) {
@@ -136,7 +136,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
   }, [game.pendingAction]);
 
   const handleCardReturn = (cardId: string) => {
-    // Call the GameHub to send the selected card back
     respondToReturnCard(game.roomCode, cardId);
     setShowReturnCardModal(false);
   };
@@ -160,16 +159,19 @@ const GameBoard: React.FC<GameBoardProps> = ({
             </BootstrapCard.Header>
             <BootstrapCard.Body style={{ maxHeight: '200px', overflowY: 'auto' }}>
               <ListGroup variant="flush">
-                {game.actionsHistory.map((log, index) => {
-                  const player = game.players.find(p => p.userId === log.playerId);
-                  const targetPlayer = log.targetId ? game.players.find(p => p.userId === log.targetId) : null;
-                  return (
-                    <ListGroup.Item key={index}>
-                      <strong>{player?.username}:</strong> {log.action}
-                      {targetPlayer && ` → ${targetPlayer.username}`}
+                {game.actionsHistory.map((log, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <ListGroup.Item>
+                      <strong>{game.players.find(p => p.userId === log.playerId)?.username}:</strong> {log.action}
+                      {log.targetId && ` → ${game.players.find(p => p.userId === log.targetId)?.username}`}
                     </ListGroup.Item>
-                  );
-                })}
+                  </motion.div>
+                ))}
               </ListGroup>
             </BootstrapCard.Body>
           </BootstrapCard>
@@ -184,18 +186,23 @@ const GameBoard: React.FC<GameBoardProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <BootstrapCard className={`text-center ${player.userId === currentUserId && !isSpectator ? 'border-primary' : ''}`}>
+              <BootstrapCard className={`text-center ${player.userId === currentUserId && !isSpectator ? 'border-primary' : ''} ${player.userId === game.currentTurnUserId ? 'bg-light border-warning' : ''}`}>
                 <BootstrapCard.Header className="bg-primary text-white">
                   {player.username}
                   {player.userId === game.leaderId && <Badge bg="success" className="ms-2">Leader</Badge>}
+                  {player.userId === game.currentTurnUserId && (
+                    <Badge bg="warning" className="ms-2">
+                      {player.userId === currentUserId ? "Your turn" : "Current turn"}
+                    </Badge>
+                  )}
                 </BootstrapCard.Header>
                 <BootstrapCard.Body>
                   <p><FaCoins /> {player.coins} Coins</p>
                   <div className="d-flex justify-content-center gap-2">
                     {player.hand.map((card, index) => {
                       const isCurrentUser = player.userId === currentUserId;
-
-                      if (card.isRevealed) {
+                      
+                      if (card.isRevealed || isSpectator) {
                         return (
                           <div className="img-fluid" key={index}>
                             <img
@@ -267,6 +274,32 @@ const GameBoard: React.FC<GameBoardProps> = ({
         ))}
       </Row>
 
+      {/* Spectators Section */}
+      {isSpectator && (
+        <Row className="w-75 mb-4 d-flex justify-content-center">
+          <Col>
+            <BootstrapCard>
+              <BootstrapCard.Header className="bg-secondary text-white">
+                <FaUserShield /> Spectators
+              </BootstrapCard.Header>
+              <BootstrapCard.Body style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                {spectators.length === 0 ? (
+                  <p>No spectators currently.</p>
+                ) : (
+                  <ListGroup variant="flush">
+                    {spectators.map((spectator, index) => (
+                      <ListGroup.Item key={index}>
+                        {spectator.username}
+                      </ListGroup.Item>
+                    ))}
+                  </ListGroup>
+                )}
+              </BootstrapCard.Body>
+            </BootstrapCard>
+          </Col>
+        </Row>
+      )}
+
       {/* Action Button */}
       {!isSpectator && !isGameOver && gameState === 'ACTIVE' && (
         <Button variant="primary" onClick={openActionModal}>
@@ -296,17 +329,31 @@ const GameBoard: React.FC<GameBoardProps> = ({
       )}
 
       {/* Action Selection Modal */}
-      <ActionSelectionModal
-        show={showActionModal}
-        onHide={closeActionModal}
-        onSelectAction={handleActionSelect}
-        game={game}
-        currentUserId={currentUserId}
-      />
+      {!isSpectator && !game.isGameOver && gameState === 'ACTIVE' && (
+        <ActionSelectionModal
+          show={showActionModal}
+          onHide={closeActionModal}
+          onSelectAction={handleActionSelect}
+          game={game}
+          currentUserId={currentUserId}
+        />
+      )}
 
       {/* Pending Action Modal */}
       <PendingActionModal
-        show={!!currentPendingAction && gameState !== 'ACTION_BLOCKED' && gameState !== 'ACTION_CHALLENGED' && currentPendingAction.initiatorId !== currentUserId && currentPendingAction.actionType !== 'ReturnCard' && currentPendingAction.actionType !== 'blockAttempt' && (currentPendingAction.actionType !== 'exchangeSelect' || currentPendingAction.initiatorId === currentUserId) && gameState !== 'GAME_OVER'}
+        show={
+          !!currentPendingAction &&
+          !isSpectator &&
+          currentPendingAction.initiatorId !== currentUserId &&
+          gameState !== 'ACTION_BLOCKED' &&
+          gameState !== 'ACTION_CHALLENGED' &&
+          gameState !== 'GAME_OVER' &&
+          currentPendingAction.actionType !== 'ReturnCard' &&
+          currentPendingAction.actionType !== 'blockAttempt' &&
+          (currentPendingAction.actionType !== 'exchangeSelect' || currentPendingAction.initiatorId === currentUserId) &&
+          !currentPendingAction.responses[currentUserId] &&
+          !!game.players.find(p => p.userId === currentUserId)?.isActive
+        }
         action={currentPendingAction as Action | undefined}
         onRespond={handleRespond}
         onHide={() => setCurrentPendingAction(null)}

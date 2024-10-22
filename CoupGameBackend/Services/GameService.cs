@@ -174,6 +174,33 @@ namespace CoupGameBackend.Services
             return (true, "Game started successfully.");
         }
 
+        public async Task<(bool IsSuccess, string Message)> ResetGameAsync(string gameId, string userId)
+        {
+            var game = await _gameRepository.GetGameAsync(gameId);
+            if (game == null)
+                return (false, "Game not found.");
+
+            game.IsStarted = false;
+            game.IsGameOver = false;
+            game.CurrentTurnUserId = string.Empty;
+            game.WinnerId = null;
+            game.PendingAction = null;
+            game.ActionInitiatorId = null;
+            game.Players.ForEach(player =>
+            {
+                player.Coins = 2;
+                player.Influences = 2;
+                player.IsActive = true;
+                player.Hand.Clear();
+            });
+            
+            game.CentralDeck = InitializeDeck();
+            ShuffleDeck(game);
+
+            await _gameRepository.UpdateGameAsync(game);
+            return (true, "Game reset successfully.");
+        }
+
         public async Task<(bool IsSuccess, string Message)> RestartGameAsync(string gameId, string userId)
         {
             var game = await _gameRepository.GetGameAsync(gameId);

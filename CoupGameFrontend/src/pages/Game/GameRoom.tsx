@@ -38,11 +38,7 @@ const GameRoom: React.FC = () => {
     newGameHub.connect()
       .then(() => {
         console.log('Connected to GameHub');
-        if (isSpectator) {
-          return newGameHub.switchToSpectator(id || '');
-        } else {
-          return newGameHub.reconnect(id || '');
-        }
+        return newGameHub.reconnect(id || '');
       })
       .then(() => {
         return newGameHub.getGameState(id || '');
@@ -61,6 +57,16 @@ const GameRoom: React.FC = () => {
         .catch((err: any) => console.error('Error disconnecting:', err));
     };
   }, [id, isSpectator]);
+
+  // If the user isn't active, but he is on the page, try to reconnect
+  useEffect(() => {
+    if (!gameHub) return;
+    gameHub.on('ReconnectFailed', (message: string) => {
+      if (message === 'Player is not active.') {
+        gameHub.reconnect(id || '');
+      }
+    });
+  }, [gameHub, id]);
 
   useEffect(() => {
     authService.getUser(getToken() || '').then(user => {
@@ -350,14 +356,24 @@ const GameRoom: React.FC = () => {
   };
 
   if (error) {
-    return <Container className="my-5"><Alert variant="danger">{error}</Alert></Container>;
+    return (
+      <Container className="d-flex flex-column align-items-center justify-content-center" style={{ height: '100vh' }}>
+        <Alert variant="danger">{error}</Alert>
+        <Button variant="primary" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </Container>
+    );
   }
 
   if (loading || !game) {
+    if (!game) {
+      gameHub?.reconnect(id || '');
+    }
     return (
-      <Container className="my-5 text-center">
+      <Container className="d-flex flex-column align-items-center justify-content-center" style={{ height: '100vh' }}>
         <Spinner animation="border" variant="primary" />
-        <div>Loading game...</div>
+        <p className="mt-3">Connecting to the game...</p>
       </Container>
     );
   }
@@ -386,6 +402,7 @@ const GameRoom: React.FC = () => {
           respondToReturnCard={respondToReturnCard}
           respondToBlock={respondToBlock}
           respondToExchangeSelect={respondToExchangeSelect}
+          spectators={game.spectators}
         />
       )}
 

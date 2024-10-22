@@ -346,8 +346,7 @@ namespace CoupGameBackend.Hubs
             var game = await _gameRepository.GetGameAsync(gameIdOrCode);
             if (game != null && game.LeaderId == userId)
             {
-                game.IsStarted = false;
-                await _gameRepository.UpdateGameAsync(game);
+                await _gameService.ResetGameAsync(game.Id, userId);
                 await _gameStateService.EmitGameUpdatesToUsers(game.Id);
             }
         }
@@ -439,7 +438,6 @@ namespace CoupGameBackend.Hubs
         public async Task RespondToPendingAction(string gameId, string response, string? blockOption)
         {
             var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            Console.WriteLine($"RespondToPendingAction: Responding to pending action '{response}' for game '{gameId}' by user '{userId}'.");
 
             if (string.IsNullOrEmpty(userId))
             {
