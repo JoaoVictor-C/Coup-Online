@@ -69,7 +69,9 @@
         "name": "Exchange",
         "description": "Exchange: Draw 2 cards from the central deck",
         "selectCards": "Select Cards to Keep",
-        "selectPrompt": "Select 2 cards to return to the deck"
+        "selectCardsToKeep": "Select {{count}} cards to keep",
+        "selectPrompt": "Select {{count}} cards to return to the deck",
+        "selectKeepPrompt": "Select {{count}} cards to keep"
       },
       "tax": {
         "name": "Tax",
@@ -119,9 +121,15 @@
     "status": {
       "gameOver": "Game Over",
       "winner": "Winner",
-      "you": "You"
+      "you": "You",
+      "spectator": "Spectator",
+      "leader": "Leader",
+      "inactive": "Inactive",
+      "currentTurn": "Current Turn"
     },
     "gameOver": {
+      "title": "Game Over",
+      "winner": "Winner",
       "waiting": "Waiting for leader to restart or exit..."
     },
     "resources": {

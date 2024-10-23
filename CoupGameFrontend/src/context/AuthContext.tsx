@@ -9,6 +9,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  isLoggedIn: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -17,7 +18,8 @@ export const AuthContext = createContext<AuthContextType>({
   loading: true,
   login: async () => {},
   register: async () => {},
-  logout: () => {}
+  logout: () => {},
+  isLoggedIn: false,
 });
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -76,8 +78,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Optionally, inform the backend about the logout
   };
 
+  const isLoggedIn = user !== null;
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, isLoggedIn }}>
       {children}
     </AuthContext.Provider>
   );

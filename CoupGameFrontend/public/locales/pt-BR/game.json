@@ -69,7 +69,9 @@
         "name": "Trocar",
         "description": "Trocar: Compre 2 cartas do baralho central",
         "selectCards": "Selecione Cartas para Manter",
-        "selectPrompt": "Selecione 2 cartas para devolver ao baralho"
+        "selectPrompt": "Selecione {{count}} cartas para devolver ao baralho",
+        "selectCardsToKeep": "Selecione {{count}} cartas para manter",
+        "selectKeepPrompt": "Selecione {{count}} cartas para manter"
       },
       "tax": {
         "name": "Imposto",
@@ -119,10 +121,16 @@
     "status": {
       "gameOver": "Fim de Jogo",
       "winner": "Vencedor",
-      "you": "Você"
+      "you": "Você",
+      "spectator": "Espectador",
+      "leader": "Líder",
+      "inactive": "Inativo",
+      "currentTurn": "Vez Atual"
     },
     "gameOver": {
-      "waiting": "Aguardando líder reiniciar ou sair..."
+      "waiting": "Aguardando líder reiniciar ou sair...",
+      "title": "Fim de Jogo",
+      "winner": "Vencedor"
     },
     "resources": {
       "coins": "moedas"

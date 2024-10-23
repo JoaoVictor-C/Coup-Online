@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Form, Button, Alert, Spinner } from 'react-bootstrap';
+import { Container, TextField, Button, Alert, CircularProgress, Typography, Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import roomService from '@services/roomService';
 import authService from '@services/authService';
@@ -17,11 +17,16 @@ const JoinGame: React.FC = () => {
 
   useEffect(() => {
     const getUser = async () => {
-      const user = await authService.getUser(token || '');
-      setCurrentUserId(user.id);
+      try {
+        const user = await authService.getUser(token || '');
+        setCurrentUserId(user.id);
+      } catch (err) {
+        console.error('Failed to fetch user:', err);
+        setError(t('common:error.generic'));
+      }
     };
     getUser();
-  }, [token]);
+  }, [token, t]);
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +35,7 @@ const JoinGame: React.FC = () => {
 
     try {
       const game = await roomService.joinRoom(roomCode.toUpperCase());
-      const isSpectator = game.spectators.some(spectator => spectator.userId === currentUserId) || game.players?.length >= game.playerCount;
+      const isSpectator = game.spectators.some(spectator => spectator.userId === currentUserId) || (game.players && game.players.length >= game.playerCount);
       navigate(`/${isSpectator ? 'spectator' : 'game'}/${game.roomCode}`);
     } catch (err: any) {
       if (err.response?.data?.message === "Game not found.") {
@@ -43,32 +48,48 @@ const JoinGame: React.FC = () => {
     }
   };
 
+  const handleRoomCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value.toUpperCase();
+    const lettersOnly = input.replace(/[^A-Z]/g, '').slice(0, 4);
+    setRoomCode(lettersOnly);
+  };
+
   return (
-    <Container className="my-5">
-      <h2>{t('game:room.join.title')}</h2>
-      {error && <Alert variant="danger">{error}</Alert>}
-      <Form onSubmit={handleJoin}>
-        <Form.Group controlId="roomCode" className="mb-3">
-          <Form.Label>{t('game:room.join.roomCode')}</Form.Label>
-          <Form.Control
-            type="text"
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value)}
-            required
-            placeholder={t('game:room.join.enterCode')}
-          />
-          <Form.Text className="text-muted">
-            {t('game:room.join.codeHelp')}
-          </Form.Text>
-        </Form.Group>
-        <Button variant="primary" type="submit" disabled={loading}>
-          {loading ? (
-            <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
-          ) : (
-            t('common:buttons.join')
-          )}
+    <Container maxWidth="sm" sx={{ my: 5 }}>
+      <Typography variant="h4" gutterBottom align="center">
+        {t('game:room.join.title')}
+      </Typography>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+      <Box component="form" onSubmit={handleJoin} noValidate>
+        <TextField
+          fullWidth
+          label={t('game:room.join.roomCode')}
+          value={roomCode}
+          onChange={handleRoomCodeChange}
+          required
+          placeholder={t('game:room.join.enterCode')}
+          margin="normal"
+          inputProps={{ maxLength: 4, pattern: '[A-Z]{4}' }}
+        />
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {t('game:room.join.codeHelp')}
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          type="submit"
+          disabled={loading || roomCode.length !== 4}
+          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+          fullWidth
+          sx={{ paddingY: 1.5 }}
+        >
+          {loading ? t('common:buttons.joining') : t('common:buttons.join')}
         </Button>
-      </Form>
+      </Box>
     </Container>
   );
 };

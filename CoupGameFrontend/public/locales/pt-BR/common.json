@@ -11,7 +11,9 @@
     "return": "Voltar",
     "login": "Entrar",
     "logout": "Sair",
-    "register": "Registrar"
+    "register": "Registrar",
+    "rooms": "Salas",
+    "refresh": "Atualizar"
   },
   "loading": "Carregando...",
   "error": {
@@ -42,6 +44,6 @@
   },
   "greeting": "Olá, {{username}}",
   "footer": {
-    "copyright": "© {{year}} Coup Online. Todos os direitos reservados."
+    "copyright": "© {{year}} Coup Online site não oficial."
   }
 }

@@ -1,44 +1,50 @@
 import React from 'react';
-import { Modal, Button, ListGroup } from 'react-bootstrap';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemText, Typography } from '@mui/material';
 import { Game } from '@utils/types';
 import { useTranslation } from 'react-i18next';
 
 interface TargetSelectionModalProps {
-  show: boolean;
-  onHide: () => void;
+  open: boolean;
+  onClose: () => void;
   onSelectTarget: (userId: string) => void;
   game: Game;
   currentUserId: string;
 }
 
-const TargetSelectionModal: React.FC<TargetSelectionModalProps> = ({ show, onHide, onSelectTarget, game, currentUserId }) => {
+const TargetSelectionModal: React.FC<TargetSelectionModalProps> = ({ open, onClose, onSelectTarget, game, currentUserId }) => {
   const { t } = useTranslation(['game', 'common']);
   const alivePlayers = game.players.filter(p => p.isActive && p.userId !== currentUserId);
 
   return (
-    <Modal show={show} onHide={onHide} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>{t('game:actions.selectTarget')}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{t('game:actions.selectTarget')}</DialogTitle>
+      <DialogContent>
         {alivePlayers.length > 0 ? (
-          <ListGroup>
+          <List>
             {alivePlayers.map(player => (
-              <ListGroup.Item key={player.userId} action onClick={() => onSelectTarget(player.userId)}>
-                {player.username} - {player.coins} {t('game:actions.coins')}
-              </ListGroup.Item>
+              <ListItem 
+                key={player.userId} 
+                component="button"
+                onClick={() => onSelectTarget(player.userId)}
+                sx={{ '&:hover': { backgroundColor: 'action.hover' } }}
+              >
+                <ListItemText 
+                  primary={player.username} 
+                  secondary={`${player.coins} ${t('game:actions.coins')}`}
+                />
+              </ListItem>
             ))}
-          </ListGroup>
+          </List>
         ) : (
-          <p>{t('game:actions.noTargets')}</p>
+          <Typography variant="body1">{t('game:actions.noTargets')}</Typography>
         )}
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary">
           {t('common:buttons.cancel')}
         </Button>
-      </Modal.Footer>
-    </Modal>
+      </DialogActions>
+    </Dialog>
   );
 };
 

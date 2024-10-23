@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import GameHub from './GameHub';
 import { Game, ActionLog, Action, PendingAction, ActionResponse } from '@utils/types';
-import { Container, Spinner, Alert, Modal, Button } from 'react-bootstrap';
+import { Container, CircularProgress, Alert, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, Typography } from '@mui/material';
 import GameBoard from './GameBoard';
 import GameLobby from './GameLobby';
 import { getToken } from '@utils/auth';
@@ -358,9 +358,17 @@ const GameRoom: React.FC = () => {
 
   if (error) {
     return (
-      <Container className="d-flex flex-column align-items-center justify-content-center" style={{ height: '100vh' }}>
-        <Alert variant="danger">{error}</Alert>
-        <Button variant="primary" onClick={() => window.location.reload()}>
+      <Container
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+        }}
+      >
+        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+        <Button variant="contained" onClick={() => window.location.reload()}>
           Retry
         </Button>
       </Container>
@@ -372,15 +380,25 @@ const GameRoom: React.FC = () => {
       gameHub?.reconnect(id || '');
     }
     return (
-      <Container className="d-flex flex-column align-items-center justify-content-center" style={{ height: '100vh' }}>
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-3">Connecting to the game...</p>
+      <Container
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Connecting to the game...
+        </Typography>
       </Container>
     );
   }
 
   return (
-    <Container className="my-5">
+    <Container sx={{ my: 5 }}>
       {!game.isStarted ? (
         <GameLobby
           game={game}
@@ -407,42 +425,48 @@ const GameRoom: React.FC = () => {
         />
       )}
 
-      {/* Confirmation Modal */}
-      <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>{t('game:spectator.switchTitle')}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {t('game:spectator.switchConfirm')}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+      >
+        <DialogTitle>{t('game:spectator.switchTitle')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {t('game:spectator.switchConfirm')}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowConfirmModal(false)} color="primary">
             {t('common:buttons.cancel')}
           </Button>
-          <Button variant="danger" onClick={handleConfirmSwitch}>
+          <Button onClick={handleConfirmSwitch} color="secondary">
             {t('game:spectator.switchButton')}
           </Button>
-        </Modal.Footer>
-      </Modal>
+        </DialogActions>
+      </Dialog>
 
-      {/* Rejoin as Player Modal */}
+      {/* Rejoin as Player Dialog */}
       {game.isGameOver && game.spectators.some(s => s.userId === currentUserId) && (
-        <Modal show={showRejoinModal} onHide={() => setShowRejoinModal(false)}>
-          <Modal.Header closeButton>
-            <Modal.Title>{t('game:spectator.rejoinTitle')}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            {t('game:spectator.rejoinConfirm')}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowRejoinModal(false)}>
+        <Dialog
+          open={showRejoinModal}
+          onClose={() => setShowRejoinModal(false)}
+        >
+          <DialogTitle>{t('game:spectator.rejoinTitle')}</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              {t('game:spectator.rejoinConfirm')}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowRejoinModal(false)} color="primary">
               {t('common:buttons.cancel')}
             </Button>
-            <Button variant="primary" onClick={handleRejoinAsPlayer}>
+            <Button onClick={handleRejoinAsPlayer} color="secondary">
               {t('game:spectator.rejoinButton')}
             </Button>
-          </Modal.Footer>
-        </Modal>
+          </DialogActions>
+        </Dialog>
       )}
     </Container>
   );

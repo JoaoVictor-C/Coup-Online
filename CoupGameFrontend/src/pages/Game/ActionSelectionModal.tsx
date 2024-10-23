@@ -1,24 +1,22 @@
 import React, { useState, useContext } from 'react';
-import { Modal, Button, Row, Col, Card } from 'react-bootstrap';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Card, CardContent, CardMedia, Typography, Tooltip } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Game, Action, cardImages, ActionResponse } from '@utils/types';
+import { Game, Action, cardImages } from '@utils/types';
 import TargetSelectionModal from './TargetSelectionModal';
 import { GameContext } from '@context/GameContext';
-import { FaCoins } from 'react-icons/fa';
-import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 
 interface ActionSelectionModalProps {
-  show: boolean;
-  onHide: () => void;
+  open: boolean;
+  onClose: () => void;
   onSelectAction: (action: Action) => void;
   game: Game;
   currentUserId: string;
 }
 
 const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
-  show,
-  onHide,
+  open,
+  onClose,
   onSelectAction,
   game,
   currentUserId,
@@ -34,13 +32,25 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
     if (game.isGameOver) {
       return;
     }
+    const currentPlayer = game.players.find(player => player.userId === currentUserId);
+    if (!currentPlayer) return;
+
+    if (action.actionType === 'assassinate' && currentPlayer.coins < 3) {
+      alert(t('game:actions.assassinate.notEnoughCoins'));
+      return;
+    }
+    if (action.actionType === 'coup' && currentPlayer.coins < 7) {
+      alert(t('game:actions.coup.notEnoughCoins'));
+      return;
+    }
+
     console.log('Action clicked:', action);
     if (actionsRequiringTarget.includes(action.actionType)) {
       setSelectedAction(action);
       setShowTargetModal(true);
     } else {
       onSelectAction(action);
-      onHide();
+      onClose();
     }
   };
 
@@ -62,7 +72,7 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
       });
       setSelectedAction(null);
       setShowTargetModal(false);
-      onHide();
+      onClose();
     }
   };
 
@@ -89,90 +99,77 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
     coup: undefined,
   };
 
-  const renderCardImg = (actionType: string) => {
-    const imgSrc = actionsWithImages[actionType];
-    if (imgSrc) {
-      return <img src={imgSrc} alt={actionType} style={{ width: '50px' }} />;
-    }
-    return null;
-  };
+  const renderActionCard = (actionType: string) => {
+    const currentPlayer = game.players.find(player => player.userId === currentUserId);
+    if (!currentPlayer) return;
 
-  const renderTooltip = (actionType: string) => (
-    <Tooltip id={`tooltip-${actionType}`}>
-      {getActionDetails(actionType).description}
-    </Tooltip>
-  );
+    const isDisabled = (actionType === 'assassinate' && currentPlayer.coins < 3) || 
+                       (actionType === 'coup' && currentPlayer.coins < 7);
+
+    return (
+      <Box key={actionType} sx={{ width: { xs: '100%', sm: '50%', md: '25%' }, padding: 1 }}>
+        <Tooltip title={getActionDetails(actionType).description} arrow>
+          <Card 
+            component={motion.div}
+            whileHover={{ scale: isDisabled ? 1 : 1.05 }}
+            whileTap={{ scale: isDisabled ? 1 : 0.95 }}
+            onClick={() => !isDisabled && handleActionClick({ actionType: actionType as Action['actionType'] })}
+            sx={{ 
+              cursor: isDisabled ? 'not-allowed' : 'pointer', 
+              height: '100%', 
+              backgroundColor: isDisabled ? 'action.disabledBackground' : 'background.paper', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              opacity: isDisabled ? 0.5 : 1,
+            }}
+          >
+            {actionsWithImages[actionType] && (
+              <CardMedia
+                component="img"
+                height="auto"
+                image={actionsWithImages[actionType]}
+                alt={actionType}
+              />
+            )}
+            {!actionsWithImages[actionType] && (
+              <CardContent>
+                <Typography variant="h6" component="div" sx={{ textAlign: 'center' }}>
+                  {t(`game:actions.${actionType}.name`)}
+                </Typography>
+              </CardContent>
+            )}
+          </Card>
+        </Tooltip>
+      </Box>
+    );
+  };
 
   return (
     <>
-      <Modal show={show} onHide={onHide} centered backdrop="static">
-        <Modal.Header closeButton>
-          <Modal.Title>{t('game:actions.select')}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <h5 className="mb-3">{t('game:actions.roleActions')}</h5>
-          <Row>
-            {['steal', 'assassinate', 'tax', 'exchange'].map((actionType) => (
-              <Col md={3} className="mb-3" key={actionType}>
-                <OverlayTrigger placement="top" overlay={renderTooltip(actionType)}>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Card
-                      onClick={() => handleActionClick({ actionType: actionType as Action['actionType'] })}
-                      className="h-100 text-center shadow-m border-0"
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div style={{ width: 'auto', height: 'auto', margin: '0 auto' }}>
-                        {renderCardImg(actionType)}
-                      </div>
-                      <Card.Body>
-                        <Card.Title>{t(`game:actions.${actionType}.name`)}</Card.Title>
-                      </Card.Body>
-                    </Card>
-                  </motion.div>
-                </OverlayTrigger>
-              </Col>
-            ))}
-          </Row>
-          <h5 className="mb-3">{t('game:actions.mainActions')}</h5>
-          <Row>
-            {['income', 'foreign_aid', 'coup'].map((actionType) => (
-              <Col md={4} className="mb-4" key={actionType}>
-                <OverlayTrigger placement="top" overlay={renderTooltip(actionType)}>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Card
-                      onClick={() => handleActionClick({ actionType: actionType as Action['actionType'] })}
-                      className={`h-100 text-center shadow-m border-0 ${selectedAction?.actionType === actionType ? 'border-success' : ''}`}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <Card.Body>
-                        <Card.Title className="text-success">
-                          {t(`game:actions.${actionType}.name`)}
-                        </Card.Title>
-                        <Button
-                          variant={actionType === 'coup' ? 'outline-danger' : 'outline-success'}
-                          disabled={game.isGameOver}
-                        >
-                          <strong>{t(`game:actions.${actionType}.name`)}</strong>
-                        </Button>
-                      </Card.Body>
-                    </Card>
-                  </motion.div>
-                </OverlayTrigger>
-              </Col>
-            ))}
-          </Row>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={onHide} disabled={showTargetModal}>
+      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <DialogTitle>{t('game:actions.select')}</DialogTitle>
+        <DialogContent>
+          <Typography variant="h6" gutterBottom sx={{ textAlign: 'center' }}>{t('game:actions.roleActions')}</Typography>
+          <Box display="flex" justifyContent="center" flexWrap="wrap">
+            {['steal', 'assassinate', 'tax', 'exchange'].map(renderActionCard)}
+          </Box>
+          <Typography variant="h6" gutterBottom sx={{ mt: 3, textAlign: 'center' }}>{t('game:actions.mainActions')}</Typography>
+          <Box display="flex" justifyContent="center" flexWrap="wrap">
+            {['income', 'foreign_aid', 'coup'].map(renderActionCard)}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose} color="primary" disabled={showTargetModal}>
             {t('common:buttons.cancel')}
           </Button>
-        </Modal.Footer>
-      </Modal>
+        </DialogActions>
+      </Dialog>
 
       {selectedAction && (
         <TargetSelectionModal
-          show={showTargetModal}
-          onHide={handleCloseTargetModal}
+          open={showTargetModal}
+          onClose={handleCloseTargetModal}
           onSelectTarget={handleTargetSelect}
           game={game}
           currentUserId={currentUserId}

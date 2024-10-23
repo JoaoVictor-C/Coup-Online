@@ -1,6 +1,6 @@
-
 import { Game } from '@utils/types';
 import { useTranslation } from 'react-i18next';
+import { Button, Container, Typography, Stack } from '@mui/material';
 
 interface GameOverScreenProps {
     winnerName: string | null;
@@ -12,21 +12,31 @@ interface GameOverScreenProps {
 
 const GameOverScreen: React.FC<GameOverScreenProps> = ({ winnerName, onRestart, onExit, game, currentUserId }) => {
     const { t } = useTranslation(['game', 'common']);
+    const isLeader = game.players.find(player => player.userId === currentUserId)?.userId === game.leaderId;
+
     return (
-        <div className="game-over-screen text-center">
-            <h2>Game Over</h2>
-            <p>Winner: {winnerName}</p>
-            {game.players.find(player => player.userId === currentUserId)?.userId === game.leaderId ? (
-                <>
-                    <button className="btn btn-primary m-2" onClick={onRestart}>{t('common:buttons.restart')}</button>
-                    <button className="btn btn-secondary m-2" onClick={onExit}>{t('common:buttons.exit')}</button>
-                </>
+        <Container sx={{ textAlign: 'center', py: 5 }}>
+            <Typography variant="h4" gutterBottom>
+                {t('game:gameOver.title')}
+            </Typography>
+            <Typography variant="h5" gutterBottom>
+                {t('game:gameOver.winner')}: {winnerName || t('game:player.unknown')}
+            </Typography>
+            {isLeader ? (
+                <Stack direction="row" justifyContent="center" spacing={2} mt={4}>
+                    <Button variant="contained" color="primary" onClick={onRestart}>
+                        {t('common:buttons.restart')}
+                    </Button>
+                    <Button variant="outlined" color="secondary" onClick={onExit}>
+                        {t('common:buttons.exit')}
+                    </Button>
+                </Stack>
             ) : (
-                <p>
+                <Typography variant="body1" mt={2}>
                     {t('game:gameOver.waiting')}
-                </p>
+                </Typography>
             )}
-        </div>
+        </Container>
     );
 };
 

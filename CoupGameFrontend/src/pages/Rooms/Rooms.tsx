@@ -1,12 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Table, Button, Form, Row, Col, Alert, Spinner } from 'react-bootstrap';
+// Start of Selection
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  Container,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  TextField,
+  Grid,
+  Alert,
+  CircularProgress,
+  Box,
+  TablePagination,
+  Stack,
+} from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import roomService from '@services/roomService';
 import { Game } from '@utils/types';
-import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import authService from '@services/authService';
 import { getToken } from '@utils/auth';
-import { useTranslation } from 'react-i18next';
 
 const Rooms: React.FC = () => {
   const { t } = useTranslation(['game', 'common']);
@@ -20,10 +39,18 @@ const Rooms: React.FC = () => {
   const navigate = useNavigate();
   const token = getToken();
 
+  // Pagination
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   useEffect(() => {
     const getUser = async () => {
-      const user = await authService.getUser(token || '');
-      setCurrentUserId(user.id);
+      try {
+        const user = await authService.getUser(token || '');
+        setCurrentUserId(user.id);
+      } catch (err) {
+        console.error('Failed to fetch user:', err);
+      }
     };
     getUser();
   }, [token]);
@@ -52,12 +79,13 @@ const Rooms: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [lastSearchTime, t]); 
+  }, [lastSearchTime, t]);
 
   const fetchRooms = async () => {
     setLoading(true);
     try {
       const fetchedRooms = await roomService.getPublicRooms();
+      console.log(fetchedRooms);
       setRooms(fetchedRooms);
       setError(null);
       setLastSearchTime(new Date());
@@ -71,104 +99,186 @@ const Rooms: React.FC = () => {
   const handleJoin = async (room: Game) => {
     try {
       const game = await roomService.joinRoom(room.id);
-      const isSpectator = game.spectators.some(spectator => spectator.userId === currentUserId) || game.players?.length >= room.playerCount;
+      const isSpectator =
+        game.spectators.some((spectator) => spectator.userId === currentUserId) ||
+        (game.players && game.players.length >= room.playerCount);
       navigate(`/${isSpectator ? 'spectator' : 'game'}/${game.roomCode}`);
     } catch (err: any) {
-      if (err.response?.data?.message === "Game not found.") {
+      if (err.response?.data?.message === 'Game not found.') {
         fetchRooms();
       }
       setError(err.response?.data?.message || t('game:rooms.errors.joinFailed'));
     }
   };
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const filteredRooms = await roomService.searchRooms(searchTerm);
-      setRooms(filteredRooms);
-      setError(null);
-      setLastSearchTime(new Date());
-    } catch (err: any) {
-      setError(t('game:rooms.errors.searchFailed'));
-    } finally {
-      setLoading(false);
-    }
+  // Debounced search function
+  const debouncedSearch = useCallback(() => {
+    let timeoutId: NodeJS.Timeout;
+    return (query: string) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(async () => {
+        if (!query) {
+          fetchRooms();
+          return;
+        }
+        setLoading(true);
+        try {
+          const filteredRooms = await roomService.searchRooms(query);
+          setRooms(filteredRooms);
+          setError(null);
+          setLastSearchTime(new Date());
+        } catch (err: any) {
+          setError(t('game:rooms.errors.searchFailed'));
+        } finally {
+          setLoading(false);
+        }
+      }, 500);
+    };
+  }, []);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    debouncedSearch()(e.target.value);
+  };
+
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   return (
-    <Container className="my-5">
-      <h2 className="mb-4">{t('game:room.available')}</h2>
-      <Form onSubmit={handleSearch} className="mb-4">
-        <Row>
-          <Col md={6}>
-            <Form.Control
-              type="text"
-              placeholder={t('game:room.searchPlaceholder')}
+    <Container sx={{ my: 5 }}>
+      <Typography variant="h4" gutterBottom align="center">
+        {t('game:room.available')}
+      </Typography>
+      <form onSubmit={(e) => e.preventDefault()}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label={t('game:room.searchPlaceholder')}
+              variant="outlined"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
+              aria-label={t('game:room.searchPlaceholder')}
             />
-          </Col>
-          <Col md={4} className="text-end">
-            <Link to="/create-room">
-              <Button variant="success" className="me-2">
+          </Grid>
+          <Grid item xs={12} md={6} textAlign="right">
+            <Stack direction="row" spacing={2} justifyContent="flex-end">
+              <Button
+                component={RouterLink}
+                to="/create-room"
+                variant="contained"
+                color="success"
+                sx={{ paddingX: 3, paddingY: 1 }}
+              >
                 {t('game:room.create.title')}
               </Button>
-            </Link>
-            <Link to="/join-game">
-              <Button variant="primary">
+              <Button
+                component={RouterLink}
+                to="/join-game"
+                variant="contained"
+                color="primary"
+                sx={{ paddingX: 3, paddingY: 1 }}
+              >
                 {t('game:room.join.title')}
               </Button>
-            </Link>
-          </Col>
-        </Row>
-      </Form>
+              <Button
+                variant="contained"
+                color="info"
+                onClick={fetchRooms}
+                sx={{ paddingX: 3, paddingY: 1 }}
+              >
+                {t('common:buttons.refresh')}
+              </Button>
+            </Stack>
+          </Grid>
+        </Grid>
+      </form>
       {elapsedTime && (
-        <div className="mb-3">
-          <Alert variant="info">{elapsedTime}</Alert>
-        </div>
+        <Alert severity="info" sx={{ mt: 3 }}>
+          {elapsedTime}
+        </Alert>
       )}
-      {error && <Alert variant="danger">{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
+      )}
       {loading ? (
-        <div className="text-center">
-          <Spinner animation="border" variant="primary" />
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <CircularProgress />
+        </Box>
       ) : (
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th>{t('game:room.name')}</th>
-              <th>{t('game:room.code')}</th>
-              <th>{t('game:room.players')}</th>
-              <th>{t('game:room.actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rooms.length > 0 ? (
-              rooms.map((room) => (
-                <tr key={room.id}>
-                  <td>{room.gameName}</td>
-                  <td>{room.roomCode}</td>
-                  <td>{t('game:room.lobby.players', { current: room.players.length, max: room.playerCount })}</td>
-                  <td>
-                    <Button 
-                      variant={room.players.length >= room.playerCount ? "secondary" : "primary"} 
-                      onClick={() => handleJoin(room)}
-                    >
-                      {room.players.length >= room.playerCount ? t('game:spectator.title') : t('common:buttons.join')}
-                    </Button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="text-center">
-                  {t('game:room.noRooms')}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </Table>
+        <TableContainer component={Paper} sx={{ mt: 4 }}>
+          <Table aria-label="rooms table">
+            <TableHead>
+              <TableRow>
+                <TableCell>{t('game:room.name')}</TableCell>
+                <TableCell>{t('game:room.code')}</TableCell>
+                <TableCell>{t('game:room.players')}</TableCell>
+                <TableCell>{t('game:room.actions')}</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rooms.length > 0 ? (
+                rooms
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((room) => (
+                    <TableRow key={room.id} hover>
+                      <TableCell>{room.gameName}</TableCell>
+                      <TableCell>{room.roomCode}</TableCell>
+                      <TableCell>
+                        {t('game:room.lobby.players', {
+                          current: room.players.length,
+                          max: room.playerCount,
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color={room.players.length >= room.playerCount ? 'secondary' : 'primary'}
+                          onClick={() => handleJoin(room)}
+                          disabled={room.players.length > room.playerCount + 1} // Prevent over-spectating
+                          aria-label={
+                            room.players.length >= room.playerCount
+                              ? t('game:spectator.title')
+                              : t('common:buttons.join')
+                          }
+                        >
+                          {room.players.length >= room.playerCount
+                            ? t('game:spectator.title')
+                            : t('common:buttons.join')}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} align="center">
+                    {t('game:room.noRooms')}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          {/* Pagination */}
+          <TablePagination
+            component="div"
+            count={rooms.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
+          />
+        </TableContainer>
       )}
     </Container>
   );

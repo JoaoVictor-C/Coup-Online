@@ -11,7 +11,9 @@
     "return": "Return",
     "login": "Login",
     "logout": "Logout",
-    "register": "Register"
+    "register": "Register",
+    "rooms": "Rooms",
+    "refresh": "Refresh"
   },
   "loading": "Loading...",
   "error": {
@@ -42,6 +44,6 @@
   },
   "greeting": "Hello, {{username}}",
   "footer": {
-    "copyright": "© {{year}} Coup Online. All rights reserved."
+    "copyright": "© {{year}} Coup Online unofficial fan site."
   }
 }
