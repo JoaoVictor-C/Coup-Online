@@ -143,6 +143,10 @@ namespace CoupGameBackend.Services
             var player = game.Players.FirstOrDefault(p => p.UserId == userId);
             if (player != null)
             {
+                // If player is already disconnected, do nothing
+                if (!player.IsActive)
+                    return (true, "Player is already disconnected.");
+
                 // Mark player as inactive
                 player.IsActive = false;
                 await _gameRepository.UpdateGameAsync(game);
@@ -158,7 +162,7 @@ namespace CoupGameBackend.Services
                     {
                         try
                         {
-                            await Task.Delay(TimeSpan.FromSeconds(20), cts.Token);
+                            await Task.Delay(TimeSpan.FromSeconds(30), cts.Token);
                             // After timeout, kick the player
                             var updatedGame = await _gameRepository.GetGameAsync(gameId);
                             var disconnectedPlayer = updatedGame.Players.FirstOrDefault(p => p.UserId == userId);
