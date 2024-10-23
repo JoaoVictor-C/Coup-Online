@@ -3,6 +3,7 @@ import { Game, CardImages, Action, backCard, cardImages, ActionResponse, Pending
 import { Button, Modal, Container, Row, Col, Card as BootstrapCard, ListGroup, Badge, Tooltip, OverlayTrigger, Spinner, Alert } from 'react-bootstrap';
 import { FaCoins, FaUserShield } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import ActionSelectionModal from './ActionSelectionModal';
 import WaitingScreen from './WaitingScreen';
 import PendingActionModal from './PendingActionModal';
@@ -37,6 +38,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   respondToExchangeSelect,
   spectators
 }) => {
+  const { t } = useTranslation(['game', 'common']);
   const currentUser = game.players.find(p => p.userId === currentUserId);
   const isGameOver = game.isGameOver;
   const [showSwitchModal, setShowSwitchModal] = useState(false);
@@ -74,7 +76,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const handleActionSelect = (action: Action) => {
     if (action.actionType === 'coup' || action.actionType === 'steal' || action.actionType === 'assassinate') {
       if (!action.targetUserId) {
-        alert('Please select a target for this action.');
+        alert(t('game:actions.selectTarget'));
         return;
       }
     }
@@ -89,7 +91,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
   const renderTooltip = (props: any) => (
     <Tooltip id="button-tooltip" {...props}>
-      Click to switch to spectator mode
+      {t('game:spectator.switchTooltip')}
     </Tooltip>
   );
 
@@ -98,7 +100,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     const hasChallenge = Object.values(game.pendingAction?.responses || {}).includes('challenge');
 
     if (game.isGameOver) {
-      console.log('Game is over');
+      console.log(t('game:status.gameOver'));
       setGameState('GAME_OVER');
     } else if (!game.isStarted) {
       setGameState('LOBBY');
@@ -115,7 +117,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     } else {
       setGameState('WAITING_FOR_TURN');
     }
-  }, [game, setGameState, currentUserId]);
+  }, [game, setGameState, currentUserId, t]);
 
   useEffect(() => {
     if (game.pendingAction && game.pendingAction.actionType === "ReturnCard" && game.pendingAction.initiatorId === currentUserId) {
@@ -145,7 +147,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   }
 
   if (gameState === 'GAME_OVER') {
-    return <GameOverScreen winnerName={game.players.find(p => p.userId === game.winnerId)?.username || 'Unknown'} onRestart={onRestartGame} onExit={onReturnToLobby} game={game} currentUserId={currentUserId} />;
+    return <GameOverScreen winnerName={game.players.find(p => p.userId === game.winnerId)?.username || t('game:player.unknown')} onRestart={onRestartGame} onExit={onReturnToLobby} game={game} currentUserId={currentUserId} />;
   }
 
   return (
@@ -155,7 +157,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <Col>
           <BootstrapCard>
             <BootstrapCard.Header className="bg-dark text-white">
-              <FaUserShield /> Action History
+              <FaUserShield /> {t('game:actionLog.title')}
             </BootstrapCard.Header>
             <BootstrapCard.Body style={{ maxHeight: '200px', overflowY: 'auto' }}>
               <ListGroup variant="flush">
@@ -189,15 +191,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
               <BootstrapCard className={`text-center ${player.userId === currentUserId && !isSpectator ? 'border-primary' : ''} ${player.userId === game.currentTurnUserId ? 'bg-light border-warning' : ''}`}>
                 <BootstrapCard.Header className="bg-primary text-white">
                   {player.username}
-                  {player.userId === game.leaderId && <Badge bg="success" className="ms-2">Leader</Badge>}
+                  {player.userId === game.leaderId && <Badge bg="success" className="ms-2">{t('game:player.leader')}</Badge>}
                   {player.userId === game.currentTurnUserId && (
                     <Badge bg="warning" className="ms-2">
-                      {player.userId === currentUserId ? "Your turn" : "Current turn"}
+                      {player.userId === currentUserId ? t('game:turn.yours') : t('game:turn.current')}
                     </Badge>
                   )}
                 </BootstrapCard.Header>
                 <BootstrapCard.Body>
-                  <p><FaCoins /> {player.coins} Coins</p>
+                  <p><FaCoins /> {player.coins} {t('game:resources.coins')}</p>
                   <div className="d-flex justify-content-center gap-2">
                     {player.hand.map((card, index) => {
                       const isCurrentUser = player.userId === currentUserId;
@@ -232,7 +234,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                             >
                               <img
                                 src={backCard}
-                                alt="card back"
+                                alt={t('game:cards.back')}
                                 className="img-fluid position-absolute top-0 start-0"
                                 style={{
                                   backfaceVisibility: 'hidden',
@@ -280,11 +282,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
           <Col>
             <BootstrapCard>
               <BootstrapCard.Header className="bg-secondary text-white">
-                <FaUserShield /> Spectators
+                <FaUserShield /> {t('game:spectator.title')}
               </BootstrapCard.Header>
               <BootstrapCard.Body style={{ maxHeight: '200px', overflowY: 'auto' }}>
                 {spectators.length === 0 ? (
-                  <p>No spectators currently.</p>
+                  <p>{t('game:spectator.none')}</p>
                 ) : (
                   <ListGroup variant="flush">
                     {spectators.map((spectator, index) => (
@@ -303,7 +305,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {/* Action Button */}
       {!isSpectator && !isGameOver && gameState === 'ACTIVE' && (
         <Button variant="primary" onClick={openActionModal}>
-          Choose Action
+          {t('game:actions.choose')}
         </Button>
       )}
 
@@ -311,7 +313,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {gameState === 'WAITING_FOR_TURN' && (
         <Container className="my-5 text-center">
           <Spinner animation="border" variant="primary" />
-          <div>Waiting for the next turn...</div>
+          <div>{t('game:turn.waiting')}</div>
         </Container>
       )}
 
@@ -323,7 +325,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
           overlay={renderTooltip}
         >
           <Button variant="secondary" onClick={handleSwitchClick} className="mt-3">
-            Switch to Spectator
+            {t('game:spectator.switchButton')}
           </Button>
         </OverlayTrigger>
       )}
@@ -368,17 +370,17 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {/* Switch Modal */}
       <Modal show={showSwitchModal} onHide={cancelSwitch} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Switch to Spectator</Modal.Title>
+          <Modal.Title>{t('game:spectator.switchTitle')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          Are you sure you want to switch to spectator mode?
+          {t('game:spectator.switchConfirm')}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={cancelSwitch}>
-            Cancel
+            {t('common:buttons.cancel')}
           </Button>
           <Button variant="danger" onClick={confirmSwitch}>
-            Switch to Spectator
+            {t('game:spectator.switchButton')}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -386,7 +388,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {/* Return Card Modal */}
       <Modal show={showReturnCardModal} onHide={() => setShowReturnCardModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Select a Card to Return to the Deck</Modal.Title>
+          <Modal.Title>{t('game:cards.selectReturn')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <ListGroup>
@@ -399,7 +401,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowReturnCardModal(false)}>
-            Cancel
+            {t('common:buttons.cancel')}
           </Button>
         </Modal.Footer>
       </Modal>

@@ -1,0 +1,143 @@
+{
+    "room": {
+      "create": {
+        "title": "Criar Nova Sala",
+        "gameName": "Nome do Jogo",
+        "playerCount": "Número de Jogadores", 
+        "playersCount": "{{count}} Jogadores",
+        "privateRoom": "Tornar esta sala privada",
+        "creating": "Criando...",
+        "success": "Sala criada com sucesso!"
+      },
+      "join": {
+        "title": "Entrar em um Jogo Privado",
+        "roomCode": "Código da Sala",
+        "enterCode": "Digite o código da sala",
+        "codeHelp": "Digite o código único fornecido pelo anfitrião do jogo"
+      },
+      "lobby": {
+        "title": "Lobby de {{gameName}}",
+        "waiting": "Aguardando o início do jogo...",
+        "players": "Jogadores ({{current}}/{{max}})",
+        "spectators": "Espectadores ({{count}})",
+        "leader": "Líder",
+        "inactive": "Inativo",
+        "minPlayers": "Você precisa de pelo menos 2 jogadores para iniciar",
+        "needMorePlayers": "Necessário pelo menos 2 jogadores para iniciar"
+      },
+      "code": "Código da Sala",
+      "codeCopied": "Código da sala copiado!",
+      "name": "Nome da Sala",
+      "available": "Salas Disponíveis", 
+      "searchPlaceholder": "Buscar salas...",
+      "noRooms": "Nenhuma sala disponível",
+      "players": "Jogadores",
+      "actions": "Ações",
+      "lastSearch": {
+        "na": "Última busca: N/D",
+        "time": "Última busca: há {{minutes}}m {{seconds}}s"
+      }
+    },
+    "rooms": {
+      "errors": {
+        "joinFailed": "Falha ao entrar na sala",
+        "searchFailed": "Falha ao buscar salas"
+      }
+    },
+    "actions": {
+      "income": {
+        "name": "Renda",
+        "description": "Renda: Ganhe 1 moeda"
+      },
+      "foreign_aid": {
+        "name": "Ajuda Externa",
+        "description": "Ajuda Externa: Ganhe 2 moedas do tesouro central"
+      },
+      "coup": {
+        "name": "Golpe",
+        "description": "Golpe: Gaste 7 moedas para remover a Carta de outro jogador do jogo"
+      },
+      "steal": {
+        "name": "Roubar",
+        "description": "Roubar: Roube 2 moedas de outro jogador"
+      },
+      "assassinate": {
+        "name": "Assassinar",
+        "description": "Assassinar: Gaste 3 moedas para assassinar outro jogador"
+      },
+      "exchange": {
+        "name": "Trocar",
+        "description": "Trocar: Compre 2 cartas do baralho central",
+        "selectCards": "Selecione Cartas para Manter",
+        "selectPrompt": "Selecione 2 cartas para devolver ao baralho"
+      },
+      "tax": {
+        "name": "Imposto",
+        "description": "Imposto: Pegue 3 moedas do tesouro"
+      },
+      "select": "Selecione uma Ação",
+      "selectTarget": "Selecione um Alvo",
+      "noTargets": "Nenhum alvo válido disponível",
+      "choose": "Escolher Ação",
+      "coins": "moedas",
+      "roleActions": "Ações de Papel",
+      "mainActions": "Ações Principais",
+      "block": {
+        "action": "Bloquear",
+        "selectOption": "Selecione Opção de Bloqueio",
+        "selectCard": "Selecione qual carta você quer usar para bloquear",
+        "respondTitle": "Responder ao Bloqueio",
+        "attemptingBlock": "está tentando bloquear sua ação",
+        "challengePrompt": "Você gostaria de desafiar o bloqueio dele?"
+      },
+      "pending": "Ação Pendente",
+      "challenge": "Desafiar",
+      "pass": "Passar",
+      "performing": "está realizando",
+      "respondPrompt": "Como você gostaria de responder?",
+      "you": "Você"
+    },
+    "spectator": {
+      "title": "Espectadores",
+      "switchButton": "Virar Espectador",
+      "rejoinButton": "Voltar como Jogador",
+      "switchTitle": "Mudar para Modo Espectador",
+      "switchConfirm": "Tem certeza que deseja mudar para modo espectador?",
+      "switchTooltip": "Mude para modo espectador para observar o jogo",
+      "none": "Sem espectadores"
+    },
+    "player": {
+      "inactive": "Inativo",
+      "leader": "Líder",
+      "unknown": "Desconhecido"
+    },
+    "turn": {
+      "yours": "Sua Vez",
+      "current": "Vez Atual",
+      "waiting": "Aguardando outros jogadores..."
+    },
+    "status": {
+      "gameOver": "Fim de Jogo",
+      "winner": "Vencedor",
+      "you": "Você"
+    },
+    "gameOver": {
+      "waiting": "Aguardando líder reiniciar ou sair..."
+    },
+    "resources": {
+      "coins": "moedas"
+    },
+    "cards": {
+      "back": "Verso da Carta",
+      "selectReturn": "Selecione uma carta para devolver",
+      "ambassador": "Embaixador",
+      "assassin": "Assassino",
+      "captain": "Capitão",
+      "contessa": "Condessa",
+      "duke": "Duque"
+    },
+    "actionLog": {
+      "title": "Registro de Ações"
+    },
+    "waitingForPlayers": "Aguardando jogadores..."
+}

@@ -1,4 +1,3 @@
- // Start of Selection
 import React, { useContext, useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import GameHub from './GameHub';
@@ -9,8 +8,10 @@ import GameLobby from './GameLobby';
 import { getToken } from '@utils/auth';
 import authService from '@services/authService';
 import { GameContext } from '@context/GameContext';
+import { useTranslation } from 'react-i18next';
 
 const GameRoom: React.FC = () => {
+  const { t } = useTranslation(['game', 'common']);
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const GameRoom: React.FC = () => {
   useEffect(() => {
     const token = getToken();
     if (!token) {
-      setError('User not authenticated.');
+      setError(t('auth:errors.notAuthenticated'));
       setLoading(false);
       return;
     }
@@ -37,15 +38,15 @@ const GameRoom: React.FC = () => {
 
     newGameHub.connect()
       .then(() => {
-        console.log('Connected to GameHub');
+        console.log(t('game:connection.connected'));
         return newGameHub.reconnect(id || '');
       })
       .then(() => {
         return newGameHub.getGameState(id || '');
       })
       .catch((err: any) => {
-        console.error('Connection failed: ', err);
-        setError('Failed to connect to the game server.');
+        console.error(t('game:connection.failed'), err);
+        setError(t('game:connection.error'));
         setLoading(false);
       });
 
@@ -53,10 +54,10 @@ const GameRoom: React.FC = () => {
 
     return () => {
       newGameHub.disconnect()
-        .then(() => console.log('Disconnected from GameHub'))
-        .catch((err: any) => console.error('Error disconnecting:', err));
+        .then(() => console.log(t('game:connection.disconnected')))
+        .catch((err: any) => console.error(t('game:connection.disconnectError'), err));
     };
-  }, [id, isSpectator]);
+  }, [id, isSpectator, t]);
 
   // If the user isn't active, but he is on the page, try to reconnect
   useEffect(() => {
@@ -394,8 +395,8 @@ const GameRoom: React.FC = () => {
           game={game}
           currentUserId={currentUserId || ''}
           onActionSelect={handleActionSelect}
-          onRestartGame={() => { handleRestartGame() }}
-          onReturnToLobby={() => { handleReturnToLobby() }} 
+          onRestartGame={handleRestartGame}
+          onReturnToLobby={handleReturnToLobby}
           onSwitchToSpectator={handleSwitchToSpectator}
           isSpectator={isSpectator}
           handleRespondToPendingAction={handleRespondToPendingAction}
@@ -409,17 +410,17 @@ const GameRoom: React.FC = () => {
       {/* Confirmation Modal */}
       <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Switch to Spectator</Modal.Title>
+          <Modal.Title>{t('game:spectator.switchTitle')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          Are you sure you want to switch to spectator mode? You will be removed from the game and can only rejoin once the game ends.
+          {t('game:spectator.switchConfirm')}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
-            Cancel
+            {t('common:buttons.cancel')}
           </Button>
           <Button variant="danger" onClick={handleConfirmSwitch}>
-            Switch to Spectator
+            {t('game:spectator.switchButton')}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -428,17 +429,17 @@ const GameRoom: React.FC = () => {
       {game.isGameOver && game.spectators.some(s => s.userId === currentUserId) && (
         <Modal show={showRejoinModal} onHide={() => setShowRejoinModal(false)}>
           <Modal.Header closeButton>
-            <Modal.Title>Rejoin as Player</Modal.Title>
+            <Modal.Title>{t('game:spectator.rejoinTitle')}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            The game has ended. Would you like to rejoin as a player?
+            {t('game:spectator.rejoinConfirm')}
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowRejoinModal(false)}>
-              Cancel
+              {t('common:buttons.cancel')}
             </Button>
             <Button variant="primary" onClick={handleRejoinAsPlayer}>
-              Rejoin Game
+              {t('game:spectator.rejoinButton')}
             </Button>
           </Modal.Footer>
         </Modal>

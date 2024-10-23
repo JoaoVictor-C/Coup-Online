@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Form, Button, Alert } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import roomService from '@services/roomService';
 
 const CreateRoom: React.FC = () => {
+  const { t } = useTranslation(['game', 'common']);
   const navigate = useNavigate();
   const [form, setForm] = useState({
     gameName: '',
@@ -46,24 +48,24 @@ const CreateRoom: React.FC = () => {
 
   return (
     <Container className="my-5">
-      <h2>Create New Room</h2>
+      <h2>{t('game:room.create.title')}</h2>
       {error && <Alert variant="danger">{error}</Alert>}
-      {success && <Alert variant="success">{success}</Alert>}
+      {success && <Alert variant="success">{t('game:room.create.success')}</Alert>}
       <Form onSubmit={handleSubmit}>
         <Form.Group controlId="gameName" className="mb-3">
-          <Form.Label>Game Name</Form.Label>
+          <Form.Label>{t('game:room.create.gameName')}</Form.Label>
           <Form.Control
             type="text"
             name="gameName"
             value={form.gameName}
             onChange={handleChange}
             required
-            placeholder="Enter game name"
+            placeholder={t('game:room.create.gameName')}
           />
         </Form.Group>
 
         <Form.Group controlId="playerCount" className="mb-3">
-          <Form.Label>Number of Players</Form.Label>
+          <Form.Label>{t('game:room.create.playerCount')}</Form.Label>
           <Form.Control
             as="select"
             name="playerCount"
@@ -73,7 +75,7 @@ const CreateRoom: React.FC = () => {
           >
             {[2, 3, 4, 5, 6].map((count) => (
               <option key={count} value={count}>
-                {count} Players
+                {t('game:room.create.playersCount', { count })}
               </option>
             ))}
           </Form.Control>
@@ -83,14 +85,14 @@ const CreateRoom: React.FC = () => {
           <Form.Check
             type="checkbox"
             name="isPrivate"
-            label="Make this a private room"
+            label={t('game:room.create.privateRoom')}
             checked={form.isPrivate}
             onChange={handleChange}
           />
         </Form.Group>
 
         <Button variant="primary" type="submit" disabled={loading}>
-          {loading ? 'Creating...' : 'Create Room'}
+          {loading ? t('game:room.create.creating') : t('common:buttons.create')}
         </Button>
       </Form>
     </Container>

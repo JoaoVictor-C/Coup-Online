@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import { Action, ActionResponse, Card, PendingAction, Player } from '@utils/types';
+import { useTranslation } from 'react-i18next';
 
 interface PendingActionModalProps {
   show: boolean;
@@ -16,6 +17,7 @@ interface PendingActionModalProps {
 }
 
 const PendingActionModal: React.FC<PendingActionModalProps> = ({ show, action, onRespond, onHide, pendingAction, currentUserId, players, respondToBlock, respondToExchangeSelect, gameId }) => {
+  const { t } = useTranslation(['game', 'common']);
   const [showSelectBlockOption, setShowSelectBlockOption] = useState(false);
   const [showRespondToBlock, setShowRespondToBlock] = useState(false);
   const [showRespondToExchangeSelect, setShowRespondToExchangeSelect] = useState(false);
@@ -61,51 +63,7 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ show, action, o
     }
   }, [pendingAction, currentUserId]);
 
-  const getActionDetails = (actionType: string) => {
-    switch (actionType) {
-      case 'foreign_aid':
-        return {
-          description: 'Foreign Aid: Gain 2 coins from the central treasury.',
-          canBlock: true,
-          canChallenge: false,
-        };
-      case 'steal':
-        return {
-          description: 'Steal: Steal 2 coins from another player.',
-          canBlock: true,
-          canChallenge: true,
-        };
-      case 'assassinate':
-        return {
-          description: 'Assassinate: Spend 3 coins to assassinate another player.',
-          canBlock: true,
-          canChallenge: true,
-        };
-      case 'exchange':
-        return {
-          description: 'Exchange: Draw 2 cards from the central deck.',
-          canBlock: false,
-          canChallenge: true,
-        };
-      case 'tax':
-        return {
-          description: 'Tax: Collect 3 coins from the central treasury.',
-          canBlock: false,
-          canChallenge: true,
-        };
-      // Add other actions as needed
-      default:
-        return {
-          description: 'Unknown Action',
-          canBlock: false,
-          canChallenge: false,
-        };
-    }
-  };
-
   if (!action) return null;
-
-  const { description, canBlock, canChallenge } = getActionDetails(action.actionType);
 
   if (showRespondToExchangeSelect) {
     return (
@@ -117,10 +75,10 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ show, action, o
         size="lg"
       >
         <Modal.Header closeButton>
-          <Modal.Title>Select Cards to Exchange</Modal.Title>
+          <Modal.Title>{t('game:actions.exchange.selectCards')}</Modal.Title>
         </Modal.Header>
         <Modal.Body className="text-center">
-          <p>Please choose two cards to return to the central deck:</p>
+          <p>{t('game:actions.exchange.selectPrompt')}</p>
           <div className="d-flex flex-wrap justify-content-center">
             {players
               .find((player) => player.userId === pendingAction?.initiatorId)
@@ -160,7 +118,7 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ show, action, o
                 }}
                 size="lg"
               >
-                Confirm Selection
+                {t('common:buttons.confirm')}
               </Button>
             </div>
           )}
@@ -173,22 +131,22 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ show, action, o
     return (
       <Modal show={showSelectBlockOption} onHide={() => setShowSelectBlockOption(false)} centered backdrop="static">
         <Modal.Header closeButton>
-          <Modal.Title>Select Block Option</Modal.Title>
+          <Modal.Title>{t('game:actions.block.selectOption')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Please choose a card to block the action:</p>
+          <p>{t('game:actions.block.selectCard')}</p>
           <div className="d-flex justify-content-around">
             <Button variant="primary" onClick={() => handleResponse('block', 'ambassador')}>
-              Ambassador
+              {t('game:cards.ambassador')}
             </Button>
             <Button variant="primary" onClick={() => handleResponse('block', 'captain')}>
-              Captain
+              {t('game:cards.captain')}
             </Button>
           </div>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowSelectBlockOption(false)}>
-            Cancel
+            {t('common:buttons.cancel')}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -199,19 +157,19 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ show, action, o
     return (
       <Modal show={showRespondToBlock} onHide={() => setShowRespondToBlock(false)} centered backdrop="static">
         <Modal.Header closeButton>
-          <Modal.Title>Respond to Block</Modal.Title>
+          <Modal.Title>{t('game:actions.block.respondTitle')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <p>
-            {players.find(player => player.userId === pendingAction?.initiatorId)?.username} is attempting to block your action.
+            {players.find(player => player.userId === pendingAction?.initiatorId)?.username} {t('game:actions.block.attemptingBlock')}
           </p>
-          <p>Do you want to challenge this block?</p>
+          <p>{t('game:actions.block.challengePrompt')}</p>
           <div className="d-flex justify-content-around">
             <Button variant="danger" onClick={() => respondToBlock(gameId, true)}>
-              Challenge
+              {t('game:actions.challenge')}
             </Button>
             <Button variant="secondary" onClick={() => respondToBlock(gameId, false)}>
-              Pass
+              {t('game:actions.pass')}
             </Button>
           </div>
         </Modal.Body>
@@ -222,30 +180,34 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ show, action, o
   return (
     <Modal show={show} onHide={onHide} centered backdrop="static">
       <Modal.Header closeButton>
-        <Modal.Title>Pending Action</Modal.Title>
+        <Modal.Title>{t('game:actions.pending')}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <p>
           {pendingAction?.initiatorId === currentUserId
-            ? 'You'
+            ? t('game:actions.you')
             : players.find(player => player.userId === pendingAction?.initiatorId)?.username}{' '}
-          is performing <strong>{description}</strong>
+          {t('game:actions.performing')} <strong>{t(`game:actions.${action.actionType}.description`)}</strong>
         </p>
-        <p>Do you want to respond?</p>
+        <p>{t('game:actions.respondPrompt')}</p>
       </Modal.Body>
       <Modal.Footer>
-        {canBlock && (
-          <Button variant="danger" onClick={() => handleResponse('block')}>
-            Block
-          </Button>
-        )}
-        {canChallenge && (
-          <Button variant="warning" onClick={() => handleResponse('challenge')}>
-            Challenge
-          </Button>
+        {action.actionType !== 'income' && action.actionType !== 'coup' && (
+          <>
+            {['foreign_aid', 'steal', 'assassinate'].includes(action.actionType) && (
+              <Button variant="danger" onClick={() => handleResponse('block')}>
+                {t('game:actions.block.action')}
+              </Button>
+            )}
+            {['steal', 'assassinate', 'exchange', 'tax'].includes(action.actionType) && (
+              <Button variant="warning" onClick={() => handleResponse('challenge')}>
+                {t('game:actions.challenge')}
+              </Button>
+            )}
+          </>
         )}
         <Button variant="secondary" onClick={() => handleResponse('pass')}>
-          Pass
+          {t('game:actions.pass')}
         </Button>
       </Modal.Footer>
     </Modal>

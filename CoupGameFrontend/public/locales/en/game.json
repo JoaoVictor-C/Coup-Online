@@ -1,0 +1,143 @@
+{
+    "room": {
+      "create": {
+        "title": "Create New Room",
+        "gameName": "Game Name", 
+        "playerCount": "Number of Players",
+        "playersCount": "{{count}} Players",
+        "privateRoom": "Make this a private room",
+        "creating": "Creating...",
+        "success": "Room created successfully!"
+      },
+      "join": {
+        "title": "Join a Private Game",
+        "roomCode": "Room Code",
+        "enterCode": "Enter room code",
+        "codeHelp": "Enter the unique room code provided by the game host"
+      },
+      "lobby": {
+        "title": "{{gameName}} Lobby",
+        "waiting": "Waiting for the game to start...",
+        "players": "Players ({{current}}/{{max}})",
+        "spectators": "Spectators ({{count}})",
+        "leader": "Leader",
+        "inactive": "Inactive",
+        "minPlayers": "You need at least 2 players to start the game",
+        "needMorePlayers": "Need at least 2 players to start"
+      },
+      "code": "Room Code",
+      "codeCopied": "Room code copied to clipboard!",
+      "name": "Room Name",
+      "available": "Available Rooms",
+      "searchPlaceholder": "Search rooms...",
+      "noRooms": "No rooms available",
+      "players": "Players",
+      "actions": "Actions",
+      "lastSearch": {
+        "na": "Last search: N/A",
+        "time": "Last search: {{minutes}}m {{seconds}}s ago"
+      }
+    },
+    "rooms": {
+      "errors": {
+        "joinFailed": "Failed to join room",
+        "searchFailed": "Failed to search rooms"
+      }
+    },
+    "actions": {
+      "income": {
+        "name": "Income",
+        "description": "Income: Gain 1 coin"
+      },
+      "foreign_aid": {
+        "name": "Foreign Aid", 
+        "description": "Foreign Aid: Gain 2 coins from the central treasury"
+      },
+      "coup": {
+        "name": "Coup",
+        "description": "Coup: Spend 7 coins to remove another player's Card from the game"
+      },
+      "steal": {
+        "name": "Steal",
+        "description": "Steal: Steal 2 coins from another player"
+      },
+      "assassinate": {
+        "name": "Assassinate",
+        "description": "Assassinate: Spend 3 coins to assassinate another player"
+      },
+      "exchange": {
+        "name": "Exchange",
+        "description": "Exchange: Draw 2 cards from the central deck",
+        "selectCards": "Select Cards to Keep",
+        "selectPrompt": "Select 2 cards to return to the deck"
+      },
+      "tax": {
+        "name": "Tax",
+        "description": "Tax: Take 3 coins from the treasury"
+      },
+      "select": "Select an Action",
+      "selectTarget": "Select a Target",
+      "noTargets": "No valid targets available", 
+      "choose": "Choose Action",
+      "coins": "coins",
+      "roleActions": "Role Actions",
+      "mainActions": "Main Actions",
+      "block": {
+        "action": "Block",
+        "selectOption": "Select Block Option",
+        "selectCard": "Select which card you want to use to block",
+        "respondTitle": "Respond to Block",
+        "attemptingBlock": "is attempting to block your action",
+        "challengePrompt": "Would you like to challenge their block?"
+      },
+      "pending": "Pending Action",
+      "challenge": "Challenge",
+      "pass": "Pass",
+      "performing": "is performing",
+      "respondPrompt": "How would you like to respond?",
+      "you": "You"
+    },
+    "spectator": {
+      "title": "Spectators",
+      "switchButton": "Switch to Spectator",
+      "rejoinButton": "Rejoin as Player",
+      "switchTitle": "Switch to Spectator Mode",
+      "switchConfirm": "Are you sure you want to switch to spectator mode?",
+      "switchTooltip": "Switch to spectator mode to observe the game",
+      "none": "No spectators"
+    },
+    "player": {
+      "inactive": "Inactive",
+      "leader": "Leader",
+      "unknown": "Unknown"
+    },
+    "turn": {
+      "yours": "Your Turn",
+      "current": "Current Turn",
+      "waiting": "Waiting for other players..."
+    },
+    "status": {
+      "gameOver": "Game Over",
+      "winner": "Winner",
+      "you": "You"
+    },
+    "gameOver": {
+      "waiting": "Waiting for leader to restart or exit..."
+    },
+    "resources": {
+      "coins": "coins"
+    },
+    "cards": {
+      "back": "Card Back",
+      "selectReturn": "Select a card to return",
+      "ambassador": "Embaixador",
+      "assassin": "Assassino",
+      "captain": "Capitão",
+      "contessa": "Condessa",
+      "duke": "Duque"
+    },
+    "actionLog": {
+      "title": "Action Log"
+    },
+    "waitingForPlayers": "Waiting for players..."
+}

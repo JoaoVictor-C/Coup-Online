@@ -6,6 +6,7 @@ import TargetSelectionModal from './TargetSelectionModal';
 import { GameContext } from '@context/GameContext';
 import { FaCoins } from 'react-icons/fa';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 
 interface ActionSelectionModalProps {
   show: boolean;
@@ -22,6 +23,7 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
   game,
   currentUserId,
 }) => {
+  const { t } = useTranslation(['game', 'common']);
   const [showTargetModal, setShowTargetModal] = useState(false);
   const [selectedAction, setSelectedAction] = useState<Action | null>(null);
   const { handlePendingAction } = useContext(GameContext);
@@ -69,59 +71,12 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
     setShowTargetModal(false);
   };
 
-
   const getActionDetails = (actionType: string) => {
-    switch (actionType) {
-      case 'income':
-        return {
-          description: 'Income: Gain 1 coin.',
-          canBlock: false,
-          canChallenge: false,
-        };
-      case 'foreign_aid':
-        return {
-          description: 'Foreign Aid: Gain 2 coins from the central treasury.',
-          canBlock: true,
-          canChallenge: false,
-        };
-      case 'coup':
-        return {
-          description: 'Coup: Spend 7 coins to remove another player\'s Card from the game.',
-          canBlock: false,
-          canChallenge: false,
-        };
-      case 'steal':
-        return {
-          description: 'Steal: Steal 2 coins from another player.',
-          canBlock: true,
-          canChallenge: true,
-        };
-      case 'assassinate':
-        return {
-          description: 'Assassinate: Spend 3 coins to assassinate another player.',
-          canBlock: true,
-          canChallenge: true,
-        };
-      case 'exchange':
-        return {
-          description: 'Exchange: Draw 2 cards from the central deck.',
-          canBlock: false,
-          canChallenge: true,
-        };
-      case 'tax':
-        return {
-          description: 'Tax: Collect 3 coins from the central treasury.',
-          canBlock: false,
-          canChallenge: true,
-        };
-      // Add other actions as needed
-      default:
-        return {
-          description: 'Unknown Action',
-          canBlock: false,
-          canChallenge: false,
-        };
-    }
+    return {
+      description: t(`game:actions.${actionType}.description`),
+      canBlock: ['foreign_aid', 'steal', 'assassinate'].includes(actionType),
+      canChallenge: ['steal', 'assassinate', 'exchange', 'tax'].includes(actionType),
+    };
   };
 
   const actionsWithImages: { [key: string]: string | undefined } = {
@@ -129,9 +84,9 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
     assassinate: cardImages.assassin,
     exchange: cardImages.ambassador,
     tax: cardImages.duke,
-    income: undefined, // No image
-    foreign_aid: undefined, // No image
-    coup: undefined, // No image
+    income: undefined,
+    foreign_aid: undefined,
+    coup: undefined,
   };
 
   const renderCardImg = (actionType: string) => {
@@ -152,10 +107,10 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
     <>
       <Modal show={show} onHide={onHide} centered backdrop="static">
         <Modal.Header closeButton>
-          <Modal.Title>Select Action</Modal.Title>
+          <Modal.Title>{t('game:actions.select')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <h5 className="mb-3">Role Actions</h5>
+          <h5 className="mb-3">{t('game:actions.roleActions')}</h5>
           <Row>
             {['steal', 'assassinate', 'tax', 'exchange'].map((actionType) => (
               <Col md={3} className="mb-3" key={actionType}>
@@ -169,14 +124,16 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
                       <div style={{ width: 'auto', height: 'auto', margin: '0 auto' }}>
                         {renderCardImg(actionType)}
                       </div>
+                      <Card.Body>
+                        <Card.Title>{t(`game:actions.${actionType}.name`)}</Card.Title>
+                      </Card.Body>
                     </Card>
                   </motion.div>
                 </OverlayTrigger>
               </Col>
             ))}
           </Row>
-          {/* Main Actions Section */}
-          <h5 className="mb-3">Main Actions</h5>
+          <h5 className="mb-3">{t('game:actions.mainActions')}</h5>
           <Row>
             {['income', 'foreign_aid', 'coup'].map((actionType) => (
               <Col md={4} className="mb-4" key={actionType}>
@@ -188,20 +145,14 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
                       style={{ cursor: 'pointer' }}
                     >
                       <Card.Body>
-                        <Card.Title className="text-success text-capitalize">
-                          {actionType.replace('_', ' ')}
+                        <Card.Title className="text-success">
+                          {t(`game:actions.${actionType}.name`)}
                         </Card.Title>
                         <Button
-                          variant={
-                            actionType === 'coup'
-                              ? 'outline-danger'
-                              : 'outline-success'
-                          }
+                          variant={actionType === 'coup' ? 'outline-danger' : 'outline-success'}
                           disabled={game.isGameOver}
                         >
-                          <strong>
-                            {actionType.charAt(0).toUpperCase() + actionType.slice(1).replace('_', ' ')}
-                          </strong>
+                          <strong>{t(`game:actions.${actionType}.name`)}</strong>
                         </Button>
                       </Card.Body>
                     </Card>
@@ -213,12 +164,11 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={onHide} disabled={showTargetModal}>
-            Cancel
+            {t('common:buttons.cancel')}
           </Button>
         </Modal.Footer>
       </Modal>
 
-      {/* Target Selection Modal */}
       {selectedAction && (
         <TargetSelectionModal
           show={showTargetModal}

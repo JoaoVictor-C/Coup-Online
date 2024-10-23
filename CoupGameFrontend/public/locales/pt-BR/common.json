@@ -1,0 +1,47 @@
+{
+  "buttons": {
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "submit": "Enviar", 
+    "create": "Criar",
+    "join": "Entrar",
+    "start": "Iniciar",
+    "restart": "Reiniciar",
+    "exit": "Sair",
+    "return": "Voltar",
+    "login": "Entrar",
+    "logout": "Sair",
+    "register": "Registrar"
+  },
+  "loading": "Carregando...",
+  "error": {
+    "generic": "Ocorreu um erro",
+    "required": "Este campo é obrigatório",
+    "connection": "Erro de conexão",
+    "invalidRoom": "Código de sala inválido",
+    "roomFull": "Sala está cheia",
+    "gameInProgress": "Jogo já está em andamento"
+  },
+  "status": {
+    "waiting": "Aguardando...",
+    "connecting": "Conectando...",
+    "disconnected": "Desconectado",
+    "reconnecting": "Reconectando..."
+  },
+  "modal": {
+    "close": "Fechar"
+  },
+  "validation": {
+    "required": "Este campo é obrigatório",
+    "minLength": "Deve ter pelo menos {{min}} caracteres",
+    "maxLength": "Deve ter menos de {{max}} caracteres",
+    "invalidFormat": "Formato inválido"
+  },
+  "navigation": {
+    "rooms": "Salas"
+  },
+  "greeting": "Olá, {{username}}",
+  "footer": {
+    "copyright": "© {{year}} Coup Online. Todos os direitos reservados."
+  }
+}

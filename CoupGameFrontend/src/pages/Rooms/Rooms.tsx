@@ -6,14 +6,16 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import authService from '@services/authService';
 import { getToken } from '@utils/auth';
+import { useTranslation } from 'react-i18next';
 
 const Rooms: React.FC = () => {
+  const { t } = useTranslation(['game', 'common']);
   const [rooms, setRooms] = useState<Game[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [lastSearchTime, setLastSearchTime] = useState<Date | null>(null);
-  const [elapsedTime, setElapsedTime] = useState<string>('Last search: N/A');
+  const [elapsedTime, setElapsedTime] = useState<string>(t('game:room.lastSearch.na'));
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const navigate = useNavigate();
   const token = getToken();
@@ -43,14 +45,14 @@ const Rooms: React.FC = () => {
         const diffInSeconds = Math.floor((now.getTime() - lastSearchTime.getTime()) / 1000);
         const minutes = Math.floor(diffInSeconds / 60);
         const seconds = diffInSeconds % 60;
-        setElapsedTime(`Last search: ${minutes} minute${minutes !== 1 ? 's' : ''} ${seconds} second${seconds !== 1 ? 's' : ''}.`);
+        setElapsedTime(t('game:room.lastSearch.time', { minutes, seconds }));
       } else {
-        setElapsedTime('Last search: N/A');
+        setElapsedTime(t('game:room.lastSearch.na'));
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [lastSearchTime]); 
+  }, [lastSearchTime, t]); 
 
   const fetchRooms = async () => {
     setLoading(true);
@@ -60,7 +62,7 @@ const Rooms: React.FC = () => {
       setError(null);
       setLastSearchTime(new Date());
     } catch (err: any) {
-      setError('Failed to load rooms. Please try again later.');
+      setError(t('common:error.generic'));
     } finally {
       setLoading(false);
     }
@@ -69,15 +71,13 @@ const Rooms: React.FC = () => {
   const handleJoin = async (room: Game) => {
     try {
       const game = await roomService.joinRoom(room.id);
-      console.log(game);
       const isSpectator = game.spectators.some(spectator => spectator.userId === currentUserId) || game.players?.length >= room.playerCount;
       navigate(`/${isSpectator ? 'spectator' : 'game'}/${game.roomCode}`);
     } catch (err: any) {
       if (err.response?.data?.message === "Game not found.") {
         fetchRooms();
       }
-      console.log(err);
-      setError(err.response?.data?.message || 'Failed to join the game. Please try again.');
+      setError(err.response?.data?.message || t('game:rooms.errors.joinFailed'));
     }
   };
 
@@ -90,7 +90,7 @@ const Rooms: React.FC = () => {
       setError(null);
       setLastSearchTime(new Date());
     } catch (err: any) {
-      setError('Failed to search rooms. Please try again.');
+      setError(t('game:rooms.errors.searchFailed'));
     } finally {
       setLoading(false);
     }
@@ -98,13 +98,13 @@ const Rooms: React.FC = () => {
 
   return (
     <Container className="my-5">
-      <h2 className="mb-4">Available Rooms</h2>
+      <h2 className="mb-4">{t('game:room.available')}</h2>
       <Form onSubmit={handleSearch} className="mb-4">
         <Row>
           <Col md={6}>
             <Form.Control
               type="text"
-              placeholder="Search by Room Name or Code"
+              placeholder={t('game:room.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -112,12 +112,12 @@ const Rooms: React.FC = () => {
           <Col md={4} className="text-end">
             <Link to="/create-room">
               <Button variant="success" className="me-2">
-                Create New Room
+                {t('game:room.create.title')}
               </Button>
             </Link>
             <Link to="/join-game">
               <Button variant="primary">
-                Join Private Game
+                {t('game:room.join.title')}
               </Button>
             </Link>
           </Col>
@@ -137,10 +137,10 @@ const Rooms: React.FC = () => {
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              <th>Room Name</th>
-              <th>Room Code</th>
-              <th>Players</th>
-              <th>Actions</th>
+              <th>{t('game:room.name')}</th>
+              <th>{t('game:room.code')}</th>
+              <th>{t('game:room.players')}</th>
+              <th>{t('game:room.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -149,13 +149,13 @@ const Rooms: React.FC = () => {
                 <tr key={room.id}>
                   <td>{room.gameName}</td>
                   <td>{room.roomCode}</td>
-                  <td>{room.players.length} / {room.playerCount}</td>
+                  <td>{t('game:room.lobby.players', { current: room.players.length, max: room.playerCount })}</td>
                   <td>
                     <Button 
                       variant={room.players.length >= room.playerCount ? "secondary" : "primary"} 
                       onClick={() => handleJoin(room)}
                     >
-                      {room.players.length >= room.playerCount ? "Spectate" : "Join"}
+                      {room.players.length >= room.playerCount ? t('game:spectator.title') : t('common:buttons.join')}
                     </Button>
                   </td>
                 </tr>
@@ -163,7 +163,7 @@ const Rooms: React.FC = () => {
             ) : (
               <tr>
                 <td colSpan={4} className="text-center">
-                  No rooms available.
+                  {t('game:room.noRooms')}
                 </td>
               </tr>
             )}
