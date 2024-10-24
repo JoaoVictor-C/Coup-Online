@@ -62,6 +62,69 @@ namespace CoupGameBackend.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        // Verify if the token is expired, if it is, return false
+        public async Task<bool> VerifyToken(string token, string userId)
+        {
+            try
+            {
+                var jwtSettings = _configuration.GetSection("JwtSettings");
+                var secret = jwtSettings["Secret"];
+                if (string.IsNullOrEmpty(secret))
+                    throw new InvalidOperationException("JWT Secret is not configured.");
+
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtSettings["Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = jwtSettings["Audience"],
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero,
+                    NameClaimType = JwtRegisteredClaimNames.Sub
+                };
+
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
+                var tokenUserId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(tokenUserId))
+                {
+                    Console.WriteLine("Token does not contain a valid 'sub' claim.");
+                    return false;
+                }
+                if (tokenUserId != userId)
+                {
+                    Console.WriteLine($"Token user ID ({tokenUserId}) does not match the provided user ID ({userId}).");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (SecurityTokenExpiredException ex)
+            {
+                Console.WriteLine($"Token expired: {ex.Message}");
+                return false;
+            }
+            catch (SecurityTokenInvalidIssuerException ex)
+            {
+                Console.WriteLine($"Invalid issuer: {ex.Message}");
+                return false;
+            }
+            catch (SecurityTokenInvalidAudienceException ex)
+            {
+                Console.WriteLine($"Invalid audience: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Token validation failed: {ex.Message}");
+                return false;
+            }
+        }
+
         public async Task<string> Register(string username, string password, string email)
         {
             // Validate input

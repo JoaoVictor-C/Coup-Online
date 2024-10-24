@@ -7,5 +7,6 @@ namespace CoupGameBackend.Services
         Task<string> Authenticate(string username, string password);
         Task<string> Register(string username, string password, string email);
         Task<User> GetCurrentUser(string token);
+        Task<bool> VerifyToken(string token, string userId);
     }
 }

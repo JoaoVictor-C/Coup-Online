@@ -75,8 +75,21 @@ namespace CoupGameBackend.Controllers
         public async Task<IActionResult> GetCurrentUser()
         {
             var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            if (string.IsNullOrEmpty(token))
+                return BadRequest(new { message = "Token is required." });
+
             var user = await _userService.GetCurrentUser(token);
             return Ok(user);
+        }
+
+        [HttpGet("verifyToken")]
+        public async Task<IActionResult> VerifyToken([FromQuery] string? token, [FromQuery] string userId)
+        {
+            if (string.IsNullOrEmpty(token))
+                return BadRequest(new { message = "Token is required." });
+
+            var result = await _userService.VerifyToken(token, userId);
+            return Ok(result);
         }
 
         private string ComputeSha256Hash(string rawData)

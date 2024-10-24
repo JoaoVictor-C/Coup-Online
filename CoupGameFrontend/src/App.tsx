@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
 import Home from '@pages/Home/Home';
@@ -12,8 +12,22 @@ import Header from '@components/layout/Header';
 import Footer from '@components/layout/Footer';
 import PrivateRoute from '@components/common/PrivateRoute';
 import { GameProvider } from '@context/GameContext';
+import { AuthContext, AuthProvider } from '@context/AuthContext';
 
 const App: React.FC = () => {
+  // If the user is logged in, verify the token
+  const { user, token, verifyToken } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (user && token) {
+      verifyToken(token, user.id).then(isValid => {
+        if (!isValid) {
+          window.location.href = '/login';
+        }
+      });
+    }
+  }, [user, token, verifyToken]);
+
   return (
     <div className="App">
       <Header />

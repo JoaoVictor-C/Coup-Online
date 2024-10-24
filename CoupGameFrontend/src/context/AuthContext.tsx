@@ -10,6 +10,7 @@ interface AuthContextType {
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   isLoggedIn: boolean;
+  verifyToken: (token: string, userId: string) => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -20,6 +21,7 @@ export const AuthContext = createContext<AuthContextType>({
   register: async () => {},
   logout: () => {},
   isLoggedIn: false,
+  verifyToken: async () => false,
 });
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -75,13 +77,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
-    // Optionally, inform the backend about the logout
+  };
+
+  const verifyToken = async (token: string, userId: string) => {
+    const response = await authService.verifyToken(token, userId);
+    console.log(response);
+    if (!response) {
+      logout();
+    }
+    return response;
   };
 
   const isLoggedIn = user !== null;
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, isLoggedIn }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, isLoggedIn, verifyToken }}>
       {children}
     </AuthContext.Provider>
   );

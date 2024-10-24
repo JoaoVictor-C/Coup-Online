@@ -27,6 +27,7 @@
       },
       "code": "Room Code",
       "codeCopied": "Room code copied to clipboard!",
+      "clickToCopy": "Click to copy",
       "name": "Room Name",
       "available": "Available Rooms",
       "searchPlaceholder": "Search rooms...",

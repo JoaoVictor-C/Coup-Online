@@ -27,6 +27,7 @@
       },
       "code": "Código da Sala",
       "codeCopied": "Código da sala copiado!",
+      "clickToCopy": "Clique para copiar",
       "name": "Nome da Sala",
       "available": "Salas Disponíveis", 
       "searchPlaceholder": "Buscar salas...",

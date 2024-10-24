@@ -17,6 +17,10 @@ const authService = {
   getUser: async (token: string): Promise<User> => {
     const response = await api.get('/auth/me');
     return response.data;
+  },
+  verifyToken: async (token: string, userId: string): Promise<boolean> => {
+    const response = await api.get(`/auth/verifyToken?token=${token}&userId=${userId}`);
+    return response.data;
   }
 };
 

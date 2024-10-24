@@ -1,4 +1,3 @@
-// Start of Selection
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   Container,
@@ -154,7 +153,18 @@ const Rooms: React.FC = () => {
 
   return (
     <Container sx={{ my: 5 }}>
-      <Typography variant="h4" gutterBottom align="center">
+      <Typography
+        variant="h4"
+        gutterBottom
+        align="center"
+        sx={{
+          fontSize: {
+            xs: '1.5rem', // Mobile
+            sm: '2rem',
+            md: '2.5rem', // Desktop
+          },
+        }}
+      >
         {t('game:room.available')}
       </Typography>
       <form onSubmit={(e) => e.preventDefault()}>
@@ -169,14 +179,14 @@ const Rooms: React.FC = () => {
               aria-label={t('game:room.searchPlaceholder')}
             />
           </Grid>
-          <Grid item xs={12} md={6} textAlign="right">
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
+          <Grid item xs={12} md={6} textAlign={{ xs: 'center', md: 'right' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="flex-end">
               <Button
                 component={RouterLink}
                 to="/create-room"
                 variant="contained"
                 color="success"
-                sx={{ paddingX: 3, paddingY: 1 }}
+                sx={{ paddingX: 3, paddingY: 1, width: { xs: '100%', sm: 'auto' } }}
               >
                 {t('game:room.create.title')}
               </Button>
@@ -185,7 +195,7 @@ const Rooms: React.FC = () => {
                 to="/join-game"
                 variant="contained"
                 color="primary"
-                sx={{ paddingX: 3, paddingY: 1 }}
+                sx={{ paddingX: 3, paddingY: 1, width: { xs: '100%', sm: 'auto' } }}
               >
                 {t('game:room.join.title')}
               </Button>
@@ -193,7 +203,7 @@ const Rooms: React.FC = () => {
                 variant="contained"
                 color="info"
                 onClick={fetchRooms}
-                sx={{ paddingX: 3, paddingY: 1 }}
+                sx={{ paddingX: 3, paddingY: 1, width: { xs: '100%', sm: 'auto' } }}
               >
                 {t('common:buttons.refresh')}
               </Button>
@@ -216,7 +226,7 @@ const Rooms: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : (
-        <TableContainer component={Paper} sx={{ mt: 4 }}>
+        <TableContainer component={Paper} sx={{ mt: 4, overflowX: 'auto' }}>
           <Table aria-label="rooms table">
             <TableHead>
               <TableRow>
@@ -251,6 +261,10 @@ const Rooms: React.FC = () => {
                               ? t('game:spectator.title')
                               : t('common:buttons.join')
                           }
+                          sx={{
+                            width: { xs: '100%', sm: 'auto' },
+                            mt: { xs: 1, sm: 0 },
+                          }}
                         >
                           {room.players.length >= room.playerCount
                             ? t('game:spectator.title')
