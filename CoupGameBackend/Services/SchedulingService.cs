@@ -36,6 +36,7 @@ namespace CoupGameBackend.Services
                         var game = await _gameRepository.GetGameAsync(gameId);
                         if (game != null && game.Players.All(p => !p.IsActive))
                         {
+                            Console.WriteLine($"Game: {game.GameName} is being deleted");
                             await _gameRepository.DeleteGameAsync(gameId);
                             await _hubContext.Clients.All.SendAsync("GameDeleted", gameId);
                         }

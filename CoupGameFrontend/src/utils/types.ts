@@ -47,6 +47,7 @@ export interface Player {
   coins: number;
   influences: number;
   isActive: boolean;
+  isConnected: boolean;
   hand: Card[];
 }
 

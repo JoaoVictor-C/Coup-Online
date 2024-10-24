@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Game, CardImages, Action, backCard, cardImages, ActionResponse, PendingAction, Card, Spectator } from '@utils/types';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Container, Grid, Card as MuiCard, Typography, List, ListItem, Tooltip, CircularProgress, CardContent, CardHeader, Box, Chip } from '@mui/material';
+import { Game, CardImages, Action, backCard, cardImages, ActionResponse, PendingAction, Card, Spectator, Player } from '@utils/types';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Container, Grid, Card as MuiCard, Typography, List, ListItem, Tooltip, CircularProgress, CardContent, CardHeader, Box, Badge } from '@mui/material';
 import { FaCoins, FaUserShield, FaCrown, FaFlag, FaUser } from 'react-icons/fa';
+import { FiWifiOff } from "react-icons/fi";
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import ActionSelectionModal from './ActionSelectionModal';
@@ -142,6 +143,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
     setShowReturnCardModal(false);
   };
 
+  // New function to determine card styles based on user status
+  const getCardStyle = (player: Player) => {
+    let styles: React.CSSProperties = {};
+    if (!player.isActive) {
+      styles.filter = 'grayscale(100%)';
+    }
+    return styles;
+  };
+
   if (gameState === 'WAITING_FOR_PLAYERS') {
     return <WaitingScreen />;
   }
@@ -195,29 +205,37 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 <MuiCard
                   sx={{
                     textAlign: 'center',
-                    border: isCurrentUser && !isSpectator ? '2px solid primary.main' : 'none',
+                    border: isCurrentTurn ? '1px solid #1976d2' : '1px solid rgba(0, 0, 0, 0.12)',
                     bgcolor: isCurrentTurn ? 'grey.100' : 'background.paper',
                     position: 'relative',
+                    boxShadow: isCurrentTurn ? '0px 0px 15px 0px #1976d2' : 'none',
+                    transition: 'border 0.3s, box-shadow 0.3s',
                   }}
                 >
+                  {/* Disconnected Indicator */}
+                  {!player.isConnected && (
+                    <Badge
+                      overlap="circular"
+                      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                      badgeContent={<FiWifiOff color="error" />}
+                    />
+                  )}
+
                   <CardHeader
-                    sx={{ bgcolor: isLeader ? 'goldenrod' : 'primary.main', color: 'common.white' }}
+                    sx={{ bgcolor: isLeader ? 'goldenrod' : (isCurrentUser ? 'primary.dark' : 'primary.main'), color: 'common.white' }}
                     title={
                       <Box display="flex" alignItems="center" justifyContent="center" flexWrap="wrap">
-                        <Typography variant="subtitle1" sx={{ mr: 1 }}>{player.username}</Typography>
+                        <Typography variant="subtitle1" sx={{ mr: 1, fontWeight: isCurrentUser ? 'bold' : 'normal' }}>
+                          {player.username} {isCurrentUser && `(${t('common:labels.you')})`}
+                        </Typography>
                         {isLeader && (
                           <Tooltip title={t('game:status.leader')}>
                             <FaCrown color="warning" size="1em" />
                           </Tooltip>
                         )}
-                        {isCurrentTurn && (
-                          <Tooltip title={t('game:status.currentTurn')}>
-                            <FaFlag color="info" size="1em" />
-                          </Tooltip>
-                        )}
-                        {isCurrentUser && (
-                          <Tooltip title={t('common:labels.you')}>
-                            <FaUser color="success" size="1em" />
+                        {!isCurrentUser && (
+                          <Tooltip title={isCurrentUser ? t('common:labels.you') : ''}>
+                            <span></span>
                           </Tooltip>
                         )}
                       </Box>
@@ -235,7 +253,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
                               <img
                                 src={cardImages[card.name.toLowerCase() as keyof CardImages]}
                                 alt={card.name}
-                                style={{ width: '90px', height: '135px', borderRadius: '8px' }}
+                                style={{ 
+                                  width: '90px', 
+                                  height: '135px', 
+                                  borderRadius: '8px',
+                                  ...getCardStyle(player)
+                                }}
                               />
                             </Box>
                           );
@@ -260,6 +283,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                                   transition: 'transform 0.25s ease',
                                   transformStyle: 'preserve-3d',
                                   cursor: 'pointer',
+                                  ...getCardStyle(player)
                                 }}
                                 whileHover={{ rotateY: 180 }}
                               >
@@ -288,6 +312,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                                     left: 0,
                                     transform: 'rotateY(180deg)',
                                     backfaceVisibility: 'hidden',
+                                    ...getCardStyle(player)
                                   }}
                                 />
                               </motion.div>
@@ -299,7 +324,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
                               <img
                                 src={backCard}
                                 alt={card.name}
-                                style={{ width: '90px', height: '135px', borderRadius: '8px' }}
+                                style={{ 
+                                  width: '90px', 
+                                  height: '135px', 
+                                  borderRadius: '8px',
+                                  ...getCardStyle(player)
+                                }}
                               />
                             </Box>
                           );

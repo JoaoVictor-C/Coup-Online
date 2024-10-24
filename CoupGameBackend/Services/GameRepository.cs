@@ -4,12 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+
 namespace CoupGameBackend.Services
 {
     public class GameRepository : IGameRepository
     {
         private readonly IMongoCollection<Game> _games;
         private readonly IUserRepository _userRepository;
+
         public GameRepository(IConfiguration configuration, IUserRepository userRepository)
         {
             var client = new MongoClient(configuration.GetConnectionString("MongoDB"));
@@ -75,11 +77,15 @@ namespace CoupGameBackend.Services
                 game.IsStarted = false;
                 game.IsGameOver = false;
                 game.CurrentTurnUserId = string.Empty;
-                game.ActionsHistory.Clear();
+                game.WinnerId = null;
+                game.PendingAction = null;
+                game.ActionInitiatorId = null;
                 game.Players.ForEach(player =>
                 {
                     player.Coins = 0;
                     player.Influences = 2; // Assuming each player starts with 2 influences
+                    player.IsActive = true;
+                    player.IsConnected = true; // Reset connection status
                     player.Hand.Clear();
                 });
                 game.CentralDeck = InitializeDeck(); // Implement deck initialization logic

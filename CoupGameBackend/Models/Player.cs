@@ -14,6 +14,8 @@ namespace CoupGameBackend.Models
         public int Influences { get; set; } = 0;
         [BsonElement("IsActive")]
         public bool IsActive { get; set; } = true;
+        [BsonElement("IsConnected")]
+        public bool IsConnected { get; set; } = true;
         [BsonElement("Hand")]
         public List<Card> Hand { get; set; } = new List<Card>();
     }
@@ -24,5 +26,7 @@ namespace CoupGameBackend.Models
         public string UserId { get; set; } = string.Empty;
         [BsonElement("Username")]
         public string Username { get; set; } = string.Empty;
+        [BsonElement("IsConnected")]
+        public bool IsConnected { get; set; } = true;
     }
 }

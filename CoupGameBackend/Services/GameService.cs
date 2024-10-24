@@ -51,7 +51,8 @@ namespace CoupGameBackend.Services
                 UserId = userId,
                 Coins = 2,
                 Influences = 2,
-                IsActive = true
+                IsActive = true,
+                IsConnected = true
             };
             game.Players.Add(player);
 

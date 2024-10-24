@@ -44,6 +44,9 @@
         "searchFailed": "Falha ao buscar salas"
       }
     },
+    "labels": {
+      "you": "Você"
+    },
     "actions": {
       "income": {
         "name": "Renda",

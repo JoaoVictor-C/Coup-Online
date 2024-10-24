@@ -510,7 +510,7 @@ namespace CoupGameBackend.Services
                 Action = "Pass"
             });
 
-            int activePlayerCount = game.Players.Count(p => p.Influences > 0 && p.IsActive) - 1;
+            int activePlayerCount = game.Players.Count(p => p.Influences > 0 && p.IsActive && p.UserId != game.PendingAction.InitiatorId);
             Console.WriteLine($"Active player count: {activePlayerCount}, Responses count: {game.PendingAction.Responses.Count}");
             if (game.PendingAction.Responses.Count == activePlayerCount)
             {

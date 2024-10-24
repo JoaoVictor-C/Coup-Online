@@ -30,6 +30,9 @@
     "disconnected": "Desconectado",
     "reconnecting": "Reconectando..."
   },
+  "labels": {
+    "you": "Você"
+  },
   "modal": {
     "close": "Fechar"
   },

@@ -107,7 +107,7 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
                        (actionType === 'coup' && currentPlayer.coins < 7);
 
     return (
-      <Box key={actionType} sx={{ width: { xs: '100%', sm: '50%', md: '25%' }, padding: 1 }}>
+      <Box key={actionType} sx={{ width: { xs: '100%', sm: '50%', md: '25%', lg: '23%' }, padding: 1, display: 'flex', justifyContent: 'center' }}>
         <Tooltip title={getActionDetails(actionType).description} arrow>
           <Card 
             component={motion.div}
@@ -117,24 +117,28 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
             sx={{ 
               cursor: isDisabled ? 'not-allowed' : 'pointer', 
               height: '100%', 
+              width: actionsWithImages[actionType] ? '120px' : '100%',
               backgroundColor: isDisabled ? 'action.disabledBackground' : 'background.paper', 
               display: 'flex', 
               justifyContent: 'center', 
-              alignItems: 'center',
+              alignItems: 'end',
               opacity: isDisabled ? 0.5 : 1,
             }}
           >
             {actionsWithImages[actionType] && (
               <CardMedia
                 component="img"
-                height="auto"
+                sx={{
+                  width: actionsWithImages[actionType] ? '120px' : '100%',
+                  height: 'auto',
+                }}
                 image={actionsWithImages[actionType]}
                 alt={actionType}
               />
             )}
             {!actionsWithImages[actionType] && (
               <CardContent>
-                <Typography variant="h6" component="div" sx={{ textAlign: 'center' }}>
+                <Typography variant="h6" component="div" sx={{ textAlign: 'center', width: '100%' }}>
                   {t(`game:actions.${actionType}.name`)}
                 </Typography>
               </CardContent>
@@ -151,7 +155,7 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
         <DialogTitle>{t('game:actions.select')}</DialogTitle>
         <DialogContent>
           <Typography variant="h6" gutterBottom sx={{ textAlign: 'center' }}>{t('game:actions.roleActions')}</Typography>
-          <Box display="flex" justifyContent="center" flexWrap="wrap">
+          <Box display="flex" justifyContent="center" alignItems="center" flexWrap="wrap">
             {['steal', 'assassinate', 'tax', 'exchange'].map(renderActionCard)}
           </Box>
           <Typography variant="h6" gutterBottom sx={{ mt: 3, textAlign: 'center' }}>{t('game:actions.mainActions')}</Typography>

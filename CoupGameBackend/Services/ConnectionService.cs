@@ -36,7 +36,6 @@ namespace CoupGameBackend.Services
         public Task RemoveUserConnection(string userId, string connectionId)
         {
             UserConnections.TryRemove(userId, out _);
-            // Optionally, handle additional disconnection logic here
             return Task.CompletedTask;
         }
 
@@ -80,7 +79,8 @@ namespace CoupGameBackend.Services
                     UserId = userId,
                     Coins = 2,
                     Influences = 2,
-                    IsActive = true
+                    IsActive = true,
+                    IsConnected = true
                 };
                 game.Players.Add(newPlayer);
 
@@ -96,42 +96,63 @@ namespace CoupGameBackend.Services
             if (game == null)
                 return (false, "Game not found.");
 
+            // Check if user is a player
             var player = game.Players.FirstOrDefault(p => p.UserId == userId);
-            if (player == null)
-                return (false, "Player not found in the game.");
-
-            if (player.IsActive)
-                return (false, "Player is already connected.");
-
-            var timeoutKey = $"{game.Id}_{userId}";
-            if (PendingDisconnections.TryRemove(timeoutKey, out var cts))
+            if (player != null)
             {
-                // Cancel the pending disconnection timeout
-                cts.Cancel();
-                cts.Dispose();
+                if (player.IsConnected)
+                    return (false, "Player is already connected.");
 
-                // Restore player status
-                player.IsActive = true;
+                var timeoutKey = $"{game.Id}_{userId}";
+                if (PendingDisconnections.TryRemove(timeoutKey, out var cts))
+                {
+                    // Cancel the pending disconnection timeout
+                    cts.Cancel();
+                    cts.Dispose();
 
+                    // Restore player connection status
+                    player.IsConnected = true;
+
+                    // Update the connection ID if provided
+                    if (!string.IsNullOrEmpty(newConnectionId))
+                    {
+                        await AddUserConnection(userId, newConnectionId);
+                    }
+
+                    // Notify others about the reconnection
+                    await _hubContext.Clients.Group(gameId).SendAsync("PlayerReconnected", userId);
+
+                    // Update the game state in the repository
+                    await _gameRepository.UpdateGameAsync(game);
+
+                    return (true, "Reconnected successfully as player.");
+                }
+
+                return (false, "No pending player reconnection found or reconnection window has expired.");
+            }
+
+            // Check if user is a spectator
+            var spectator = game.Spectators.FirstOrDefault(s => s.UserId == userId);
+            if (spectator != null)
+            {
                 // Update the connection ID if provided
                 if (!string.IsNullOrEmpty(newConnectionId))
                 {
                     await AddUserConnection(userId, newConnectionId);
                 }
 
-                // Notify others about the reconnection
-                await _hubContext.Clients.Group(gameId).SendAsync("PlayerReconnected", userId);
+                // Restore spectator connection status
+                spectator.IsConnected = true;
 
-                // Update the game state in the repository
-                await _gameRepository.UpdateGameAsync(game);
+                // Notify others about spectator reconnection
+                await _hubContext.Clients.Group(gameId).SendAsync("SpectatorReconnected", userId);
 
-                return (true, "Reconnected successfully.");
+                return (true, "Reconnected successfully as spectator.");
             }
 
-            return (false, "No pending reconnection found or reconnection window has expired.");
+            return (false, "User not found in game as player or spectator.");
         }
 
-        // Start of Selection
         public async Task<(bool IsSuccess, string Message)> HandleDisconnection(string gameId, string userId)
         {
             var game = await _gameRepository.GetGameAsync(gameId);
@@ -144,11 +165,14 @@ namespace CoupGameBackend.Services
             if (player != null)
             {
                 // If player is already disconnected, do nothing
-                if (!player.IsActive)
+                if (!player.IsConnected)
+                {
+                    Console.WriteLine($"Player is already disconnected: {player.Username}");
                     return (true, "Player is already disconnected.");
+                }
 
-                // Mark player as inactive
-                player.IsActive = false;
+                // Mark player as disconnected
+                player.IsConnected = false;
                 await _gameRepository.UpdateGameAsync(game);
 
                 // Notify other players
@@ -163,10 +187,10 @@ namespace CoupGameBackend.Services
                         try
                         {
                             await Task.Delay(TimeSpan.FromSeconds(30), cts.Token);
-                            // After timeout, kick the player
+                            // After timeout, kick the player if still disconnected
                             var updatedGame = await _gameRepository.GetGameAsync(gameId);
                             var disconnectedPlayer = updatedGame.Players.FirstOrDefault(p => p.UserId == userId);
-                            if (disconnectedPlayer != null && !disconnectedPlayer.IsActive)
+                            if (disconnectedPlayer != null && !disconnectedPlayer.IsConnected)
                             {
                                 // Remove player from the game
                                 updatedGame.Players.Remove(disconnectedPlayer);
@@ -185,6 +209,7 @@ namespace CoupGameBackend.Services
                                     else
                                     {
                                         // No players left, schedule game deletion
+                                        await _gameRepository.UpdateGameAsync(updatedGame);
                                         _schedulingService.ScheduleGameDeletion(gameId);
                                         return;
                                     }
@@ -214,85 +239,55 @@ namespace CoupGameBackend.Services
                     });
                 }
 
-                return (true, "Player marked as inactive. You have 20 seconds to reconnect.");
+                return (true, "Player marked as disconnected. You have 30 seconds to reconnect.");
             }
 
             // Handle spectator disconnection
-            var spectator = game.Spectators.FirstOrDefault(s => s.UserId == userId);
-            if (spectator != null)
+            var spectatorDisconnected = game.Spectators.FirstOrDefault(s => s.UserId == userId);
+            if (spectatorDisconnected != null)
             {
-                // Remove spectator from the list
-                game.Spectators.Remove(spectator);
+                // Mark spectator as disconnected
+                spectatorDisconnected.IsConnected = false;
                 await _gameRepository.UpdateGameAsync(game);
 
-                // Remove the spectator's connection
-                if (UserConnections.TryGetValue(userId, out var connectionId))
-                {
-                    await RemoveUserConnection(userId, connectionId);
-                }
-
-                // Notify others about spectator departure
+                // Notify others about spectator disconnection
                 await _hubContext.Clients.Group(gameId).SendAsync("SpectatorDisconnected", userId);
-                return (true, "Spectator disconnected and removed from the game.");
+
+                // Optionally, remove spectator after a timeout similar to players
+                // This can be implemented similarly using PendingDisconnections if desired
+
+                return (true, "Spectator marked as disconnected.");
             }
 
             // If user is neither a player nor a spectator
             return (false, "User not found in the game.");
         }
 
-        public async Task<(bool IsSuccess, string Message)> RejoinAsPlayerAsync(string gameId, string userId)
+        public async Task<(bool IsSuccess, string Message, string GameId)> JoinGameInProgress(string userId, string gameIdOrCode)
         {
-            var game = await _gameRepository.GetGameByIdOrCodeAsync(gameId);
+            var game = await _gameRepository.GetGameByIdOrCodeAsync(gameIdOrCode);
+
             if (game == null)
-                return (false, "Game not found.");
-
-            if (game.IsStarted && !game.IsGameOver)
-                return (false, "Cannot rejoin as a player while the game is in progress.");
-
-            var spectator = game.Spectators.FirstOrDefault(s => s.UserId == userId);
-
-            if (game.Players.Any(p => p.UserId == userId))
-                return (false, "User is already a player in the game.");
-
-            // Remove from spectators
-            game.Spectators.Remove(spectator);
-
-            // Remove the spectator's connection
-            await RemoveUserConnection(userId, UserConnections.ContainsKey(userId) ? UserConnections[userId] : string.Empty);
-
-            // Add back to active players
-            var player = new Player
             {
-                UserId = userId,
-                Username = await _gameRepository.GetUsernameAsync(userId),
-                Coins = game.IsStarted ? 0 : 2, // Start with 0 coins if game is in progress
-                Influences = game.IsStarted ? 0 : 2, // Start with 0 influences if game is in progress
-                IsActive = true,
-                Hand = new List<Card>()
-            };
-            game.Players.Add(player);
-
-            // If the game is in progress, deal cards to the player
-            if (game.IsStarted)
-            {
-                _gameStateService.DealCardsToPlayer(game, player, 2);
+                return (false, "Game not found.", string.Empty);
             }
 
-            // Log the action
-            game.ActionsHistory.Add(new ActionLog
+            if (game.IsGameOver)
             {
-                Timestamp = DateTime.UtcNow,
-                PlayerId = userId,
-                Action = "Rejoined as Player"
-            });
+                return (false, "Game is already over.", string.Empty);
+            }
 
-            // Update the game state
+            var existingSpectator = game.Spectators.FirstOrDefault(s => s.UserId == userId);
+            if (existingSpectator != null)
+            {
+                return (false, "You are already a spectator in this game.", game.Id);
+            }
+
+            game.Spectators.Add(new Spectator { UserId = userId, IsConnected = true });
             await _gameRepository.UpdateGameAsync(game);
+            await _hubContext.Clients.Group(game.Id).SendAsync("SpectatorJoined", userId);
 
-            // Notify clients
-            await _gameStateService.EmitGameUpdatesToUsers(gameId);
-
-            return (true, "Successfully rejoined the game as a player.");
+            return (true, "Joined as a spectator. Waiting for the game to finish.", game.Id);
         }
 
         public async Task<(bool IsSuccess, string Message)> LeaveGameAsync(string gameId, string userId)
@@ -341,10 +336,10 @@ namespace CoupGameBackend.Services
                 // Remove spectator from the game
                 game.Spectators.Remove(spectator);
 
-                // Remove the spectator's connection
+                // Mark spectator as disconnected
                 await RemoveUserConnection(userId, UserConnections.ContainsKey(userId) ? UserConnections[userId] : string.Empty);
 
-                // Notify other players about the spectator leaving
+                // Notify others about spectator departure
                 await _hubContext.Clients.Group(gameId).SendAsync("SpectatorLeft", userId);
             }
 
@@ -354,31 +349,63 @@ namespace CoupGameBackend.Services
             return (true, "Successfully left the game.");
         }
 
-        public async Task<(bool IsSuccess, string Message, string GameId)> JoinGameInProgress(string userId, string gameIdOrCode)
+        public async Task<(bool IsSuccess, string Message)> RejoinAsPlayerAsync(string gameId, string userId)
         {
-            var game = await _gameRepository.GetGameByIdOrCodeAsync(gameIdOrCode);
-
+            var game = await _gameRepository.GetGameByIdOrCodeAsync(gameId);
             if (game == null)
+                return (false, "Game not found.");
+
+            if (game.IsStarted && !game.IsGameOver)
+                return (false, "Cannot rejoin as a player while the game is in progress.");
+
+            var spectator = game.Spectators.FirstOrDefault(s => s.UserId == userId);
+
+            if (game.Players.Any(p => p.UserId == userId))
+                return (false, "User is already a player in the game.");
+
+            // Remove from spectators
+            if (spectator != null)
             {
-                return (false, "Game not found.", string.Empty);
+                game.Spectators.Remove(spectator);
             }
 
-            if (game.IsGameOver)
+            // Remove the spectator's connection
+            await RemoveUserConnection(userId, UserConnections.ContainsKey(userId) ? UserConnections[userId] : string.Empty);
+
+            // Add back to active players
+            var player = new Player
             {
-                return (false, "Game is already over.", string.Empty);
+                UserId = userId,
+                Username = await _gameRepository.GetUsernameAsync(userId),
+                Coins = game.IsStarted ? 0 : 2, // Start with 0 coins if game is in progress
+                Influences = game.IsStarted ? 0 : 2, // Start with 0 influences if game is in progress
+                IsActive = true,
+                IsConnected = true,
+                Hand = new List<Card>()
+            };
+            game.Players.Add(player);
+
+            // If the game is in progress, deal cards to the player
+            if (game.IsStarted)
+            {
+                _gameStateService.DealCardsToPlayer(game, player, 2);
             }
 
-            var existingSpectator = game.Spectators.FirstOrDefault(s => s.UserId == userId);
-            if (existingSpectator != null)
+            // Log the action
+            game.ActionsHistory.Add(new ActionLog
             {
-                return (false, "You are already a spectator in this game.", game.Id);
-            }
+                Timestamp = DateTime.UtcNow,
+                PlayerId = userId,
+                Action = "Rejoined as Player"
+            });
 
-            game.Spectators.Add(new Spectator { UserId = userId });
+            // Update the game state
             await _gameRepository.UpdateGameAsync(game);
-            await _hubContext.Clients.Group(game.Id).SendAsync("SpectatorJoined", userId);
 
-            return (true, "Joined as a spectator. Waiting for the game to finish.", game.Id);
+            // Notify clients
+            await _gameStateService.EmitGameUpdatesToUsers(gameId);
+
+            return (true, "Successfully rejoined the game as a player.");
         }
     }
 }

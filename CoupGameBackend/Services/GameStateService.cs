@@ -68,12 +68,18 @@ namespace CoupGameBackend.Services
                     Coins = p.Coins,
                     Influences = p.Influences,
                     IsActive = p.IsActive,
+                    IsConnected = p.IsConnected,
                     Hand = p.UserId == userId
                         ? p.Hand
                         : p.Hand.Select(c => c.IsRevealed ? c : new Card { Name = "Hidden", Role = "Hidden", IsRevealed = false }).ToList()
                 }).ToList(),
-                Spectators = game.Spectators,
-                CentralDeck = new List<Card>(),
+                Spectators = game.Spectators.Select(s => new Spectator
+                {
+                    UserId = s.UserId,
+                    Username = s.Username,
+                    IsConnected = s.IsConnected
+                }).ToList(),
+                CentralDeck = new List<Card>(), // CentralDeck remains hidden
                 CurrentTurnUserId = game.CurrentTurnUserId,
                 IsGameOver = game.IsGameOver,
                 PendingAction = game.PendingAction,
@@ -86,7 +92,7 @@ namespace CoupGameBackend.Services
 
         public void UpdateTurn(Game game)
         {
-            var activePlayers = game.Players.FindAll(p => p.IsActive);
+            var activePlayers = game.Players.FindAll(p => p.IsActive && p.IsConnected);
             if (activePlayers.Count == 0)
                 return;
 
@@ -115,11 +121,11 @@ namespace CoupGameBackend.Services
             {
                 return;
             }
-            var activePlayers = game.Players.Count(p => p.IsActive && p.Influences > 0);
+            var activePlayers = game.Players.Count(p => p.IsActive && p.IsConnected);
             if (activePlayers <= 1)
             {
                 game.IsGameOver = true;
-                string? winnerId = game.Players.FirstOrDefault(p => p.IsActive && p.Influences > 0)?.UserId;
+                string? winnerId = game.Players.FirstOrDefault(p => p.IsActive && p.IsConnected)?.UserId;
                 game.WinnerId = winnerId;
                 game.PendingAction = null;
 

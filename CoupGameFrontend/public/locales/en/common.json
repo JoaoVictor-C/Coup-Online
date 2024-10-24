@@ -15,6 +15,9 @@
     "rooms": "Rooms",
     "refresh": "Refresh"
   },
+  "labels": {
+    "you": "You"
+  },
   "loading": "Loading...",
   "error": {
     "generic": "An error occurred",
