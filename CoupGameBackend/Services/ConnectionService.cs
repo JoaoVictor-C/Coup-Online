@@ -172,6 +172,13 @@ namespace CoupGameBackend.Services
 
                 var timeoutKey = $"{gameId}_{userId}";
                 var cts = new CancellationTokenSource();
+                if (PendingDisconnections.TryGetValue(timeoutKey, out var existingCts))
+                {
+                    existingCts.Cancel();
+                    existingCts.Dispose();
+                    PendingDisconnections.TryRemove(timeoutKey, out _);
+                }
+
                 if (PendingDisconnections.TryAdd(timeoutKey, cts))
                 {
                     _ = Task.Run(async () =>
@@ -214,23 +221,25 @@ namespace CoupGameBackend.Services
 
                             // Remove the timeout
                             PendingDisconnections.TryRemove(timeoutKey, out _);
+                            cts.Dispose();
                         }
                         catch (TaskCanceledException)
                         {
                             // Reconnection occurred, do nothing
                             PendingDisconnections.TryRemove(timeoutKey, out _);
+                            cts.Dispose();
                         }
                         catch (Exception ex)
                         {
-                            // Log the exception (assuming a logger is available)
-                            // _logger.LogError(ex, $"Error handling disconnection for user {userId} in game {gameId}.");
+                            // Log the exception
                             Console.WriteLine($"Error handling disconnection timeout: {ex.Message}");
                             PendingDisconnections.TryRemove(timeoutKey, out _);
+                            cts.Dispose();
                         }
                     });
                 }
 
-                return (true, "Player marked as disconnected. You have 30 seconds to reconnect.");
+                return (true, "Player marked as disconnected. You have 45 seconds to reconnect.");
             }
 
             // Handle spectator disconnection
@@ -244,8 +253,7 @@ namespace CoupGameBackend.Services
                 // Notify others about spectator disconnection
                 await _hubContext.Clients.Group(gameId).SendAsync("SpectatorDisconnected", userId);
 
-                // Optionally, remove spectator after a timeout similar to players
-                // This can be implemented similarly using PendingDisconnections if desired
+                // Optionally, handle spectator disconnection timeout similarly
 
                 return (true, "Spectator marked as disconnected.");
             }
