@@ -10,6 +10,7 @@ using CoupGameBackend.Models;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using System.Reflection;
+using Swashbuckle.AspNetCore.Annotations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,7 +87,7 @@ builder.Services.AddSignalR();
 // Add controllers
 builder.Services.AddControllers();
 
-// Add Swagger for API documentation
+// Add Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -135,8 +136,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
-    // Enable annotations
-    c.EnableAnnotations();
 });
 
 // Register Repositories and Services
