@@ -466,6 +466,7 @@ namespace CoupGameBackend.Hubs
 
             if (result.IsSuccess)
             {
+                var game = await _gameRepository.GetGameAsync(gameId);
                 await _gameStateService.CheckGameOver(game);
                 await Clients.Group(gameId).SendAsync("PendingActionResponded", userId, response.ToLower());
             }
