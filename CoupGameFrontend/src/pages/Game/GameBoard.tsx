@@ -253,9 +253,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
                               <img
                                 src={cardImages[card.name.toLowerCase() as keyof CardImages]}
                                 alt={card.name}
-                                style={{ 
-                                  width: '90px', 
-                                  height: '135px', 
+                                style={{
+                                  width: '90px',
+                                  height: '135px',
                                   borderRadius: '8px',
                                   ...getCardStyle(player)
                                 }}
@@ -324,9 +324,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
                               <img
                                 src={backCard}
                                 alt={card.name}
-                                style={{ 
-                                  width: '90px', 
-                                  height: '135px', 
+                                style={{
+                                  width: '90px',
+                                  height: '135px',
                                   borderRadius: '8px',
                                   ...getCardStyle(player)
                                 }}
@@ -451,17 +451,34 @@ const GameBoard: React.FC<GameBoardProps> = ({
         </DialogActions>
       </Dialog>
 
-      {/* Return Card Dialog */}
       <Dialog open={showReturnCardModal} onClose={() => setShowReturnCardModal(false)}>
         <DialogTitle>{t('game:cards.selectReturn')}</DialogTitle>
         <DialogContent>
-          <List>
+          <Grid container spacing={2} justifyContent="center">
             {cardsToReturn.map((card, index) => (
-              <ListItem key={`${card.name}-${index}`} onClick={() => handleCardReturn(card.name)}>
-                <Typography variant="body1">{card.name}</Typography>
-              </ListItem>
+              <Grid item key={`${card.name}-${index}`}>
+                <Button
+                  onClick={() => handleCardReturn(card.name)}
+                  sx={{
+                    minWidth: '120px',
+                    height: '220px',
+                    padding: 0,
+                    border: '1px solid rgba(0, 0, 0, 0.23)',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    backgroundImage: `url(${cardImages[card.name.toLowerCase() as keyof CardImages]})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      opacity: 0.8,
+                      border: '1px solid rgba(0, 0, 0, 0.54)',
+                    },
+                  }}
+                />
+              </Grid>
             ))}
-          </List>
+          </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowReturnCardModal(false)} color="primary">

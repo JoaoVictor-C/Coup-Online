@@ -430,9 +430,6 @@ namespace CoupGameBackend.Services
                 return (false, "Card 2 not found.");
             player.Hand.Remove(cardSelected2);
 
-            Console.WriteLine($"Card 1: {cardSelected1.Name}, Card 2: {cardSelected2.Name}");
-            Console.WriteLine($"Original card 1: {card1}, Original card 2: {card2}");
-
             game.CentralDeck.Add(cardSelected1);
             game.CentralDeck.Add(cardSelected2);
 
@@ -813,9 +810,9 @@ namespace CoupGameBackend.Services
                     game.PendingAction = null;
                 }
 
+                await _gameRepository.UpdateGameAsync(game);
                 await _gameStateService.CheckGameOver(game);
                 _gameStateService.UpdateTurn(game);
-                await _gameRepository.UpdateGameAsync(game);
                 await _hubContext.Clients.Group(game.Id.ToString()).SendAsync("ChallengeSucceeded", blocker.Username, cardToReveal?.Name);
                 return (true, "Challenge succeeded. Blocker lost an influence. Original action to be executed.");
             }

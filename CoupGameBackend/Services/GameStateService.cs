@@ -151,12 +151,6 @@ namespace CoupGameBackend.Services
 
             for (int i = 0; i < numberOfCards; i++)
             {
-                if (i == 0 || (availableCards.Count > 1 && dealtCards[0].Name == availableCards[0].Name))
-                {
-                    // Shuffle the remaining cards to increase randomness
-                    availableCards = availableCards.OrderBy(c => Guid.NewGuid()).ToList();
-                }
-
                 var card = availableCards.First();
                 availableCards.RemoveAt(0);
                 dealtCards.Add(card);

@@ -109,6 +109,7 @@ namespace CoupGameBackend.Hubs
                 var result = await _actionService.PerformAction(game.Id, userId, action, targetId);
                 if (result is OkResult)
                 {
+                    await _gameStateService.CheckGameOver(game);
                     await Clients.Group(game.Id).SendAsync("ActionPerformed", new ActionLog
                     {
                         Timestamp = DateTime.UtcNow,
@@ -275,6 +276,12 @@ namespace CoupGameBackend.Hubs
                 {
                     Console.WriteLine($"StartGame: Game not found for GameIdOrCode '{gameIdOrCode}'.");
                     await Clients.Caller.SendAsync("Error", "Game not found.");
+                    return;
+                }
+
+                if (game.Players.Count < 2)
+                {
+                    await Clients.Caller.SendAsync("Error", "Not enough players to start the game.");
                     return;
                 }
 
@@ -459,6 +466,7 @@ namespace CoupGameBackend.Hubs
 
             if (result.IsSuccess)
             {
+                await _gameStateService.CheckGameOver(game);
                 await Clients.Group(gameId).SendAsync("PendingActionResponded", userId, response.ToLower());
             }
             else
@@ -479,6 +487,7 @@ namespace CoupGameBackend.Hubs
             var result = await _actionService.HandleReturnCardResponseAsync(game, Context.UserIdentifier, cardId);
             if (result is OkResult)
             {
+                await _gameStateService.CheckGameOver(game);
                 await Clients.Group(gameId).SendAsync("UpdateGameState", game);
             }
             else if (result is BadRequestObjectResult badRequest)
@@ -512,6 +521,7 @@ namespace CoupGameBackend.Hubs
                 var result = await _actionService.HandleBlockResponseAsync(game, userId, isChallenge);
                 if (result.IsSuccess)
                 {
+                    await _gameStateService.CheckGameOver(game);
                     await _gameStateService.EmitGameUpdatesToUsers(gameId);
                     await Clients.Group(gameId).SendAsync("BlockResponseProcessed", userId, isChallenge);
                 }
@@ -547,6 +557,7 @@ namespace CoupGameBackend.Hubs
                 var result = await _actionService.HandleExchangeSelectResponseAsync(game, userId, card1, card2);
                 if (result.IsSuccess)
                 {
+                    await _gameStateService.CheckGameOver(game);
                     await Clients.Group(gameId).SendAsync("ExchangeSelectResponded", userId, card1, card2);
                 }
                 else
