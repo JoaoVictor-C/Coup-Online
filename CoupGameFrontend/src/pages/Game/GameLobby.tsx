@@ -68,6 +68,8 @@ const GameLobby: React.FC<GameLobbyProps> = ({
     setOpenSnackbar(false);
   };
 
+  const isLeader = currentUserId === game.leaderId;
+
   return (
     <Container
       maxWidth="sm"
@@ -168,44 +170,46 @@ const GameLobby: React.FC<GameLobbyProps> = ({
           </Grid>
         )}
 
-        <Grid item xs={12}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: isMobile ? 'column' : 'row',
-              justifyContent: 'center',
-              gap: 2,
-              mt: 2,
-              flexWrap: 'wrap',
-            }}
-          >
-            <Button
-              component={Link}
-              to={`/game/${game.roomCode}`}
-              variant="contained"
-              color="success"
-              size="large"
-              disabled={game.players.length < 2}
-              onClick={(e) => {
-                if (game.players.length < 2) {
-                  setOpenSnackbar(true);
-                  e.preventDefault();
-                } else {
-                  onStartGame();
-                }
-              }}
-              startIcon={<PlayArrowIcon />}
+        {isLeader && (
+          <Grid item xs={12}>
+            <Box
               sx={{
-                cursor: game.players.length < 2 ? 'not-allowed' : 'pointer',
-                paddingY: 1.5,
-                flexGrow: 1,
-                minWidth: { xs: '100%', sm: 'auto' },
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                justifyContent: 'center',
+                gap: 2,
+                mt: 2,
+                flexWrap: 'wrap',
               }}
             >
-              {t('common:buttons.start')}
-            </Button>
-          </Box>
-        </Grid>
+              <Button
+                component={Link}
+                to={`/game/${game.roomCode}`}
+                variant="contained"
+                color="success"
+                size="large"
+                disabled={game.players.length < 2}
+                onClick={(e) => {
+                  if (game.players.length < 2) {
+                    setOpenSnackbar(true);
+                    e.preventDefault();
+                  } else {
+                    onStartGame();
+                  }
+                }}
+                startIcon={<PlayArrowIcon />}
+                sx={{
+                  cursor: game.players.length < 2 ? 'not-allowed' : 'pointer',
+                  paddingY: 1.5,
+                  flexGrow: 1,
+                  minWidth: { xs: '100%', sm: 'auto' },
+                }}
+              >
+                {t('common:buttons.start')}
+              </Button>
+            </Box>
+          </Grid>
+        )}
 
         <Grid item xs={12}>
           <Box

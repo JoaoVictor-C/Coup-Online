@@ -56,7 +56,8 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
   useEffect(() => {
     const initiator = players.find((player) => player.userId === pendingAction?.initiatorId);
     const playerHand = initiator?.hand || [];
-    setMaxSelections(playerHand.filter(card => !card.isRevealed).length === 3 ? 1 : 2);
+    const unrevealedCards = playerHand.filter(card => !card.isRevealed);
+    setMaxSelections(unrevealedCards.length === 3 ? 1 : 2);
   }, [pendingAction, players]);
 
   useEffect(() => {
@@ -75,9 +76,15 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
   if (showRespondToExchangeSelect) {
     const initiator = players.find((player) => player.userId === pendingAction?.initiatorId);
     const playerHand = initiator?.hand || [];
+    const unrevealedCards = playerHand.filter(card => !card.isRevealed);
     const handleConfirmKeep = () => {
-      const toReturnCards = playerHand.filter((card, index) => !selectedCards.includes(`${card.name}-${index}`));
-      if (toReturnCards.length === playerHand.length - maxSelections) {
+      let toReturnCards: Card[];
+      if (maxSelections === 1) {
+        toReturnCards = unrevealedCards.filter((card, index) => !selectedCards.includes(`${card.name}-${index}`));
+      } else {
+        toReturnCards = playerHand.filter((card, index) => !selectedCards.includes(`${card.name}-${index}`));
+      }
+      if (toReturnCards.length === (maxSelections === 1 ? 2 : playerHand.length - maxSelections)) {
         respondToExchangeSelect(
           gameId,
           toReturnCards[0].name,
@@ -102,11 +109,11 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
             {t('game:actions.exchange.selectKeepPrompt', { count: maxSelections })}
           </Typography>
           <Grid container spacing={2} justifyContent="center">
-            {playerHand.map((card, index) => {
+            {unrevealedCards.map((card, index) => {
               const cardKey = `${card.name}-${index}`;
               const isSelected = selectedCards.includes(cardKey);
               const isDisabled =
-                (selectedCards.length === maxSelections && !isSelected) || card.isRevealed;
+                (selectedCards.length === maxSelections && !isSelected);
 
               return (
                 <Grid item key={cardKey}>
