@@ -52,6 +52,11 @@ namespace CoupGameBackend.Services
             return game?.Id ?? string.Empty;
         }
 
+        public async Task<IEnumerable<Game>> GetAllGamesAsync()
+        {
+            return await _games.Find(g => true).ToListAsync();
+        }
+
         public async Task<IEnumerable<Game>> SearchGamesAsync(string query)
         {
             var filter = Builders<Game>.Filter.Or(

@@ -12,6 +12,7 @@ namespace CoupGameBackend.Services
         Task UpdateGameAsync(Game game);
         Task DeleteGameAsync(string gameId);
         Task<IEnumerable<Game>> GetPublicGamesAsync();
+        Task<IEnumerable<Game>> GetAllGamesAsync();
         Task<IEnumerable<Game>> SearchGamesAsync(string query);
         Task RestartGameAsync(string gameId);
         Task<Game?> GetGameAsync(string gameId);
