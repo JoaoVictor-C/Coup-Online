@@ -31,6 +31,8 @@ namespace CoupGameBackend.Services
             if (game == null)
                 return;
 
+            await CheckGameOver(game);
+
             foreach (var player in game.Players)
             {
                 var state = await GetGameState(game.Id, player.UserId);
@@ -99,7 +101,6 @@ namespace CoupGameBackend.Services
             int currentIndex = activePlayers.FindIndex(p => p.UserId == game.CurrentTurnUserId);
             int nextIndex = (currentIndex + 1) % activePlayers.Count;
             game.CurrentTurnUserId = activePlayers[nextIndex].UserId;
-            Console.WriteLine($"Updated turn to {game.CurrentTurnUserId}");
         }
 
         public string GetRoleForAction(string actionType)

@@ -13,7 +13,9 @@
     "logout": "Sair",
     "register": "Registrar",
     "rooms": "Salas",
-    "refresh": "Atualizar"
+    "refresh": "Atualizar",
+    "returnToGame": "Voltar para o jogo",
+    "continue": "Continuar a seleção"
   },
   "loading": "Carregando...",
   "error": {

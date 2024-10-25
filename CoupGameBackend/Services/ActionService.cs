@@ -101,7 +101,6 @@ namespace CoupGameBackend.Services
             };
             game.ActionsHistory.Add(actionLog);
 
-            await _gameStateService.CheckGameOver(game);
 
             _gameStateService.UpdateTurn(game);
 
@@ -146,7 +145,7 @@ namespace CoupGameBackend.Services
                 return new BadRequestObjectResult(new { message = "TargetUserId is missing." });
 
             var targetPlayer = game.Players.FirstOrDefault(p => p.UserId == parameters.TargetUserId);
-            if (targetPlayer == null)
+            if (targetPlayer == null || !targetPlayer.IsActive)
                 return new NotFoundObjectResult(new { message = "Target player not found." });
 
             var pendingAssassinate = new PendingAction
@@ -211,11 +210,14 @@ namespace CoupGameBackend.Services
             var initiator = game.Players.FirstOrDefault(p => p.UserId == pendingAction.InitiatorId);
             var target = game.Players.FirstOrDefault(p => p.UserId == pendingAction.TargetId);
 
-            if (initiator == null || target == null)
+            if (initiator == null || target == null || !target.IsActive)
             {
                 Console.WriteLine("Initiator or target player not found.");
                 return new NotFoundObjectResult(new { message = "Initiator or target player not found." });
             }
+
+            if (target.Coins <= 0)
+                return new BadRequestObjectResult(new { message = "Target player has no coins to steal." });
 
             int stolenCoins = Math.Min(2, target.Coins);
             target.Coins -= stolenCoins;
@@ -232,6 +234,8 @@ namespace CoupGameBackend.Services
 
             if (updateTurn)
                 _gameStateService.UpdateTurn(game);
+
+            await _gameRepository.UpdateGameAsync(game);
 
             try
             {
@@ -253,7 +257,7 @@ namespace CoupGameBackend.Services
             var initiator = game.Players.FirstOrDefault(p => p.UserId == pendingAction.InitiatorId);
             var target = game.Players.FirstOrDefault(p => p.UserId == pendingAction.TargetId);
 
-            if (initiator == null || target == null)
+            if (initiator == null || target == null || !target.IsActive)
                 return new NotFoundObjectResult(new { message = "Initiator or target player not found." });
 
             if (initiator.Coins < 3)
@@ -262,17 +266,10 @@ namespace CoupGameBackend.Services
             initiator.Coins -= 3;
             target.Influences -= 1;
 
-            // Select 1 random alive card from the target's hand, set the IsRevealed to True
-            var aliveCards = target.Hand.Where(c => !c.IsRevealed).ToList();
-            if (aliveCards.Any())
+            var cardToReveal = target.Hand.Where(c => !c.IsRevealed).OrderBy(c => Guid.NewGuid()).FirstOrDefault();
+            if (cardToReveal != null)
             {
-                var randomCard = aliveCards[new Random().Next(aliveCards.Count)];
-                randomCard.IsRevealed = true;
-            }
-            else
-            {
-                // Handle the case where there are no alive cards
-                Console.WriteLine($"No alive cards found for player {target.UserId}");
+                cardToReveal.IsRevealed = true;
             }
 
             var actionLog = new ActionLog
@@ -284,16 +281,10 @@ namespace CoupGameBackend.Services
             };
             game.ActionsHistory.Add(actionLog);
 
-            if (target.Influences <= 0)
-            {
-                target.IsActive = false;
-                actionLog.Action += " - Target eliminated.";
-            }
-
-            await _gameStateService.CheckGameOver(game);
-
             if (updateTurn)
                 _gameStateService.UpdateTurn(game);
+            
+            await _gameRepository.UpdateGameAsync(game);
 
             await _gameStateService.UpdateGameStateAndNotifyPlayers(game, "Assassinate", initiator.UserId, target.UserId);
 
@@ -558,7 +549,6 @@ namespace CoupGameBackend.Services
         {
             // Logic for challenging the action
             var challengeResult = await _challengeService.HandleChallengeAsync(game, userId);
-            await _gameStateService.CheckGameOver(game);
             if (challengeResult.IsSuccess && game.PendingAction != null)
             {
                 game.PendingAction.IsActionResolved = true;
@@ -776,8 +766,6 @@ namespace CoupGameBackend.Services
                     });
                 }
 
-                await _gameStateService.CheckGameOver(game);
-
                 await _hubContext.Clients.Group(game.Id.ToString()).SendAsync("BlockSuccessful", blocker.Username, cardToReveal?.Name);
                 return (true, "Block successful. Challenger lost an influence. Blocker to return a card.");
             }
@@ -811,7 +799,6 @@ namespace CoupGameBackend.Services
                 }
 
                 await _gameRepository.UpdateGameAsync(game);
-                await _gameStateService.CheckGameOver(game);
                 _gameStateService.UpdateTurn(game);
                 await _hubContext.Clients.Group(game.Id.ToString()).SendAsync("ChallengeSucceeded", blocker.Username, cardToReveal?.Name);
                 return (true, "Challenge succeeded. Blocker lost an influence. Original action to be executed.");

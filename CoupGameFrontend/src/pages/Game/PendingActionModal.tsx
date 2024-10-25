@@ -7,7 +7,7 @@ interface PendingActionModalProps {
   open: boolean;
   action?: Action;
   onRespond: (response: ActionResponse, blockOption?: string) => void;
-  onClose: () => void;
+  onClose: (deletePendingAction?: boolean) => void;
   pendingAction?: PendingAction | undefined;
   currentUserId: string;
   players: Player[];
@@ -35,7 +35,7 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
       }
       onRespond(response, blockOption);
       setShowSelectBlockOption(false);
-      onClose();
+      onClose(true);
     }
   };
 
@@ -85,13 +85,13 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
         toReturnCards = playerHand.filter((card, index) => !selectedCards.includes(`${card.name}-${index}`));
       }
       if (toReturnCards.length === (maxSelections === 1 ? 2 : playerHand.length - maxSelections)) {
+        onClose(true);
         respondToExchangeSelect(
           gameId,
           toReturnCards[0].name,
           toReturnCards[1] ? toReturnCards[1].name : ''
         );
         setShowRespondToExchangeSelect(false);
-        onClose();
         setSelectedCards([]);
       }
     };
@@ -177,21 +177,26 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
             </Button>
           )}
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => onClose(false)} color="secondary">
+            {t('common:buttons.returnToGame')}
+          </Button>
+        </DialogActions>
       </Dialog>
     );
   }
 
   if (showSelectBlockOption) {
     return (
-      <Dialog open={showSelectBlockOption} onClose={() => setShowSelectBlockOption(false)}>
+      <Dialog open={showSelectBlockOption && open} onClose={() => onClose(false)}>
         <DialogTitle>{t('game:actions.block.selectOption')}</DialogTitle>
         <DialogContent>
           <Typography variant="body1" gutterBottom>{t('game:actions.block.selectCard')}</Typography>
           <Grid container spacing={2} justifyContent="center">
             <Grid item>
-              <Button 
-                variant="contained" 
-                color="primary" 
+              <Button
+                variant="contained"
+                color="primary"
                 onClick={() => handleResponse('block', 'ambassador')}
                 sx={{
                   backgroundImage: `url(${cardImages.ambassador})`,
@@ -207,9 +212,9 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
               </Button>
             </Grid>
             <Grid item>
-              <Button 
-                variant="contained" 
-                color="primary" 
+              <Button
+                variant="contained"
+                color="primary"
                 onClick={() => handleResponse('block', 'captain')}
                 sx={{
                   backgroundImage: `url(${cardImages.captain})`,
@@ -228,6 +233,9 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowSelectBlockOption(false)}>{t('common:buttons.cancel')}</Button>
+          <Button onClick={() => onClose(false)} color="secondary">
+            {t('common:buttons.returnToGame')}
+          </Button>
         </DialogActions>
       </Dialog>
     );
@@ -235,22 +243,74 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
 
   if (showRespondToBlock) {
     return (
-      <Dialog open={showRespondToBlock} onClose={() => setShowRespondToBlock(false)}>
+      <Dialog open={showRespondToBlock && open} onClose={() => onClose(false)}>
         <DialogTitle>{t('game:actions.block.respondTitle')}</DialogTitle>
         <DialogContent>
           <Typography variant="body1" gutterBottom>
             {players.find(player => player.userId === pendingAction?.initiatorId)?.username} {t('game:actions.block.attemptingBlock')}
           </Typography>
           <Typography variant="body1" gutterBottom>{t('game:actions.block.challengePrompt')}</Typography>
-          <Grid container spacing={2} justifyContent="center">
-            <Grid item>
-              <Button variant="contained" color="error" onClick={() => respondToBlock(gameId, true)}>
+          <Grid container spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+            <Grid item xs={12} sm={6}>
+              <Button
+                fullWidth
+                variant="contained"
+                color="error"
+                onClick={() => {
+                  onClose(true);
+                  respondToBlock(gameId, true);
+                }}
+                sx={{
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  backgroundColor: '#d32f2f',
+                  '&:hover': {
+                    backgroundColor: '#9a0007',
+                  },
+                }}
+              >
                 {t('game:actions.challenge')}
               </Button>
             </Grid>
-            <Grid item>
-              <Button variant="contained" color="secondary" onClick={() => respondToBlock(gameId, false)}>
+            <Grid item xs={12} sm={6}>
+              <Button
+                fullWidth
+                variant="contained"
+                color="secondary"
+                onClick={() => {
+                  onClose(true);
+                  respondToBlock(gameId, false);
+                }}
+                sx={{
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  backgroundColor: '#f50057',
+                  '&:hover': {
+                    backgroundColor: '#c51162',
+                  },
+                }}
+              >
                 {t('game:actions.pass')}
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={12}>
+              <Button
+                fullWidth
+                onClick={() => onClose(false)}
+                color="primary"
+                variant="outlined"
+                sx={{
+                  width: '100%',
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  borderColor: '#3f51b5',
+                  color: '#3f51b5',
+                  '&:hover': {
+                    backgroundColor: 'rgba(63, 81, 181, 0.04)',
+                  },
+                }}
+              >
+                {t('common:buttons.returnToGame')}
               </Button>
             </Grid>
           </Grid>
@@ -260,7 +320,7 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
   }
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={() => onClose(false)}>
       <DialogTitle>{t('game:actions.pending')}</DialogTitle>
       <DialogContent>
         <Typography variant="body1" gutterBottom>
@@ -288,6 +348,9 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
         )}
         <Button variant="contained" color="secondary" onClick={() => handleResponse('pass')}>
           {t('game:actions.pass')}
+        </Button>
+        <Button variant="outlined" color="primary" onClick={() => onClose(false)}>
+          {t('common:buttons.returnToGame')}
         </Button>
       </DialogActions>
     </Dialog>

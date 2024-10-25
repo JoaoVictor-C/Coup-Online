@@ -48,6 +48,31 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const [currentPendingAction, setCurrentPendingAction] = useState<PendingAction | null>(null);
   const [showReturnCardModal, setShowReturnCardModal] = useState(false);
   const [cardsToReturn, setCardsToReturn] = useState<Card[]>([]);
+  const [showPendingActionModal, setShowPendingActionModal] = useState(true);
+  const [showButton, setShowButton] = useState(false);
+
+  useEffect(() => {
+    if (!showPendingActionModal && !!currentPendingAction) {
+      setShowButton(true);
+    } else {
+      setShowButton(false);
+    }
+  }, [showPendingActionModal]);
+
+  useEffect(() => {
+    console.log('showPendingActionModal:', showPendingActionModal);
+    console.log('currentPendingAction:', !!currentPendingAction);
+    console.log('!isSpectator:', !isSpectator);
+    console.log('initiatorId !== currentUserId:', currentPendingAction?.initiatorId !== currentUserId);
+    console.log('gameState !== ACTION_BLOCKED:', gameState !== 'ACTION_BLOCKED');
+    console.log('gameState !== ACTION_CHALLENGED:', gameState !== 'ACTION_CHALLENGED');
+    console.log('gameState !== GAME_OVER:', gameState !== 'GAME_OVER');
+    console.log('actionType !== ReturnCard:', currentPendingAction?.actionType !== 'ReturnCard');
+    console.log('actionType !== blockAttempt:', currentPendingAction?.actionType !== 'blockAttempt');
+    console.log('exchangeSelect condition:', (currentPendingAction?.actionType !== 'exchangeSelect' || currentPendingAction?.initiatorId === currentUserId));
+    console.log('!responses[currentUserId]:', !currentPendingAction?.responses[currentUserId]);
+    console.log('player is active:', !!game.players.find(p => p.userId === currentUserId)?.isActive);
+  }, [showPendingActionModal, currentPendingAction, isSpectator, currentUserId, gameState]);
 
   const handleSwitchClick = () => {
     if (!isSpectator && currentUser && currentUser.isActive) {
@@ -150,6 +175,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
       styles.filter = 'grayscale(100%)';
     }
     return styles;
+  };
+
+  const handlePendingActionClose = (deletePendingAction: boolean = false) => {
+    setShowPendingActionModal(false);
+    if (deletePendingAction) {
+      setCurrentPendingAction(null);
+    }
   };
 
   if (gameState === 'WAITING_FOR_PLAYERS') {
@@ -377,6 +409,32 @@ const GameBoard: React.FC<GameBoardProps> = ({
         </Box>
       )}
 
+      {!showPendingActionModal &&
+        !isSpectator &&
+        (game.currentTurnUserId === currentUserId && !game.pendingAction) ||
+        (game.currentTurnUserId !== currentUserId && game.pendingAction) &&
+        (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setShowPendingActionModal(true)}
+              sx={{
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
+                  backgroundColor: 'primary.dark',
+                },
+                fontWeight: 'bold',
+                padding: '10px 20px',
+                borderRadius: '8px',
+              }}
+            >
+              {t('common:buttons.continue')}
+            </Button>
+          </Box>
+        )}
       {/* Waiting for turn */}
       {gameState === 'WAITING_FOR_TURN' && (
         <Container sx={{ textAlign: 'center', my: 5 }}>
@@ -410,21 +468,20 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {/* Pending Action Modal */}
       <PendingActionModal
         open={
+          showPendingActionModal &&
           !!currentPendingAction &&
           !isSpectator &&
           currentPendingAction.initiatorId !== currentUserId &&
-          gameState !== 'ACTION_BLOCKED' &&
           gameState !== 'ACTION_CHALLENGED' &&
           gameState !== 'GAME_OVER' &&
           currentPendingAction.actionType !== 'ReturnCard' &&
-          currentPendingAction.actionType !== 'blockAttempt' &&
           (currentPendingAction.actionType !== 'exchangeSelect' || currentPendingAction.initiatorId === currentUserId) &&
           !currentPendingAction.responses[currentUserId] &&
           !!game.players.find(p => p.userId === currentUserId)?.isActive
         }
         action={currentPendingAction as Action | undefined}
         onRespond={handleRespond}
-        onClose={() => setCurrentPendingAction(null)}
+        onClose={handlePendingActionClose}
         pendingAction={currentPendingAction || undefined}
         currentUserId={currentUserId}
         players={game.players}

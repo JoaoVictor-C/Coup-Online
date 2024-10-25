@@ -13,7 +13,9 @@
     "logout": "Logout",
     "register": "Register",
     "rooms": "Rooms",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "returnToGame": "Return to Game",
+    "continue": "Continue the selection"
   },
   "labels": {
     "you": "You"
