@@ -812,7 +812,24 @@ namespace CoupGameBackend.Services
                 return (false, "No block action to accept.");
             }
 
-            // Block is accepted, cancel the original action
+            // Block is accepted, cancel the original action, but if the action costs something (assassinate and coup), remove the coin from the player
+            var action = game.PendingAction;
+            if (action.ActionType == "assassinate" || action.ActionType == "coup")
+            {
+                var player = game.Players.FirstOrDefault(p => p.UserId == action.InitiatorId);
+                if (player != null)
+                {
+                    if (player.Coins >= (action.ActionType == "assassinate" ? 3 : 7))
+                    {
+                        player.Coins -= action.ActionType == "assassinate" ? 3 : 7;
+                    }
+                    else
+                    {
+                        return (false, "Player does not have enough coins to pay for the action.");
+                    }
+                }
+            }
+
             game.PendingAction = null;
             _gameStateService.UpdateTurn(game);
             await _gameRepository.UpdateGameAsync(game);
