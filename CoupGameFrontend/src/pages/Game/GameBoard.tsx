@@ -469,7 +469,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     backgroundImage: `url(${cardImages[card.name.toLowerCase() as keyof CardImages]})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    cursor: 'pointer',
+                    cursor: card.isRevealed ? 'default' : 'pointer',
+                    filter: card.isRevealed ? 'grayscale(100%)' : 'none',
                     '&:hover': {
                       opacity: 0.8,
                       border: '1px solid rgba(0, 0, 0, 0.54)',
