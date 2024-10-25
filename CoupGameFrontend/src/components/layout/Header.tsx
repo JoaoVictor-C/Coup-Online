@@ -13,10 +13,13 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Avatar from '@mui/material/Avatar';
+import { useMediaQuery, useTheme } from '@mui/material';
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const { t } = useTranslation(['common']);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -39,12 +42,76 @@ const Header: React.FC = () => {
           >
             Coup Online
           </Typography>
+          {isMobile ? (
+            <>
+              <IconButton
+                size="large"
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                onClick={handleMenu}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Menu
+                id="menu-appbar"
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+              >
+                <MenuItem
+                  key="rooms"
+                  component={RouterLink}
+                  to="/rooms"
+                  onClick={handleClose}
+                >
+                  {t('common:navigation.rooms')}
+                </MenuItem>
+                <MenuItem
+                  key="create-room"
+                  component={RouterLink}
+                  to="/create-room"
+                  onClick={handleClose}
+                >
+                  {t('common:navigation.createRoom')}
+                </MenuItem>
+                <MenuItem
+                  key="join-game"
+                  component={RouterLink}
+                  to="/join-game"
+                  onClick={handleClose}
+                >
+                  {t('common:navigation.joinGame')}
+                </MenuItem>
+                {/* Add more menu items as needed */}
+              </Menu>
+            </>
+          ) : (
+            <>
+              <Button color="inherit" component={RouterLink} to="/rooms">
+                {t('common:navigation.rooms')}
+              </Button>
+              <Button color="inherit" component={RouterLink} to="/create-room">
+                {t('common:navigation.createRoom')}
+              </Button>
+              <Button color="inherit" component={RouterLink} to="/join-game">
+                {t('common:navigation.joinGame')}
+              </Button>
+              {/* Add more buttons as needed */}
+            </>
+          )}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
             {user ? (
               <>
-                <Button color="inherit" component={RouterLink} to="/rooms">
-                  {t('common:navigation.rooms')}
-                </Button>
                 <Typography variant="body1" sx={{ mx: 2 }}>
                   {t('common:greeting', { username: user.username })}
                 </Typography>
@@ -63,72 +130,6 @@ const Header: React.FC = () => {
                 </Button>
               </>
             )}
-          </Box>
-          {/* Mobile Menu */}
-          <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-            <IconButton
-              size="large"
-              edge="start"
-              color="inherit"
-              aria-label="menu"
-              onClick={handleMenu}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorEl}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-            >
-              {user
-                ? [
-                  <MenuItem
-                    key="rooms"
-                    component={RouterLink}
-                    to="/rooms"
-                    onClick={handleClose}
-                  >
-                    {t('common:navigation.rooms')}
-                  </MenuItem>,
-                  <MenuItem
-                    key="logout"
-                    onClick={() => {
-                      logout();
-                      handleClose();
-                    }}
-                  >
-                    {t('common:buttons.logout')}
-                  </MenuItem>,
-                ]
-                : [
-                  <MenuItem
-                    key="login"
-                    component={RouterLink}
-                    to="/login"
-                    onClick={handleClose}
-                  >
-                    {t('common:buttons.login')}
-                  </MenuItem>,
-                  <MenuItem
-                    key="register"
-                    component={RouterLink}
-                    to="/register"
-                    onClick={handleClose}
-                  >
-                    {t('common:buttons.register')}
-                  </MenuItem>,
-                ]}
-            </Menu>
           </Box>
         </Toolbar>
       </AppBar>

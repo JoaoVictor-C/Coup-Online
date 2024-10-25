@@ -101,13 +101,13 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
 
   const renderActionCard = (actionType: string) => {
     const currentPlayer = game.players.find(player => player.userId === currentUserId);
-    if (!currentPlayer) return;
+    if (!currentPlayer) return null;
 
-    const isDisabled = (actionType === 'assassinate' && currentPlayer.coins < 3) || 
+    const isDisabled = (actionType === 'assassinate' && currentPlayer.coins < 3) ||
                        (actionType === 'coup' && currentPlayer.coins < 7);
 
     return (
-      <Box key={actionType} sx={{ width: { xs: '100%', sm: '50%', md: '25%', lg: '23%' }, padding: 1, display: 'flex', justifyContent: 'center' }}>
+      <Box key={actionType} sx={{ width: { xs: '100%', sm: '48%', md: '23%' }, padding: 1, display: 'flex', justifyContent: 'center' }}>
         <Tooltip title={getActionDetails(actionType).description} arrow>
           <Card 
             component={motion.div}
@@ -117,26 +117,26 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
             sx={{ 
               cursor: isDisabled ? 'not-allowed' : 'pointer', 
               height: '100%', 
-              width: actionsWithImages[actionType] ? '120px' : '100%',
+              width: actionsWithImages[actionType] ? { xs: '100%', sm: '120px' } : '100%',
               backgroundColor: isDisabled ? 'action.disabledBackground' : 'background.paper', 
               display: 'flex', 
               justifyContent: 'center', 
               alignItems: 'end',
               opacity: isDisabled ? 0.5 : 1,
+              minHeight: '150px',
             }}
           >
-            {actionsWithImages[actionType] && (
+            {actionsWithImages[actionType] ? (
               <CardMedia
                 component="img"
                 sx={{
-                  width: actionsWithImages[actionType] ? '120px' : '100%',
+                  width: actionsWithImages[actionType] ? { xs: '100%', sm: '120px' } : '100%',
                   height: 'auto',
                 }}
                 image={actionsWithImages[actionType]}
                 alt={actionType}
               />
-            )}
-            {!actionsWithImages[actionType] && (
+            ) : (
               <CardContent>
                 <Typography variant="h6" component="div" sx={{ textAlign: 'center', width: '100%' }}>
                   {t(`game:actions.${actionType}.name`)}

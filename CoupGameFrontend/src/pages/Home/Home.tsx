@@ -11,24 +11,24 @@ const Home: React.FC = () => {
   return (
     <Container sx={{ my: 5 }}>
       <Stack alignItems="center" mb={4}>
-        <Box component="img" src={logo} alt="Coup Logo" sx={{ width: 150, height: 150 }} />
+        <Box component="img" src={logo} alt="Coup Logo" sx={{ width: { xs: 100, sm: 150 }, height: { xs: 100, sm: 150 } }} />
       </Stack>
       <Stack alignItems="center" mb={5}>
-        <Typography variant="h3" gutterBottom>
+        <Typography variant="h3" gutterBottom textAlign={{ xs: 'center', sm: 'left' }}>
           Welcome to Coup Online
         </Typography>
-        <Typography variant="h6" color="text.secondary">
+        <Typography variant="h6" color="text.secondary" textAlign={{ xs: 'center', sm: 'left' }}>
           Experience the thrill of deception and strategy in the world of Coup.
         </Typography>
       </Stack>
       {isLoggedIn ? (
-        <Stack direction="row" justifyContent="center" mb={5} spacing={2}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="center" mb={5} spacing={2}>
           <Button component={RouterLink} to="/rooms" variant="contained" color="primary" size="large">
             Rooms
           </Button>
         </Stack>
       ) : (
-        <Stack direction="row" justifyContent="center" mb={5} spacing={2}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="center" mb={5} spacing={2}>
           <Button component={RouterLink} to="/login" variant="contained" color="primary" size="large">
             Login
           </Button>

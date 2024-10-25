@@ -9,6 +9,7 @@ using Microsoft.OpenApi.Models;
 using CoupGameBackend.Models;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -89,7 +90,25 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Coup Game API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { 
+        Title = "Coup Game API", 
+        Version = "v1",
+        Description = "API for the Coup card game",
+        Contact = new OpenApiContact
+        {
+            Name = "API Support",
+            Email = "support@coupgame.com"
+        },
+        License = new OpenApiLicense
+        {
+            Name = "MIT License"
+        }
+    });
+
+    // Add XML comments
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
 
     // Add JWT Authentication
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -115,6 +134,9 @@ builder.Services.AddSwaggerGen(c =>
             new string[] {}
         }
     });
+
+    // Enable annotations
+    c.EnableAnnotations();
 });
 
 // Register Repositories and Services
@@ -168,7 +190,13 @@ catch (Exception ex)
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Coup Game API V1");
+        c.RoutePrefix = "swagger";
+        c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
+        c.DefaultModelsExpandDepth(-1);
+    });
 }
 
 app.UseHttpsRedirection();

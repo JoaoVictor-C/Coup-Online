@@ -15,7 +15,8 @@
     "rooms": "Salas",
     "refresh": "Atualizar",
     "returnToGame": "Voltar para o jogo",
-    "continue": "Continuar a seleção"
+    "continue": "Continuar a seleção",
+    "joining": "Entrando..."
   },
   "loading": "Carregando...",
   "error": {
@@ -45,7 +46,9 @@
     "invalidFormat": "Formato inválido"
   },
   "navigation": {
-    "rooms": "Salas"
+    "rooms": "Salas",
+    "createRoom": "Criar Sala",
+    "joinGame": "Entrar no Jogo"
   },
   "greeting": "Olá, {{username}}",
   "footer": {

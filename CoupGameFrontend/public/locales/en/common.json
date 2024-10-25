@@ -15,7 +15,8 @@
     "rooms": "Rooms",
     "refresh": "Refresh",
     "returnToGame": "Return to Game",
-    "continue": "Continue the selection"
+    "continue": "Continue the selection",
+    "joining": "Joining..."
   },
   "labels": {
     "you": "You"
@@ -45,7 +46,9 @@
     "invalidFormat": "Invalid format"
   },
   "navigation": {
-    "rooms": "Rooms"
+    "rooms": "Rooms",
+    "createRoom": "Create Room",
+    "joinGame": "Join Game"
   },
   "greeting": "Hello, {{username}}",
   "footer": {

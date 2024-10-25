@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Grid, Box } from '@mui/material';
 import { Action, ActionResponse, Card, CardImages, cardImages, PendingAction, Player } from '@utils/types';
 import { useTranslation } from 'react-i18next';
+import { useMediaQuery, useTheme } from '@mui/material';
 
 interface PendingActionModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
   const [showRespondToExchangeSelect, setShowRespondToExchangeSelect] = useState(false);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [maxSelections, setMaxSelections] = useState(2);
+  const theme = useTheme();
 
   const handleResponse = (response: ActionResponse, blockOption?: string) => {
     if (response === 'block' && action?.actionType === 'steal' && blockOption === undefined) {
@@ -320,7 +322,13 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
   }
 
   return (
-    <Dialog open={open} onClose={() => onClose(false)}>
+    <Dialog
+      open={open}
+      onClose={() => onClose(false)}
+      fullWidth
+      maxWidth="sm"
+      fullScreen={useMediaQuery(theme.breakpoints.down('sm'))} // Make full-screen on small devices
+    >
       <DialogTitle>{t('game:actions.pending')}</DialogTitle>
       <DialogContent>
         <Typography variant="body1" gutterBottom>

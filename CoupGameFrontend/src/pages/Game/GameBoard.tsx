@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Game, CardImages, Action, backCard, cardImages, ActionResponse, PendingAction, Card, Spectator, Player } from '@utils/types';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Container, Grid, Card as MuiCard, Typography, List, ListItem, Tooltip, CircularProgress, CardContent, CardHeader, Box, Badge } from '@mui/material';
-import { FaCoins, FaUserShield, FaCrown, FaFlag, FaUser } from 'react-icons/fa';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Container, Grid, Card as MuiCard, Typography, List, ListItem, Tooltip, CircularProgress, CardContent, CardHeader, Box, Badge, useMediaQuery, useTheme } from '@mui/material';
+import { FaCoins, FaUserShield, FaCrown } from 'react-icons/fa';
 import { FiWifiOff } from "react-icons/fi";
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +40,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
   spectators
 }) => {
   const { t } = useTranslation(['game', 'common']);
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const currentUser = game.players.find(p => p.userId === currentUserId);
   const isGameOver = game.isGameOver;
   const [showSwitchModal, setShowSwitchModal] = useState(false);
@@ -57,21 +59,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
     } else {
       setShowButton(false);
     }
-  }, [showPendingActionModal]);
+  }, [showPendingActionModal, currentPendingAction]);
 
   useEffect(() => {
-    console.log('showPendingActionModal:', showPendingActionModal);
-    console.log('currentPendingAction:', !!currentPendingAction);
-    console.log('!isSpectator:', !isSpectator);
-    console.log('initiatorId !== currentUserId:', currentPendingAction?.initiatorId !== currentUserId);
-    console.log('gameState !== ACTION_BLOCKED:', gameState !== 'ACTION_BLOCKED');
-    console.log('gameState !== ACTION_CHALLENGED:', gameState !== 'ACTION_CHALLENGED');
-    console.log('gameState !== GAME_OVER:', gameState !== 'GAME_OVER');
-    console.log('actionType !== ReturnCard:', currentPendingAction?.actionType !== 'ReturnCard');
-    console.log('actionType !== blockAttempt:', currentPendingAction?.actionType !== 'blockAttempt');
-    console.log('exchangeSelect condition:', (currentPendingAction?.actionType !== 'exchangeSelect' || currentPendingAction?.initiatorId === currentUserId));
-    console.log('!responses[currentUserId]:', !currentPendingAction?.responses[currentUserId]);
-    console.log('player is active:', !!game.players.find(p => p.userId === currentUserId)?.isActive);
+    // Removed console logs for cleaner mobile experience
   }, [showPendingActionModal, currentPendingAction, isSpectator, currentUserId, gameState]);
 
   const handleSwitchClick = () => {
@@ -126,7 +117,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
     const hasChallenge = Object.values(game.pendingAction?.responses || {}).includes('challenge');
 
     if (game.isGameOver) {
-      console.log(t('game:status.gameOver'));
       setGameState('GAME_OVER');
     } else if (!game.isStarted) {
       setGameState('LOBBY');
@@ -168,7 +158,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     setShowReturnCardModal(false);
   };
 
-  // New function to determine card styles based on user status
+  // Updated function to determine card styles based on user status
   const getCardStyle = (player: Player) => {
     let styles: React.CSSProperties = {};
     if (!player.isActive) {
@@ -198,7 +188,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <Grid item xs={12}>
           <MuiCard variant="outlined">
             <CardHeader sx={{ bgcolor: 'grey.900', color: 'common.white' }} title={<><FaUserShield /> {t('game:actionLog.title')}</>} />
-            <CardContent sx={{ maxHeight: '200px', overflowY: 'auto' }}>
+            <CardContent sx={{ maxHeight: isSmallScreen ? '150px' : '200px', overflowY: 'auto' }}>
               <List>
                 {game.actionsHistory.map((log, index) => (
                   <motion.div
@@ -208,7 +198,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     transition={{ delay: index * 0.1 }}
                   >
                     <ListItem>
-                      <Typography variant="body2">
+                      <Typography variant={isSmallScreen ? 'body2' : 'body1'}>
                         <strong>{game.players.find(p => p.userId === log.playerId)?.username}:</strong> {log.action}
                         {log.targetId && ` → ${game.players.find(p => p.userId === log.targetId)?.username}`}
                       </Typography>
@@ -231,8 +221,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
           return (
             <Grid item key={player.userId} xs={12} sm={6} md={3}>
               <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: isSmallScreen ? 1 : 1.02 }}
+                whileTap={{ scale: isSmallScreen ? 1 : 0.98 }}
               >
                 <MuiCard
                   sx={{
@@ -257,12 +247,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     sx={{ bgcolor: isLeader ? 'goldenrod' : (isCurrentUser ? 'primary.dark' : 'primary.main'), color: 'common.white' }}
                     title={
                       <Box display="flex" alignItems="center" justifyContent="center" flexWrap="wrap">
-                        <Typography variant="subtitle1" sx={{ mr: 1, fontWeight: isCurrentUser ? 'bold' : 'normal' }}>
+                        <Typography variant={isSmallScreen ? 'subtitle2' : 'subtitle1'} sx={{ mr: 1, fontWeight: isCurrentUser ? 'bold' : 'normal' }}>
                           {player.username} {isCurrentUser && `(${t('common:labels.you')})`}
                         </Typography>
                         {isLeader && (
                           <Tooltip title={t('game:status.leader')}>
-                            <FaCrown color="warning" size="1em" />
+                            <FaCrown color="warning" size={isSmallScreen ? '0.8em' : '1em'} />
                           </Tooltip>
                         )}
                         {!isCurrentUser && (
@@ -274,21 +264,22 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     }
                   />
                   <CardContent>
-                    <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Typography variant={isSmallScreen ? 'body2' : 'body1'} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <FaCoins /> {player.coins} {t('game:resources.coins')}
                     </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: isSmallScreen ? 0.5 : 1, mt: 2, flexWrap: 'wrap' }}>
                       {player.hand.slice(0, 2).map((card, index) => {
                         if (card.isRevealed || isSpectator) {
                           return (
-                            <Box key={index}>
+                            <Box key={index} sx={{ width: isSmallScreen ? '60px' : '90px', height: isSmallScreen ? '90px' : '135px' }}>
                               <img
                                 src={cardImages[card.name.toLowerCase() as keyof CardImages]}
                                 alt={card.name}
                                 style={{
-                                  width: '90px',
-                                  height: '135px',
+                                  width: '100%',
+                                  height: '100%',
                                   borderRadius: '8px',
+                                  objectFit: 'cover',
                                   ...getCardStyle(player)
                                 }}
                               />
@@ -300,8 +291,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
                               key={index}
                               sx={{
                                 position: 'relative',
-                                width: '90px',
-                                height: '135px',
+                                width: isSmallScreen ? '60px' : '90px',
+                                height: isSmallScreen ? '90px' : '135px',
                                 perspective: '500px',
                               }}
                             >
@@ -344,6 +335,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                                     left: 0,
                                     transform: 'rotateY(180deg)',
                                     backfaceVisibility: 'hidden',
+                                    objectFit: 'cover',
                                     ...getCardStyle(player)
                                   }}
                                 />
@@ -352,14 +344,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
                           );
                         } else {
                           return (
-                            <Box key={index}>
+                            <Box key={index} sx={{ width: isSmallScreen ? '60px' : '90px', height: isSmallScreen ? '90px' : '135px' }}>
                               <img
                                 src={backCard}
                                 alt={card.name}
                                 style={{
-                                  width: '90px',
-                                  height: '135px',
+                                  width: '100%',
+                                  height: '100%',
                                   borderRadius: '8px',
+                                  objectFit: 'cover',
                                   ...getCardStyle(player)
                                 }}
                               />
@@ -382,14 +375,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
           <Grid item xs={12}>
             <MuiCard variant="outlined">
               <CardHeader sx={{ bgcolor: 'secondary.main', color: 'common.white' }} title={<><FaUserShield /> {t('game:spectator.title')} ({game.spectators.length})</>} />
-              <CardContent sx={{ maxHeight: '200px', overflowY: 'auto' }}>
+              <CardContent sx={{ maxHeight: isSmallScreen ? '150px' : '200px', overflowY: 'auto' }}>
                 {spectators.length === 0 ? (
-                  <Typography variant="body2">{t('game:spectator.none')}</Typography>
+                  <Typography variant={isSmallScreen ? 'body2' : 'body1'}>{t('game:spectator.none')}</Typography>
                 ) : (
                   <List>
                     {spectators.map((spectator, index) => (
                       <ListItem key={index}>
-                        <Typography variant="body1">{spectator.username}</Typography>
+                        <Typography variant={isSmallScreen ? 'body2' : 'body1'}>{spectator.username}</Typography>
                       </ListItem>
                     ))}
                   </List>
@@ -403,7 +396,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {/* Action Button */}
       {!isSpectator && !isGameOver && gameState === 'ACTIVE' && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
-          <Button variant="contained" color="primary" onClick={openActionModal}>
+          <Button variant="contained" color="primary" onClick={openActionModal} fullWidth={isSmallScreen} size={isSmallScreen ? 'small' : 'medium'}>
             {t('game:actions.choose')}
           </Button>
         </Box>
@@ -411,14 +404,16 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
       {!showPendingActionModal &&
         !isSpectator &&
-        (game.currentTurnUserId === currentUserId && !game.pendingAction) ||
-        (game.currentTurnUserId !== currentUserId && game.pendingAction) &&
+        ((game.currentTurnUserId === currentUserId && !game.pendingAction) ||
+          (game.currentTurnUserId !== currentUserId && game.pendingAction)) &&
         (
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
             <Button
               variant="contained"
               color="primary"
               onClick={() => setShowPendingActionModal(true)}
+              fullWidth={isSmallScreen}
+              size={isSmallScreen ? 'small' : 'medium'}
               sx={{
                 transition: 'all 0.3s ease-in-out',
                 '&:hover': {
@@ -427,7 +422,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                   backgroundColor: 'primary.dark',
                 },
                 fontWeight: 'bold',
-                padding: '10px 20px',
+                padding: isSmallScreen ? '8px 16px' : '10px 20px',
                 borderRadius: '8px',
               }}
             >
@@ -439,7 +434,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {gameState === 'WAITING_FOR_TURN' && (
         <Container sx={{ textAlign: 'center', my: 5 }}>
           <CircularProgress color="primary" />
-          <Typography variant="h6" sx={{ mt: 2 }}>
+          <Typography variant={isSmallScreen ? 'h6' : 'h5'} sx={{ mt: 2 }}>
             {t('game:turn.waiting')}
           </Typography>
         </Container>
@@ -448,7 +443,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {/* Switch to Spectator Button */}
       {!isSpectator && (
         <Tooltip title={t('game:spectator.switchTooltip')}>
-          <Button variant="outlined" color="secondary" onClick={handleSwitchClick} sx={{ display: 'block', margin: '0 auto', mt: 2 }}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={handleSwitchClick}
+            fullWidth={isSmallScreen}
+            size={isSmallScreen ? 'small' : 'medium'}
+            sx={{ display: 'block', margin: '0 auto', mt: 2 }}
+          >
             {t('game:spectator.switchButton')}
           </Button>
         </Tooltip>
@@ -491,35 +493,45 @@ const GameBoard: React.FC<GameBoardProps> = ({
       />
 
       {/* Switch Dialog */}
-      <Dialog open={showSwitchModal} onClose={cancelSwitch}>
-        <DialogTitle>{t('game:spectator.switchTitle')}</DialogTitle>
+      <Dialog
+        open={showSwitchModal}
+        onClose={cancelSwitch}
+        fullScreen={isSmallScreen}
+        aria-labelledby="switch-dialog-title"
+      >
+        <DialogTitle id="switch-dialog-title">{t('game:spectator.switchTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
             {t('game:spectator.switchConfirm')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={cancelSwitch} color="primary">
+          <Button onClick={cancelSwitch} color="primary" size={isSmallScreen ? 'small' : 'medium'}>
             {t('common:buttons.cancel')}
           </Button>
-          <Button onClick={confirmSwitch} color="secondary">
+          <Button onClick={confirmSwitch} color="secondary" size={isSmallScreen ? 'small' : 'medium'}>
             {t('game:spectator.switchButton')}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showReturnCardModal} onClose={() => setShowReturnCardModal(false)}>
-        <DialogTitle>{t('game:cards.selectReturn')}</DialogTitle>
+      <Dialog
+        open={showReturnCardModal}
+        onClose={() => setShowReturnCardModal(false)}
+        fullScreen={isSmallScreen}
+        aria-labelledby="return-card-dialog-title"
+      >
+        <DialogTitle id="return-card-dialog-title">{t('game:cards.selectReturn')}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} justifyContent="center">
             {cardsToReturn.map((card, index) => (
-              <Grid item key={`${card.name}-${index}`}>
+              <Grid item key={`${card.name}-${index}`} xs={6} sm={4} md={3}>
                 <Button
                   onClick={() => handleCardReturn(card.name)}
                   disabled={card.isRevealed}
                   sx={{
-                    minWidth: '120px',
-                    height: '220px',
+                    minWidth: '100%',
+                    height: isSmallScreen ? '100px' : '220px',
                     padding: 0,
                     border: '1px solid rgba(0, 0, 0, 0.23)',
                     borderRadius: '8px',
@@ -529,6 +541,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     backgroundPosition: 'center',
                     cursor: card.isRevealed ? 'default' : 'pointer',
                     filter: card.isRevealed ? 'grayscale(100%)' : 'none',
+                    width: '100%',
                     ...(card.isRevealed
                       ? {}
                       : {
@@ -544,7 +557,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowReturnCardModal(false)} color="primary">
+          <Button onClick={() => setShowReturnCardModal(false)} color="primary" size={isSmallScreen ? 'small' : 'medium'}>
             {t('common:buttons.cancel')}
           </Button>
         </DialogActions>
