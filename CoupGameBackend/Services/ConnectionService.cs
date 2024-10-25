@@ -100,6 +100,7 @@ namespace CoupGameBackend.Services
             var player = game.Players.FirstOrDefault(p => p.UserId == userId);
             if (player != null)
             {
+                Console.WriteLine($"Player {player.Username} reconnected.");
                 var timeoutKey = $"{game.Id}_{userId}";
                 if (PendingDisconnections.TryRemove(timeoutKey, out var cts))
                 {
@@ -161,6 +162,7 @@ namespace CoupGameBackend.Services
             var player = game.Players.FirstOrDefault(p => p.UserId == userId);
             if (player != null)
             {
+                Console.WriteLine($"Player {player.Username} disconnected.");
                 // Mark player as disconnected
                 player.IsConnected = false;
                 await _gameRepository.UpdateGameAsync(game);
