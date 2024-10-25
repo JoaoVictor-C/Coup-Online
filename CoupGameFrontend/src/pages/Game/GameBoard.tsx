@@ -468,6 +468,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {/* Pending Action Modal */}
       <PendingActionModal
         open={
+          showPendingActionModal &&
           !!currentPendingAction &&
           !isSpectator &&
           currentPendingAction.initiatorId !== currentUserId &&
