@@ -458,7 +458,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
             {cardsToReturn.map((card, index) => (
               <Grid item key={`${card.name}-${index}`}>
                 <Button
-                  onClick={card.isRevealed ? () => {} : () => handleCardReturn(card.name)}
+                  onClick={() => handleCardReturn(card.name)}
+                  disabled={card.isRevealed}
                   sx={{
                     minWidth: '120px',
                     height: '220px',
@@ -471,12 +472,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     backgroundPosition: 'center',
                     cursor: card.isRevealed ? 'default' : 'pointer',
                     filter: card.isRevealed ? 'grayscale(100%)' : 'none',
-                    ...(card.isRevealed ? {} : {
-                      '&:hover': {
-                        opacity: 0.8,
-                        border: '1px solid rgba(0, 0, 0, 0.54)',
-                      }
-                    })
+                    ...(card.isRevealed
+                      ? {}
+                      : {
+                        '&:hover': {
+                          opacity: 0.8,
+                          border: '1px solid rgba(0, 0, 0, 0.54)',
+                        },
+                      }),
                   }}
                 />
               </Grid>
