@@ -100,9 +100,6 @@ namespace CoupGameBackend.Services
             var player = game.Players.FirstOrDefault(p => p.UserId == userId);
             if (player != null)
             {
-                if (player.IsConnected)
-                    return (false, "Player is already connected.");
-
                 var timeoutKey = $"{game.Id}_{userId}";
                 if (PendingDisconnections.TryRemove(timeoutKey, out var cts))
                 {
@@ -164,13 +161,6 @@ namespace CoupGameBackend.Services
             var player = game.Players.FirstOrDefault(p => p.UserId == userId);
             if (player != null)
             {
-                // If player is already disconnected, do nothing
-                if (!player.IsConnected)
-                {
-                    Console.WriteLine($"Player is already disconnected: {player.Username}");
-                    return (true, "Player is already disconnected.");
-                }
-
                 // Mark player as disconnected
                 player.IsConnected = false;
                 await _gameRepository.UpdateGameAsync(game);
@@ -186,7 +176,7 @@ namespace CoupGameBackend.Services
                     {
                         try
                         {
-                            await Task.Delay(TimeSpan.FromSeconds(30), cts.Token);
+                            await Task.Delay(TimeSpan.FromSeconds(45), cts.Token);
                             // After timeout, kick the player if still disconnected
                             var updatedGame = await _gameRepository.GetGameAsync(gameId);
                             var disconnectedPlayer = updatedGame.Players.FirstOrDefault(p => p.UserId == userId);
@@ -194,6 +184,7 @@ namespace CoupGameBackend.Services
                             {
                                 // Remove player from the game
                                 updatedGame.Players.Remove(disconnectedPlayer);
+                                await _gameRepository.UpdateGameAsync(updatedGame);
 
                                 // Notify other players about the player being kicked
                                 await _hubContext.Clients.Group(gameId).SendAsync("PlayerKicked", userId);
@@ -214,10 +205,8 @@ namespace CoupGameBackend.Services
                                         return;
                                     }
                                 }
-
                                 // Check if the game is over
                                 _gameStateService.CheckGameOver(updatedGame);
-
                                 await _gameRepository.UpdateGameAsync(updatedGame);
                             }
 

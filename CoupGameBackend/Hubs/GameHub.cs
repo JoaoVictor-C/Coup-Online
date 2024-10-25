@@ -75,7 +75,7 @@ namespace CoupGameBackend.Hubs
                 return;
             }
             var gameId = await _gameRepository.GetGameIdForUser(userId);
-            if (!string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(gameId))
+            if (!string.IsNullOrEmpty(gameId))
             {
                 await _connectionService.HandleDisconnection(gameId, userId);
                 await _gameStateService.EmitGameUpdatesToUsers(gameId);
