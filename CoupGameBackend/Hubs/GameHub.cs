@@ -56,16 +56,11 @@ namespace CoupGameBackend.Hubs
                 var gameId = await _gameRepository.GetGameIdForUser(userId);
                 if (!string.IsNullOrEmpty(gameId))
                 {
-                    var reconnectResult = await _connectionService.ReconnectToGame(gameId, userId, connectionId);
-                    if (reconnectResult.IsSuccess)
-                    {
-                        await Groups.AddToGroupAsync(connectionId, gameId);
-                        await _gameStateService.EmitGameUpdatesToUsers(gameId);
-                    }
-                    else
-                    {
-                        await Clients.Caller.SendAsync("ReconnectFailed", reconnectResult.Message);
-                    }
+                    // If the user is already in a game, try to reconnect to it
+                    await _connectionService.ReconnectToGame(gameId, userId, connectionId);
+
+                    await Groups.AddToGroupAsync(connectionId, gameId);
+                    await _gameStateService.EmitGameUpdatesToUsers(gameId);
                 }
             }
             await base.OnConnectedAsync();

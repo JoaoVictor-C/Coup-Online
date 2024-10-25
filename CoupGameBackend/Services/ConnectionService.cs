@@ -253,6 +253,9 @@ namespace CoupGameBackend.Services
                 // Notify others about spectator disconnection
                 await _hubContext.Clients.Group(gameId).SendAsync("SpectatorDisconnected", userId);
 
+                // Optionally, remove spectator after a timeout similar to players
+                // This can be implemented similarly using PendingDisconnections if desired
+
                 return (true, "Spectator marked as disconnected.");
             }
 
@@ -327,14 +330,6 @@ namespace CoupGameBackend.Services
                 }
 
                 _gameStateService.CheckGameOver(game);
-
-                // Cancel any pending disconnection for this user
-                var timeoutKey = $"{gameId}_{userId}";
-                if (PendingDisconnections.TryRemove(timeoutKey, out var cts))
-                {
-                    cts.Cancel();
-                    cts.Dispose();
-                }
             }
             else if (spectator != null)
             {
@@ -346,14 +341,6 @@ namespace CoupGameBackend.Services
 
                 // Notify others about spectator departure
                 await _hubContext.Clients.Group(gameId).SendAsync("SpectatorLeft", userId);
-
-                // Cancel any pending disconnection for this user
-                var timeoutKey = $"{gameId}_{userId}";
-                if (PendingDisconnections.TryRemove(timeoutKey, out var cts))
-                {
-                    cts.Cancel();
-                    cts.Dispose();
-                }
             }
 
             // Update the game state in the repository
@@ -361,6 +348,7 @@ namespace CoupGameBackend.Services
             await _gameStateService.EmitGameUpdatesToUsers(gameId);
             return (true, "Successfully left the game.");
         }
+
         public async Task<(bool IsSuccess, string Message)> RejoinAsPlayerAsync(string gameId, string userId)
         {
             var game = await _gameRepository.GetGameByIdOrCodeAsync(gameId);

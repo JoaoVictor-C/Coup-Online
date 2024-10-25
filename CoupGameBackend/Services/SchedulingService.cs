@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using CoupGameBackend.Models;
 using CoupGameBackend.Hubs;
 using Microsoft.AspNetCore.SignalR;
-
 namespace CoupGameBackend.Services
 {
     public class SchedulingService : ISchedulingService
@@ -14,7 +13,6 @@ namespace CoupGameBackend.Services
         private readonly IGameRepository _gameRepository;
         private readonly IHubContext<GameHub> _hubContext;
         private readonly ConcurrentDictionary<string, CancellationTokenSource> PendingDeletions = new ConcurrentDictionary<string, CancellationTokenSource>();
-        private readonly CancellationTokenSource _automaticCleanupTokenSource = new CancellationTokenSource();
 
         public SchedulingService(IGameRepository gameRepository, IHubContext<GameHub> hubContext)
         {
