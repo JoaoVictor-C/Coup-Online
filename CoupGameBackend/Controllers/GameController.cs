@@ -102,13 +102,17 @@ namespace CoupGameBackend.Controllers
                 return BadRequest(new { message = "GameId or RoomCode is required to join a game." });
             }
 
+            Console.WriteLine($"JoinGame: {request.GameIdOrCode}");
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            Console.WriteLine($"JoinGame: UserId: {userId}");
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized(new { message = "User ID is missing." });
             }
 
             var existingGameId = await _gameRepository.GetGameIdForUser(userId);
+            Console.WriteLine($"JoinGame: ExistingGameId: {existingGameId}");
             if (!string.IsNullOrEmpty(existingGameId))
             {
                 // Kick the user from the existing game

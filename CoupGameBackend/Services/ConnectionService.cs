@@ -327,8 +327,6 @@ namespace CoupGameBackend.Services
                         _schedulingService.ScheduleGameDeletion(gameId);
                     }
                 }
-
-                _gameStateService.CheckGameOver(game);
             }
             else if (spectator != null)
             {

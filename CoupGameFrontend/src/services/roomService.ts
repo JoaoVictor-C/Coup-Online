@@ -14,7 +14,7 @@ const searchRooms = async (searchTerm: string): Promise<Game[]> => {
 };
 
 const createRoom = async (request: CreateGameRequest): Promise<Game> => {
-  const response = await api.post('/game/create', request)
+  const response = await api.post('/game/create', request);
   return response.data;
 };
 
@@ -41,6 +41,7 @@ const disconnect = async (gameIdOrCode: string): Promise<void> => {
 const switchToSpectator = async (gameIdOrCode: string): Promise<void> => {
   await api.post('/game/spectate', { GameIdOrCode: gameIdOrCode });
 };
+
 
 const roomService = {
   getPublicRooms,

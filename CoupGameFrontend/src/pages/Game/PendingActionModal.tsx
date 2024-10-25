@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Grid, Box } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Grid, Box, useMediaQuery, useTheme } from '@mui/material';
 import { Action, ActionResponse, Card, CardImages, cardImages, PendingAction, Player } from '@utils/types';
 import { useTranslation } from 'react-i18next';
-import { useMediaQuery, useTheme } from '@mui/material';
 
 interface PendingActionModalProps {
   open: boolean;
@@ -17,7 +16,18 @@ interface PendingActionModalProps {
   gameId: string;
 }
 
-const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, onRespond, onClose, pendingAction, currentUserId, players, respondToBlock, respondToExchangeSelect, gameId }) => {
+const PendingActionModal: React.FC<PendingActionModalProps> = ({
+  open,
+  action,
+  onRespond,
+  onClose,
+  pendingAction,
+  currentUserId,
+  players,
+  respondToBlock,
+  respondToExchangeSelect,
+  gameId
+}) => {
   const { t } = useTranslation(['game', 'common']);
   const [showSelectBlockOption, setShowSelectBlockOption] = useState(false);
   const [showRespondToBlock, setShowRespondToBlock] = useState(false);
@@ -25,6 +35,7 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [maxSelections, setMaxSelections] = useState(2);
   const theme = useTheme();
+  const isFullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleResponse = (response: ActionResponse, blockOption?: string) => {
     if (response === 'block' && action?.actionType === 'steal' && blockOption === undefined) {
@@ -327,7 +338,7 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({ open, action, o
       onClose={() => onClose(false)}
       fullWidth
       maxWidth="sm"
-      fullScreen={useMediaQuery(theme.breakpoints.down('sm'))} // Make full-screen on small devices
+      fullScreen={isFullScreen} // Make full-screen on small devices
     >
       <DialogTitle>{t('game:actions.pending')}</DialogTitle>
       <DialogContent>

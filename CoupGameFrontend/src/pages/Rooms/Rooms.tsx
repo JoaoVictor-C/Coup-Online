@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -18,11 +18,10 @@ import {
   TablePagination,
   Stack,
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import roomService from '@services/roomService';
 import { Game } from '@utils/types';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import authService from '@services/authService';
 import { getToken } from '@utils/auth';
 
@@ -35,12 +34,16 @@ const Rooms: React.FC = () => {
   const [lastSearchTime, setLastSearchTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState<string>(t('game:room.lastSearch.na'));
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [joiningRoomId, setJoiningRoomId] = useState<string | null>(null); // New state for loading
   const navigate = useNavigate();
   const token = getToken();
 
   // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Ref for debounce timeout
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -54,6 +57,21 @@ const Rooms: React.FC = () => {
     getUser();
   }, [token]);
 
+  const fetchRooms = useCallback(async () => {
+    setLoading(true);
+    try {
+      const fetchedRooms = await roomService.getPublicRooms();
+      console.log(fetchedRooms);
+      setRooms(fetchedRooms);
+      setError(null);
+      setLastSearchTime(new Date());
+    } catch (err: any) {
+      setError(t('common:error.generic'));
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
   useEffect(() => {
     fetchRooms();
 
@@ -62,7 +80,7 @@ const Rooms: React.FC = () => {
     }, 90000); // 1 minute and 30 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchRooms]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -80,42 +98,34 @@ const Rooms: React.FC = () => {
     return () => clearInterval(timer);
   }, [lastSearchTime, t]);
 
-  const fetchRooms = async () => {
-    setLoading(true);
-    try {
-      const fetchedRooms = await roomService.getPublicRooms();
-      console.log(fetchedRooms);
-      setRooms(fetchedRooms);
-      setError(null);
-      setLastSearchTime(new Date());
-    } catch (err: any) {
-      setError(t('common:error.generic'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleJoin = async (room: Game) => {
-    try {
-      const game = await roomService.joinRoom(room.id);
-      const isSpectator =
-        game.spectators.some((spectator) => spectator.userId === currentUserId) ||
-        (game.players && game.players.length >= room.playerCount);
-      navigate(`/${isSpectator ? 'spectator' : 'game'}/${game.roomCode}`);
-    } catch (err: any) {
-      if (err.response?.data?.message === 'Game not found.') {
-        fetchRooms();
+  const handleJoin = useCallback(
+    async (room: Game) => {
+      setJoiningRoomId(room.id); // Set loading state
+      try {
+        const game = await roomService.joinRoom(room.id);
+        const isSpectator =
+          game.spectators.some((spectator) => spectator.userId === currentUserId) ||
+          (game.players && game.players.length >= room.playerCount);
+        navigate(`/${isSpectator ? 'spectator' : 'game'}/${game.roomCode}`);
+      } catch (err: any) {
+        if (err.response?.data?.message === 'Game not found.') {
+          fetchRooms();
+        }
+        setError(err.response?.data?.message || t('game:rooms.errors.joinFailed'));
+      } finally {
+        setJoiningRoomId(null); // Reset loading state
       }
-      setError(err.response?.data?.message || t('game:rooms.errors.joinFailed'));
-    }
-  };
+    },
+    [fetchRooms, navigate, t, currentUserId]
+  );
 
   // Debounced search function
-  const debouncedSearch = useCallback(() => {
-    let timeoutId: NodeJS.Timeout;
-    return (query: string) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(async () => {
+  const handleSearch = useCallback(
+    (query: string) => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+      debounceTimeout.current = setTimeout(async () => {
         if (!query) {
           fetchRooms();
           return;
@@ -132,24 +142,37 @@ const Rooms: React.FC = () => {
           setLoading(false);
         }
       }, 500);
-    };
-  }, []);
+    },
+    [fetchRooms, t]
+  );
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    debouncedSearch()(e.target.value);
-  };
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setSearchTerm(value);
+      handleSearch(value);
+    },
+    [handleSearch]
+  );
 
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
+  const handleChangePage = useCallback(
+    (event: unknown, newPage: number) => {
+      setPage(newPage);
+    },
+    []
+  );
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  const handleChangeRowsPerPage = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setRowsPerPage(parseInt(event.target.value, 10));
+      setPage(0);
+    },
+    []
+  );
+
+  const paginatedRooms = useMemo(() => {
+    return rooms.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  }, [rooms, page, rowsPerPage]);
 
   return (
     <Container sx={{ my: 5 }}>
@@ -237,42 +260,45 @@ const Rooms: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {rooms.length > 0 ? (
-                rooms
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((room) => (
-                    <TableRow key={room.id} hover>
-                      <TableCell>{room.gameName}</TableCell>
-                      <TableCell>{room.roomCode}</TableCell>
-                      <TableCell>
-                        {t('game:room.lobby.players', {
-                          current: room.players.length,
-                          max: room.playerCount,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="contained"
-                          color={room.players.length >= room.playerCount ? 'secondary' : 'primary'}
-                          onClick={() => handleJoin(room)}
-                          disabled={room.players.length > room.playerCount + 1} // Prevent over-spectating
-                          aria-label={
-                            room.players.length >= room.playerCount
-                              ? t('game:spectator.title')
-                              : t('common:buttons.join')
-                          }
-                          sx={{
-                            width: { xs: '100%', sm: 'auto' },
-                            mt: { xs: 1, sm: 0 },
-                          }}
-                        >
-                          {room.players.length >= room.playerCount
+              {paginatedRooms.length > 0 ? (
+                paginatedRooms.map((room) => (
+                  <TableRow key={room.id} hover>
+                    <TableCell>{room.gameName}</TableCell>
+                    <TableCell>{room.roomCode}</TableCell>
+                    <TableCell>
+                      {t('game:room.lobby.players', {
+                        current: room.players.length,
+                        max: room.playerCount,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="contained"
+                        color={room.players.length >= room.playerCount ? 'secondary' : 'primary'}
+                        onClick={() => handleJoin(room)}
+                        disabled={room.players.length > room.playerCount + 1 || joiningRoomId === room.id} // Disable if loading
+                        aria-label={
+                          room.players.length >= room.playerCount
                             ? t('game:spectator.title')
-                            : t('common:buttons.join')}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                            : t('common:buttons.join')
+                        }
+                        sx={{
+                          width: { xs: '100%', sm: 'auto' },
+                          mt: { xs: 1, sm: 0 },
+                          position: 'relative',
+                        }}
+                      >
+                        {joiningRoomId === room.id ? (
+                          <CircularProgress size={24} color="inherit" />
+                        ) : (
+                          room.players.length >= room.playerCount
+                            ? t('game:spectator.title')
+                            : t('common:buttons.join')
+                        )}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} align="center">

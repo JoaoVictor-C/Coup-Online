@@ -52,6 +52,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const [cardsToReturn, setCardsToReturn] = useState<Card[]>([]);
   const [showPendingActionModal, setShowPendingActionModal] = useState(true);
   const [showButton, setShowButton] = useState(false);
+  const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!showPendingActionModal && !!currentPendingAction) {
@@ -172,6 +173,18 @@ const GameBoard: React.FC<GameBoardProps> = ({
     if (deletePendingAction) {
       setCurrentPendingAction(null);
     }
+  };
+
+  const toggleCardFlip = (index: number) => {
+    setFlippedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
   };
 
   if (gameState === 'WAITING_FOR_PLAYERS') {
@@ -308,7 +321,17 @@ const GameBoard: React.FC<GameBoardProps> = ({
                                   cursor: 'pointer',
                                   ...getCardStyle(player)
                                 }}
-                                whileHover={{ rotateY: 180 }}
+                                whileHover={!isSmallScreen ? { rotateY: 180 } : {}}
+                                animate={
+                                  isSmallScreen
+                                    ? { rotateY: flippedCards.has(index) ? 180 : 0 }
+                                    : {}
+                                }
+                                onClick={
+                                  isSmallScreen
+                                    ? () => toggleCardFlip(index)
+                                    : undefined
+                                }
                               >
                                 <img
                                   src={backCard}

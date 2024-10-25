@@ -9,6 +9,7 @@ import { getToken } from '@utils/auth';
 import authService from '@services/authService';
 import { GameContext } from '@context/GameContext';
 import { useTranslation } from 'react-i18next';
+import roomService from '@services/roomService';
 
 const GameRoom: React.FC = () => {
   const { t } = useTranslation(['game', 'common']);
@@ -376,8 +377,15 @@ const GameRoom: React.FC = () => {
   }
 
   if (loading || !game) {
+    console.log(loading, game);
     if (!game) {
-      gameHub?.reconnect(id || '');
+      if (gameHub) {
+        gameHub.getGameState(id || '').then(game => {
+          console.log(game);
+          setGame(game);
+          setLoading(false);
+        });
+      }
     }
     return (
       <Container

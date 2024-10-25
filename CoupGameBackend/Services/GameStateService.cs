@@ -32,6 +32,7 @@ namespace CoupGameBackend.Services
                 return;
 
             await CheckGameOver(game);
+            await _gameRepository.UpdateGameAsync(game);
 
             foreach (var player in game.Players)
             {
@@ -49,6 +50,9 @@ namespace CoupGameBackend.Services
         public async Task<Game> GetGameState(string gameId, string userId)
         {
             var game = await _gameRepository.GetGameAsync(gameId) ?? throw new KeyNotFoundException("Game not found.");
+                
+            if (game == null)
+                return null;
 
             // Clone the game state without revealing other players' hands
             var visibleGameState = new Game
@@ -118,7 +122,7 @@ namespace CoupGameBackend.Services
 
         public async Task CheckGameOver(Game game)
         {
-            if (!game.IsStarted && !game.IsGameOver)
+            if (!game.IsStarted && !game.IsGameOver && game == null)
             {
                 return;
             }
