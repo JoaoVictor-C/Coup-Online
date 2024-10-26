@@ -42,72 +42,72 @@ const Header: React.FC = () => {
           >
             Coup Online
           </Typography>
-          {isMobile ? (
-            <>
-              <IconButton
-                size="large"
-                edge="start"
-                color="inherit"
-                aria-label="menu"
-                onClick={handleMenu}
-              >
-                <MenuIcon />
-              </IconButton>
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorEl}
-                anchorOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-              >
-                <MenuItem
-                  key="rooms"
-                  component={RouterLink}
-                  to="/rooms"
-                  onClick={handleClose}
+          {user && (
+            isMobile ? (
+              <>
+                <IconButton
+                  size="large"
+                  edge="start"
+                  color="inherit"
+                  aria-label="menu"
+                  onClick={handleMenu}
                 >
+                  <MenuIcon />
+                </IconButton>
+                <Menu
+                  id="menu-appbar"
+                  anchorEl={anchorEl}
+                  anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                  }}
+                  keepMounted
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                  }}
+                  open={Boolean(anchorEl)}
+                  onClose={handleClose}
+                >
+                  <MenuItem
+                    key="rooms"
+                    component={RouterLink}
+                    to="/rooms"
+                    onClick={handleClose}
+                  >
+                    {t('common:navigation.rooms')}
+                  </MenuItem>
+                  <MenuItem
+                    key="create-room"
+                    component={RouterLink}
+                    to="/create-room"
+                    onClick={handleClose}
+                  >
+                    {t('common:navigation.createRoom')}
+                  </MenuItem>
+                  <MenuItem
+                    key="join-game"
+                    component={RouterLink}
+                    to="/join-game"
+                    onClick={handleClose}
+                  >
+                    {t('common:navigation.joinGame')}
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <>
+                <Button color="inherit" component={RouterLink} to="/rooms">
                   {t('common:navigation.rooms')}
-                </MenuItem>
-                <MenuItem
-                  key="create-room"
-                  component={RouterLink}
-                  to="/create-room"
-                  onClick={handleClose}
-                >
+                </Button>
+                <Button color="inherit" component={RouterLink} to="/create-room">
                   {t('common:navigation.createRoom')}
-                </MenuItem>
-                <MenuItem
-                  key="join-game"
-                  component={RouterLink}
-                  to="/join-game"
-                  onClick={handleClose}
-                >
+                </Button>
+                <Button color="inherit" component={RouterLink} to="/join-game">
                   {t('common:navigation.joinGame')}
-                </MenuItem>
-                {/* Add more menu items as needed */}
-              </Menu>
-            </>
-          ) : (
-            <>
-              <Button color="inherit" component={RouterLink} to="/rooms">
-                {t('common:navigation.rooms')}
-              </Button>
-              <Button color="inherit" component={RouterLink} to="/create-room">
-                {t('common:navigation.createRoom')}
-              </Button>
-              <Button color="inherit" component={RouterLink} to="/join-game">
-                {t('common:navigation.joinGame')}
-              </Button>
-              {/* Add more buttons as needed */}
-            </>
+                </Button>
+              </>
+            )
           )}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
             {user ? (
