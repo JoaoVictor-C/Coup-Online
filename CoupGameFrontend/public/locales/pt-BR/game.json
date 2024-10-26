@@ -81,6 +81,10 @@
         "name": "Imposto",
         "description": "Imposto: Pegue 3 moedas do tesouro"
       },
+      "contessa": {
+        "name": "Condessa",
+        "description": "Condessa: Pode bloquear ataques de assassinato"
+      },
       "select": "Selecione uma Ação",
       "selectTarget": "Selecione um Alvo",
       "noTargets": "Nenhum alvo válido disponível",
@@ -151,5 +155,43 @@
     "actionLog": {
       "title": "Registro de Ações"
     },
-    "waitingForPlayers": "Aguardando jogadores..."
+    "waitingForPlayers": "Aguardando jogadores...",
+    "home": {
+      "heroTitle": "Bem-vindo ao Coup Online!",
+      "heroSubtitle": "Engaje em batalhas cardeais estratégicas e vença seus oponentes.",
+      "rules": {
+        "title": "Como Jogar Coup",
+        "description": "Coup é um jogo de blefe, dedução e manipulação. Cada jogador luta pelo poder tomando ações, desafiando oponentes e manobrando rivais para eliminar suas influências e emergir vitorioso.",
+        "sections": {
+          "gameSetup": {
+            "title": "Configuração do Jogo",
+            "content": "Jogadores: 2-6<br>Recursos Iniciais: Cada jogador começa com 2 moedas e 2 cartas de personagem aleatórias."
+          },
+          "gameplay": {
+            "title": "Jogabilidade",
+            "content": "No seu turno, escolha uma ação para realizar. As ações podem ser gerais ou específicas de um papel. Outros jogadores podem desafiar ou bloquear suas ações com base em seus papéis."
+          },
+          "eliminatingPlayer": {
+            "title": "Eliminando um Jogador",
+            "content": "Um jogador é eliminado quando perde toda a sua influência (cartas de personagem). Jogadores eliminados revelam suas cartas restantes e devolvem todas as moedas para o Tesouro."
+          },
+          "challengesAndBlocks": {
+            "title": "Desafios e Bloqueios",
+            "content": "Qualquer ação pode ser desafiada. Se um desafio for bem-sucedido, a ação é bloqueada; caso contrário, o desafiador perde influência."
+          },
+          "winningTheGame": {
+            "title": "Vencendo o Jogo",
+            "content": "O último jogador restante com pelo menos 1 influência vence o jogo."
+          }
+        },
+        "cards": {
+          "title": "Visão Geral das Cartas",
+          "description": "Aprenda sobre cada carta de personagem e suas habilidades."
+        }
+      },
+      "callToAction": {
+        "title": "Pronto para Jogar?",
+        "description": "Junte-se a uma sala agora e comece sua aventura no Coup!"
+      }
+    }
 }

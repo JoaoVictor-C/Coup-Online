@@ -81,6 +81,10 @@
         "name": "Tax",
         "description": "Tax: Take 3 coins from the treasury"
       },
+      "contessa": {
+        "name": "Contessa",
+        "description": "Contessa: Can block assassination attempts"
+      },
       "select": "Select an Action",
       "selectTarget": "Select a Target",
       "noTargets": "No valid targets available", 
@@ -142,14 +146,52 @@
     "cards": {
       "back": "Card Back",
       "selectReturn": "Select a card to return",
-      "ambassador": "Embaixador",
-      "assassin": "Assassino",
-      "captain": "Capitão",
-      "contessa": "Condessa",
-      "duke": "Duque"
+      "ambassador": "Ambassador",
+      "assassin": "Assassin",
+      "captain": "Captain",
+      "contessa": "Contessa",
+      "duke": "Duke"
     },
     "actionLog": {
       "title": "Action Log"
     },
-    "waitingForPlayers": "Waiting for players..."
+    "waitingForPlayers": "Waiting for players...",
+    "home": {
+      "heroTitle": "Welcome to Coup Online!",
+      "heroSubtitle": "Engage in strategic card battles and outwit your opponents.",
+      "rules": {
+        "title": "How to Play Coup",
+        "description": "Coup is a game of bluffing, deduction, and manipulation. Each player vies for power by taking actions, challenging opponents, and outmaneuvering rivals to eliminate their influences and emerge victorious.",
+        "sections": {
+          "gameSetup": {
+            "title": "Game Setup",
+            "content": "Players: 2-6<br>Starting Resources: Each player starts with 2 coins and 2 random character cards."
+          },
+          "gameplay": {
+            "title": "Gameplay",
+            "content": "On your turn, choose one action to perform. Actions can be either general actions or role-specific actions. Other players may challenge or block your actions based on their roles."
+          },
+          "eliminatingPlayer": {
+            "title": "Eliminating a Player",
+            "content": "A player is eliminated when they lose all their influence (character cards). Eliminated players reveal their remaining cards and return all coins to the Treasury."
+          },
+          "challengesAndBlocks": {
+            "title": "Challenges and Blocks",
+            "content": "Any action can be challenged. If a challenge is successful, the action is blocked; otherwise, the challenger loses influence."
+          },
+          "winningTheGame": {
+            "title": "Winning the Game",
+            "content": "The last remaining player with at least 1 influence wins the game."
+          }
+        },
+        "cards": {
+          "title": "Cards Overview",
+          "description": "Learn about each character card and their abilities."
+        }
+      },
+      "callToAction": {
+        "title": "Ready to Play?",
+        "description": "Join a room now and start your Coup adventure!"
+      }
+    }
 }
