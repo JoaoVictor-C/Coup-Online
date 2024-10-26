@@ -105,7 +105,9 @@
       "pass": "Pass",
       "performing": "is performing",
       "respondPrompt": "How would you like to respond?",
-      "you": "You"
+      "you": "You",
+      "pendingDetails": "{{action}} is pending",
+      "pendingAction": "Pending Action"
     },
     "spectator": {
       "title": "Spectators",

@@ -105,7 +105,8 @@
       "pass": "Permitir",
       "performing": "está realizando",
       "respondPrompt": "Como você gostaria de responder?",
-      "you": "Você"
+      "you": "Você",
+      "pendingDetails": "{{action}} está pendente"
     },
     "spectator": {
       "title": "Espectadores",

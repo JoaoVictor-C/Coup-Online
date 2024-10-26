@@ -393,7 +393,8 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
                 {t('game:actions.pendingDetails', { action: t(`game:actions.${action.actionType}`) })}
               </Typography>
             </DialogContent>
-            <DialogActions sx={{ flexDirection: isFullScreen ? 'column' : 'row', gap: 1 }}>
+            <DialogActions sx={{ flexDirection: 'column', gap: 2 }}>
+              {/* Action Buttons */}
               {action.actionType !== 'income' && action.actionType !== 'coup' && (
                 <>
                   {['foreign_aid', 'steal', 'assassinate'].includes(action.actionType) && (
@@ -418,7 +419,15 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
                 </Button>
               </motion.div>
               <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                <Button variant="outlined" color="primary" onClick={() => onClose(false)} fullWidth>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => onClose(false)}
+                  fullWidth
+                  sx={{
+                    mt: 2,
+                  }}
+                >
                   {t('common:buttons.returnToGame')}
                 </Button>
               </motion.div>
