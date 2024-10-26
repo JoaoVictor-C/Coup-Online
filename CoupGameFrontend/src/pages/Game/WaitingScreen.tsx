@@ -23,6 +23,18 @@ const WaitingScreen: React.FC = () => {
     setShowReturnConfirmation(false);
   };
 
+  // Define animation variants for the loader
+  const loaderVariants = {
+    animate: { y: [0, -20, 0] },
+    transition: { repeat: Infinity, duration: 1.5, ease: 'easeInOut' },
+  };
+
+  // Define animation variants for buttons
+  const buttonVariants = {
+    hover: { scale: 1.05 },
+    tap: { scale: 0.95 },
+  };
+
   return (
     <Container maxWidth="sm">
       <Box
@@ -35,19 +47,32 @@ const WaitingScreen: React.FC = () => {
         }}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
+          variants={loaderVariants}
+          animate="animate"
         >
           <CircularProgress size={60} />
         </motion.div>
-        <Typography variant="h5" sx={{ mt: 3 }}>
-          {t('game:waitingForPlayers')}
-        </Typography>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 1 }}
+        >
+          <Typography variant="h5" sx={{ mt: 3 }}>
+            {t('game:waitingForPlayers')}
+          </Typography>
+        </motion.div>
         {/* Return to Game Button */}
-        <Button variant="outlined" color="secondary" onClick={handleReturnToGame} sx={{ mt: 4 }}>
-          {t('common:buttons.returnToGame')}
-        </Button>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 0.5 }}
+        >
+          <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+            <Button variant="outlined" color="secondary" onClick={handleReturnToGame} sx={{ mt: 4 }}>
+              {t('common:buttons.returnToGame')}
+            </Button>
+          </motion.div>
+        </motion.div>
 
         {/* Confirmation Dialog */}
         <Dialog

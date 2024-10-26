@@ -31,7 +31,7 @@ builder.Services.AddSingleton<IMongoClient>(s => new MongoClient(mongoSettings))
 builder.Services.AddSingleton(s =>
 {
     var client = s.GetRequiredService<IMongoClient>();
-    return client.GetDatabase("CoupGameDB");
+    return client.GetDatabase("CoupGameDB"); // Ensured consistent database name
 });
 
 // Add services to the container.
@@ -91,8 +91,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { 
-        Title = "Coup Game API", 
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Coup Game API",
         Version = "v1",
         Description = "API for the Coup card game",
         Contact = new OpenApiContact
@@ -106,11 +107,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
-    // Add XML comments
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
-
     // Add JWT Authentication
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -123,17 +119,17 @@ builder.Services.AddSwaggerGen(c =>
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-        {
-            new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
+                new OpenApiSecurityScheme
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                new string[] {}
+            }
     });
 
 });
@@ -173,7 +169,7 @@ var app = builder.Build();
 try
 {
     var mongoClient = app.Services.GetRequiredService<IMongoClient>();
-    var mongoDatabase = mongoClient.GetDatabase("CoupOnline");
+    var mongoDatabase = mongoClient.GetDatabase("CoupGameDB"); // Ensured consistent database name
     var command = new BsonDocument("ping", 1);
     mongoDatabase.RunCommand<BsonDocument>(command);
     Console.WriteLine("✅ Successfully connected to MongoDB!");

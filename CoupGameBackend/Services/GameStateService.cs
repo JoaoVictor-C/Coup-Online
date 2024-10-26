@@ -122,15 +122,22 @@ namespace CoupGameBackend.Services
 
         public async Task CheckGameOver(Game game)
         {
-            if (!game.IsStarted && !game.IsGameOver && game == null)
+            if (!game.IsStarted || game == null)
             {
                 return;
             }
-            var activePlayers = game.Players.Count(p => p.IsActive && p.IsConnected);
+            foreach (var player in game.Players)
+            {
+                if (player.Influences == 0)
+                {
+                    player.IsActive = false;
+                }
+            }
+            var activePlayers = game.Players.Count(p => p.IsActive);
             if (activePlayers <= 1)
             {
                 game.IsGameOver = true;
-                string? winnerId = game.Players.FirstOrDefault(p => p.IsActive && p.IsConnected)?.UserId;
+                string? winnerId = game.Players.FirstOrDefault(p => p.IsActive)?.UserId;
                 game.WinnerId = winnerId;
                 game.PendingAction = null;
 
@@ -142,7 +149,6 @@ namespace CoupGameBackend.Services
                     WinnerId = winnerId,
                     Message = winnerId != null ? $"Player {winnerId} has won the game!" : "No players remaining. Game ended in a draw."
                 });
-                await EmitGameUpdatesToUsers(game.Id);
             }
         }
 

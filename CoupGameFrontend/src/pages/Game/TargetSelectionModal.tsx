@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { Game } from '@utils/types';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
 import { green } from '@mui/material/colors';
 
 interface TargetSelectionModalProps {
@@ -24,6 +25,20 @@ interface TargetSelectionModalProps {
   game: Game;
   currentUserId: string;
 }
+
+// Define animation variants for list items
+const listItemVariants = {
+  hidden: { opacity: 0, x: -50 },
+  visible: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    transition: {
+      delay: i * 0.1,
+      type: 'spring',
+      stiffness: 100,
+    },
+  }),
+};
 
 const TargetSelectionModal: React.FC<TargetSelectionModalProps> = ({ open, onClose, onSelectTarget, game, currentUserId }) => {
   const { t } = useTranslation(['game', 'common']);
@@ -37,27 +52,34 @@ const TargetSelectionModal: React.FC<TargetSelectionModalProps> = ({ open, onClo
       <DialogContent dividers>
         {alivePlayers.length > 0 ? (
           <List>
-            {alivePlayers.map(player => (
+            {alivePlayers.map((player, index) => (
               <React.Fragment key={player.userId}>
-                <ListItemButton onClick={() => onSelectTarget(player.userId)}>
-                  <ListItemAvatar>
-                    <Avatar alt={player.username}>
-                      {player.username.charAt(0).toUpperCase()}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={
-                      <Typography variant="subtitle1" fontWeight="bold">
-                        {player.username}
-                      </Typography>
-                    }
-                    secondary={
-                      <Typography variant="body2" color="textSecondary">
-                        {t('game:actions.coins')}: {player.coins}
-                      </Typography>
-                    }
-                  />
-                </ListItemButton>
+                <motion.div
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  variants={listItemVariants}
+                >
+                  <ListItemButton onClick={() => onSelectTarget(player.userId)}>
+                    <ListItemAvatar>
+                      <Avatar alt={player.username}>
+                        {player.username.charAt(0).toUpperCase()}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {player.username}
+                        </Typography>
+                      }
+                      secondary={
+                        <Typography variant="body2" color="textSecondary">
+                          {t('game:actions.coins')}: {player.coins}
+                        </Typography>
+                      }
+                    />
+                  </ListItemButton>
+                </motion.div>
                 <Divider component="li" />
               </React.Fragment>
             ))}
@@ -69,9 +91,11 @@ const TargetSelectionModal: React.FC<TargetSelectionModalProps> = ({ open, onClo
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} variant="contained" color="primary">
-          {t('common:buttons.cancel')}
-        </Button>
+        <motion.div whileHover={{ scale: 1.05 }}>
+          <Button onClick={onClose} variant="contained" color="primary">
+            {t('common:buttons.cancel')}
+          </Button>
+        </motion.div>
       </DialogActions>
     </Dialog>
   );

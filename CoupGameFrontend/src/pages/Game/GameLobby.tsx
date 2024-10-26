@@ -28,6 +28,32 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 
+// Define animation variants for player items
+const playerItemVariants = {
+  hidden: { opacity: 0, y: -20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.1,
+      type: 'spring',
+      stiffness: 100,
+    },
+  }),
+};
+
+// Define animation variants for the start button
+const startButtonVariants = {
+  pulse: {
+    scale: [1, 1.05, 1],
+    transition: {
+      duration: 1,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+};
+
 interface GameLobbyProps {
   game: Game;
   currentUserId: string;
@@ -102,17 +128,18 @@ const GameLobby: React.FC<GameLobbyProps> = ({
         <Grid item xs={12}>
           <AnimatePresence>
             <List>
-              {game.players.map((player) => {
+              {game.players.map((player, index) => {
                 const isLeader = player.userId === game.leaderId;
                 const isCurrentUser = player.userId === currentUserId;
 
                 return (
                   <motion.div
                     key={`player-${player.userId}`}
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 50 }}
-                    transition={{ duration: 0.3 }}
+                    custom={index}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    variants={playerItemVariants}
                   >
                     <ListItem
                       sx={{
@@ -182,31 +209,37 @@ const GameLobby: React.FC<GameLobbyProps> = ({
                 flexWrap: 'wrap',
               }}
             >
-              <Button
-                component={Link}
-                to={`/game/${game.roomCode}`}
-                variant="contained"
-                color="success"
-                size="large"
-                disabled={game.players.length < 2}
-                onClick={(e) => {
-                  if (game.players.length < 2) {
-                    setOpenSnackbar(true);
-                    e.preventDefault();
-                  } else {
-                    onStartGame();
-                  }
-                }}
-                startIcon={<PlayArrowIcon />}
-                sx={{
-                  cursor: game.players.length < 2 ? 'not-allowed' : 'pointer',
-                  paddingY: 1.5,
-                  flexGrow: 1,
-                  minWidth: { xs: '100%', sm: 'auto' },
-                }}
+              <motion.div
+                variants={startButtonVariants}
+                animate="pulse"
+                whileHover={{ scale: 1.1 }}
               >
-                {t('common:buttons.start')}
-              </Button>
+                <Button
+                  component={Link}
+                  to={`/game/${game.roomCode}`}
+                  variant="contained"
+                  color="success"
+                  size="large"
+                  disabled={game.players.length < 2}
+                  onClick={(e) => {
+                    if (game.players.length < 2) {
+                      setOpenSnackbar(true);
+                      e.preventDefault();
+                    } else {
+                      onStartGame();
+                    }
+                  }}
+                  startIcon={<PlayArrowIcon />}
+                  sx={{
+                    cursor: game.players.length < 2 ? 'not-allowed' : 'pointer',
+                    paddingY: 1.5,
+                    flexGrow: 1,
+                    minWidth: { xs: '100%', sm: 'auto' },
+                  }}
+                >
+                  {t('common:buttons.start')}
+                </Button>
+              </motion.div>
             </Box>
           </Grid>
         )}

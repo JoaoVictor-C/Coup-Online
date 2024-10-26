@@ -9,7 +9,7 @@ import { getToken } from '@utils/auth';
 import authService from '@services/authService';
 import { GameContext } from '@context/GameContext';
 import { useTranslation } from 'react-i18next';
-import roomService from '@services/roomService';
+import { motion } from 'framer-motion';
 
 const GameRoom: React.FC = () => {
   const { t } = useTranslation(['game', 'common']);
@@ -231,12 +231,6 @@ const GameRoom: React.FC = () => {
       setLoading(false);
     });
 
-    // Listen for game restarted event
-    gameHub.on('GameRestarted', (newGame: Game) => {
-      console.log('Game has been restarted.');
-      setLoading(false);
-    });
-
     // Listen for spectator switch
     gameHub.on('PlayerSwitchedToSpectator', (userId: string) => {
       console.log(`${userId} switched to spectator.`);
@@ -397,10 +391,21 @@ const GameRoom: React.FC = () => {
           height: '100vh',
         }}
       >
-        <CircularProgress />
-        <Typography variant="h6" sx={{ mt: 2 }}>
-          Connecting to the game...
-        </Typography>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
+        >
+          <CircularProgress />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 1 }}
+        >
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            {t('game:connecting')}
+          </Typography>
+        </motion.div>
       </Container>
     );
   }

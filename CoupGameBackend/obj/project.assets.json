@@ -3374,19 +3374,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Joao Victor\\.nuget\\packages\\": {}
+    "C:\\Users\\fabio\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\JoaoVictor\\Estudos\\Coup-Online\\CoupGameBackend\\CoupGameBackend.csproj",
+      "projectUniqueName": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\CoupGameBackend.csproj",
       "projectName": "CoupGameBackend",
-      "projectPath": "C:\\JoaoVictor\\Estudos\\Coup-Online\\CoupGameBackend\\CoupGameBackend.csproj",
-      "packagesPath": "C:\\Users\\Joao Victor\\.nuget\\packages\\",
-      "outputPath": "C:\\JoaoVictor\\Estudos\\Coup-Online\\CoupGameBackend\\obj\\",
+      "projectPath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\CoupGameBackend.csproj",
+      "packagesPath": "C:\\Users\\fabio\\.nuget\\packages\\",
+      "outputPath": "D:\\JV\\JoaoVictor\\Projetos Pessoais\\Coup-Online\\CoupGameBackend\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Joao Victor\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\fabio\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -3459,7 +3459,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.201/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.203/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

@@ -19,7 +19,7 @@ namespace CoupGameBackend.Services
         private static readonly ConcurrentDictionary<string, string> UserConnections = new ConcurrentDictionary<string, string>();
         private static readonly ConcurrentDictionary<string, CancellationTokenSource> PendingDisconnections = new ConcurrentDictionary<string, CancellationTokenSource>();
 
-        public ConnectionService(IGameRepository gameRepository, ISchedulingService schedulingService, IHubContext<GameHub> hubContext, IGameService gameService, IGameStateService gameStateService)
+        public ConnectionService(IGameRepository gameRepository, ISchedulingService schedulingService, IHubContext<GameHub> hubContext, IGameStateService gameStateService)
         {
             _gameRepository = gameRepository;
             _schedulingService = schedulingService;
@@ -35,7 +35,10 @@ namespace CoupGameBackend.Services
 
         public Task RemoveUserConnection(string userId, string connectionId)
         {
-            UserConnections.TryRemove(userId, out _);
+            if (UserConnections.TryGetValue(userId, out var existingConnectionId) && existingConnectionId == connectionId)
+            {
+                UserConnections.TryRemove(userId, out _);
+            }
             return Task.CompletedTask;
         }
 
@@ -58,14 +61,17 @@ namespace CoupGameBackend.Services
             var existingPlayer = game.Players.FirstOrDefault(p => p.UserId == userId);
             if (existingPlayer != null)
             {
-                // User is already a player; handle accordingly
+                // User is already a player; ensure they are marked as connected
+                existingPlayer.IsConnected = true;
+                await _gameRepository.UpdateGameAsync(game);
                 return game;
             }
 
             if (game.Players.Count >= game.PlayerCount || game.IsStarted)
             {
                 // Game is full; add as spectator
-                game.Spectators.Add(new Spectator { UserId = userId });
+                var newSpectator = new Spectator { UserId = userId, IsConnected = true };
+                game.Spectators.Add(newSpectator);
                 await _gameRepository.UpdateGameAsync(game);
                 await _hubContext.Clients.Group(game.Id).SendAsync("SpectatorJoined", userId);
                 return game;
@@ -80,7 +86,8 @@ namespace CoupGameBackend.Services
                     Coins = 2,
                     Influences = 2,
                     IsActive = true,
-                    IsConnected = true
+                    IsConnected = true,
+                    Hand = new List<Card>()
                 };
                 game.Players.Add(newPlayer);
 
@@ -188,7 +195,7 @@ namespace CoupGameBackend.Services
                             await Task.Delay(TimeSpan.FromSeconds(45), cts.Token);
                             // After timeout, kick the player if still disconnected
                             var updatedGame = await _gameRepository.GetGameAsync(gameId);
-                            var disconnectedPlayer = updatedGame.Players.FirstOrDefault(p => p.UserId == userId);
+                            var disconnectedPlayer = updatedGame?.Players.FirstOrDefault(p => p.UserId == userId);
                             if (disconnectedPlayer != null && !disconnectedPlayer.IsConnected)
                             {
                                 // Remove player from the game
@@ -209,7 +216,6 @@ namespace CoupGameBackend.Services
                                     else
                                     {
                                         // No players left, schedule game deletion
-                                        await _gameRepository.UpdateGameAsync(updatedGame);
                                         _schedulingService.ScheduleGameDeletion(gameId);
                                         return;
                                     }
@@ -282,7 +288,8 @@ namespace CoupGameBackend.Services
                 return (false, "You are already a spectator in this game.", game.Id);
             }
 
-            game.Spectators.Add(new Spectator { UserId = userId, IsConnected = true });
+            var newSpectator = new Spectator { UserId = userId, IsConnected = true };
+            game.Spectators.Add(newSpectator);
             await _gameRepository.UpdateGameAsync(game);
             await _hubContext.Clients.Group(game.Id).SendAsync("SpectatorJoined", userId);
 
@@ -307,6 +314,7 @@ namespace CoupGameBackend.Services
 
             if (player != null)
             {
+                Console.WriteLine($"Player: {player.Username} left the game: {gameId}");
                 // Remove player from the game
                 game.Players.Remove(player);
 
@@ -321,23 +329,45 @@ namespace CoupGameBackend.Services
                         game.LeaderId = game.Players.First().UserId;
                         await _hubContext.Clients.Group(gameId).SendAsync("LeaderChanged", game.LeaderId);
                     }
+                    else if (!game.IsStarted)
+                    {
+                        // If the game isn't on progress and there isn't anyone else in the game, just delete the game
+                        await _gameRepository.DeleteGameAsync(gameId);
+                        return (true, "Game deleted because there are no players left.");
+                    }
                     else
                     {
                         // No players left, schedule game deletion
                         _schedulingService.ScheduleGameDeletion(gameId);
                     }
                 }
+
+                // Remove user connection
+                Console.WriteLine($"Removing user connection for player: {userId}");
+                if (UserConnections.TryGetValue(userId, out var connectionId))
+                {
+                    Console.WriteLine($"Removing user connection for player: {userId} 2");
+                    await RemoveUserConnection(userId, connectionId);
+                    Console.WriteLine($"Removed user connection for player: {userId} 2");
+                }
             }
             else if (spectator != null)
             {
+                Console.WriteLine($"Removing spectator from the game: {gameId}");
                 // Remove spectator from the game
                 game.Spectators.Remove(spectator);
 
-                // Mark spectator as disconnected
-                await RemoveUserConnection(userId, UserConnections.ContainsKey(userId) ? UserConnections[userId] : string.Empty);
+                // Remove spectator connection
+                if (UserConnections.TryGetValue(userId, out var connectionId))
+                {
+                    Console.WriteLine($"Removing spectator connection for user: {userId}");
+                    await RemoveUserConnection(userId, connectionId);
+                    Console.WriteLine($"Removed spectator connection for user: {userId}");
+                }
 
                 // Notify others about spectator departure
                 await _hubContext.Clients.Group(gameId).SendAsync("SpectatorLeft", userId);
+                Console.WriteLine($"Notified others about spectator departure: {userId}");
             }
 
             // Update the game state in the repository
@@ -367,7 +397,10 @@ namespace CoupGameBackend.Services
             }
 
             // Remove the spectator's connection
-            await RemoveUserConnection(userId, UserConnections.ContainsKey(userId) ? UserConnections[userId] : string.Empty);
+            if (UserConnections.TryGetValue(userId, out var connectionId))
+            {
+                await RemoveUserConnection(userId, connectionId);
+            }
 
             // Add back to active players
             var player = new Player

@@ -3,25 +3,53 @@ import { Game, CardImages, Action, backCard, cardImages, ActionResponse, Pending
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Container, Grid, Card as MuiCard, Typography, List, ListItem, Tooltip, CircularProgress, CardContent, CardHeader, Box, Badge, useMediaQuery, useTheme } from '@mui/material';
 import { FaCoins, FaUserShield, FaCrown } from 'react-icons/fa';
 import { FiWifiOff } from "react-icons/fi";
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import ActionSelectionModal from './ActionSelectionModal';
 import WaitingScreen from './WaitingScreen';
 import PendingActionModal from './PendingActionModal';
 import GameOverScreen from './GameOverScreen';
 
+// Define animation variants for player cards
+const playerCardVariants = {
+  hidden: { opacity: 0, y: 50 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.1,
+    },
+  }),
+};
+
+// Define animation variants for action logs
+const actionLogVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
+
+// Define animation variants for actions
+const actionVariants = {
+  coup: {
+    scale: [1, 1.2, 1],
+    rotate: [0, 10, -10, 0],
+    transition: { duration: 0.6 },
+  },
+  // Define more action types as needed
+};
+
 interface GameBoardProps {
   game: Game;
   currentUserId: string;
   onActionSelect: (action: Action) => void;
   onRestartGame: () => void;
+  onReturnToLobby: () => void;
   onSwitchToSpectator: () => void;
   isSpectator: boolean;
   handleRespondToPendingAction: (response: ActionResponse, blockOption?: string) => void;
   respondToReturnCard: (gameId: string, cardId: string) => void;
   respondToBlock: (gameId: string, isChallenge: boolean) => void;
   respondToExchangeSelect: (gameId: string, card1: string, card2: string) => void;
-  onReturnToLobby: () => void;
   spectators: Spectator[];
 }
 
@@ -53,6 +81,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const [showPendingActionModal, setShowPendingActionModal] = useState(true);
   const [showButton, setShowButton] = useState(false);
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
+  const [forceShowGame, setForceShowGame] = useState(false);
 
   useEffect(() => {
     if (!showPendingActionModal && !!currentPendingAction) {
@@ -171,7 +200,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const handlePendingActionClose = (deletePendingAction: boolean = false) => {
     setShowPendingActionModal(false);
     if (deletePendingAction) {
-      setCurrentPendingAction(null);
+      if (currentPendingAction?.actionType !== 'exchangeSelect') {
+        setCurrentPendingAction(null);
+      }
+      setShowPendingActionModal(true);
+      setShowButton(false);
     }
   };
 
@@ -191,8 +224,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
     return <WaitingScreen />;
   }
 
-  if (gameState === 'GAME_OVER') {
-    return <GameOverScreen winnerName={game.players.find(p => p.userId === game.winnerId)?.username || t('game:player.unknown')} onRestart={onRestartGame} onExit={onReturnToLobby} game={game} currentUserId={currentUserId} />;
+  if (gameState === 'GAME_OVER' && !forceShowGame) {
+    return <GameOverScreen winnerName={game.players.find(p => p.userId === game.winnerId)?.username || t('game:player.unknown')} onRestart={onRestartGame} onExit={onReturnToLobby} game={game} currentUserId={currentUserId} showGame={() => setForceShowGame(true)} />;
   }
 
   return (
@@ -206,8 +239,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 {game.actionsHistory.map((log, index) => (
                   <motion.div
                     key={index}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    variants={actionLogVariants} // Applying the variants here
+                    initial="hidden"
+                    animate="visible"
                     transition={{ delay: index * 0.1 }}
                   >
                     <ListItem>
@@ -226,65 +260,123 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
       {/* Players Section */}
       <Grid container spacing={3} justifyContent="center" sx={{ mb: 4 }}>
-        {game.players.map(player => {
-          const isLeader = player.userId === game.leaderId;
-          const isCurrentTurn = player.userId === game.currentTurnUserId;
-          const isCurrentUser = player.userId === currentUserId;
-
-          return (
-            <Grid item key={player.userId} xs={12} sm={6} md={3}>
-              <motion.div
-                whileHover={{ scale: isSmallScreen ? 1 : 1.02 }}
-                whileTap={{ scale: isSmallScreen ? 1 : 0.98 }}
+        {game.players.map((player, index) => (
+          <Grid item key={player.userId} xs={12} sm={6} md={3}>
+            <motion.div
+              variants={playerCardVariants}
+              initial="hidden"
+              animate="visible"
+              custom={index}
+            >
+              <MuiCard
+                sx={{
+                  textAlign: 'center',
+                  border: player.userId === game.currentTurnUserId ? '1px solid #1976d2' : '1px solid rgba(0, 0, 0, 0.12)',
+                  bgcolor: player.userId === game.currentTurnUserId ? 'grey.100' : 'background.paper',
+                  position: 'relative',
+                  boxShadow: player.userId === game.currentTurnUserId ? '0px 0px 15px 0px #1976d2' : 'none',
+                  transition: 'border 0.3s, box-shadow 0.3s',
+                }}
               >
-                <MuiCard
-                  sx={{
-                    textAlign: 'center',
-                    border: isCurrentTurn ? '1px solid #1976d2' : '1px solid rgba(0, 0, 0, 0.12)',
-                    bgcolor: isCurrentTurn ? 'grey.100' : 'background.paper',
-                    position: 'relative',
-                    boxShadow: isCurrentTurn ? '0px 0px 15px 0px #1976d2' : 'none',
-                    transition: 'border 0.3s, box-shadow 0.3s',
-                  }}
-                >
-                  {/* Disconnected Indicator */}
-                  {!player.isConnected && (
-                    <Badge
-                      overlap="circular"
-                      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                      badgeContent={<FiWifiOff color="error" />}
-                    />
-                  )}
-
-                  <CardHeader
-                    sx={{ bgcolor: isLeader ? 'goldenrod' : (isCurrentUser ? 'primary.dark' : 'primary.main'), color: 'common.white' }}
-                    title={
-                      <Box display="flex" alignItems="center" justifyContent="center" flexWrap="wrap">
-                        <Typography variant={isSmallScreen ? 'subtitle2' : 'subtitle1'} sx={{ mr: 1, fontWeight: isCurrentUser ? 'bold' : 'normal' }}>
-                          {player.username} {isCurrentUser && `(${t('common:labels.you')})`}
-                        </Typography>
-                        {isLeader && (
-                          <Tooltip title={t('game:status.leader')}>
-                            <FaCrown color="warning" size={isSmallScreen ? '0.8em' : '1em'} />
-                          </Tooltip>
-                        )}
-                        {!isCurrentUser && (
-                          <Tooltip title={isCurrentUser ? t('common:labels.you') : ''}>
-                            <span></span>
-                          </Tooltip>
-                        )}
-                      </Box>
-                    }
+                {/* Disconnected Indicator */}
+                {!player.isConnected && (
+                  <Badge
+                    overlap="circular"
+                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    badgeContent={<FiWifiOff color="error" />}
                   />
-                  <CardContent>
-                    <Typography variant={isSmallScreen ? 'body2' : 'body1'} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <FaCoins /> {player.coins} {t('game:resources.coins')}
-                    </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: isSmallScreen ? 0.5 : 1, mt: 2, flexWrap: 'wrap' }}>
-                      {player.hand.slice(0, 2).map((card, index) => {
-                        if (card.isRevealed || isSpectator) {
-                          return (
-                            <Box key={index} sx={{ width: isSmallScreen ? '60px' : '90px', height: isSmallScreen ? '90px' : '135px' }}>
+                )}
+
+                <CardHeader
+                  sx={{ bgcolor: player.userId === game.leaderId ? 'goldenrod' : (player.userId === currentUserId ? 'primary.dark' : 'primary.main'), color: 'common.white' }}
+                  title={
+                    <Box display="flex" alignItems="center" justifyContent="center" flexWrap="wrap">
+                      <Typography variant={isSmallScreen ? 'subtitle2' : 'subtitle1'} sx={{ mr: 1, fontWeight: player.userId === currentUserId ? 'bold' : 'normal' }}>
+                        {player.username} {player.userId === currentUserId && `(${t('common:labels.you')})`}
+                      </Typography>
+                      {player.userId === game.leaderId && (
+                        <Tooltip title={t('game:status.leader')}>
+                          <FaCrown color="warning" size={isSmallScreen ? '0.8em' : '1em'} />
+                        </Tooltip>
+                      )}
+                      {player.userId !== currentUserId && (
+                        <Tooltip title={player.userId === currentUserId ? t('common:labels.you') : ''}>
+                          <span></span>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  }
+                />
+                <CardContent>
+                  <Typography variant={isSmallScreen ? 'body2' : 'body1'} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <FaCoins /> {player.coins} {t('game:resources.coins')}
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: isSmallScreen ? 0.5 : 1, mt: 2, flexWrap: 'wrap' }}>
+                    {player.hand.slice(0, 2).map((card, index) => {
+                      if (card.isRevealed || isSpectator) {
+                        return (
+                          <Box key={index} sx={{ width: isSmallScreen ? '60px' : '105px', height: isSmallScreen ? '90px' : '175px' }}>
+                            <img
+                              src={cardImages[card.name.toLowerCase() as keyof CardImages]}
+                              alt={card.name}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: '8px',
+                                objectFit: 'cover',
+                                ...getCardStyle(player)
+                              }}
+                            />
+                          </Box>
+                        );
+                      } else if (player.userId === currentUserId) {
+                        return (
+                          <Box
+                            key={index}
+                            sx={{
+                              position: 'relative',
+                              width: isSmallScreen ? '60px' : '105px',
+                              height: isSmallScreen ? '90px' : '175px',
+                              perspective: '500px',
+                            }}
+                          >
+                            <motion.div
+                              className="card-face"
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                position: 'absolute',
+                                backfaceVisibility: 'hidden',
+                                transition: 'transform 0.25s ease',
+                                transformStyle: 'preserve-3d',
+                                cursor: 'pointer',
+                                ...getCardStyle(player)
+                              }}
+                              whileHover={!isSmallScreen ? { rotateY: 180 } : {}}
+                              animate={
+                                isSmallScreen
+                                  ? { rotateY: flippedCards.has(index) ? 180 : 0 }
+                                  : {}
+                              }
+                              onClick={
+                                isSmallScreen
+                                  ? () => toggleCardFlip(index)
+                                  : undefined
+                              }
+                            >
+                              <img
+                                src={backCard}
+                                alt={t('game:cards.back')}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  borderRadius: '8px',
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  backfaceVisibility: 'hidden',
+                                }}
+                              />
                               <img
                                 src={cardImages[card.name.toLowerCase() as keyof CardImages]}
                                 alt={card.name}
@@ -292,104 +384,42 @@ const GameBoard: React.FC<GameBoardProps> = ({
                                   width: '100%',
                                   height: '100%',
                                   borderRadius: '8px',
-                                  objectFit: 'cover',
-                                  ...getCardStyle(player)
-                                }}
-                              />
-                            </Box>
-                          );
-                        } else if (isCurrentUser) {
-                          return (
-                            <Box
-                              key={index}
-                              sx={{
-                                position: 'relative',
-                                width: isSmallScreen ? '60px' : '90px',
-                                height: isSmallScreen ? '90px' : '135px',
-                                perspective: '500px',
-                              }}
-                            >
-                              <motion.div
-                                className="card-face"
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
                                   position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  transform: 'rotateY(180deg)',
                                   backfaceVisibility: 'hidden',
-                                  transition: 'transform 0.25s ease',
-                                  transformStyle: 'preserve-3d',
-                                  cursor: 'pointer',
-                                  ...getCardStyle(player)
-                                }}
-                                whileHover={!isSmallScreen ? { rotateY: 180 } : {}}
-                                animate={
-                                  isSmallScreen
-                                    ? { rotateY: flippedCards.has(index) ? 180 : 0 }
-                                    : {}
-                                }
-                                onClick={
-                                  isSmallScreen
-                                    ? () => toggleCardFlip(index)
-                                    : undefined
-                                }
-                              >
-                                <img
-                                  src={backCard}
-                                  alt={t('game:cards.back')}
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    borderRadius: '8px',
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    backfaceVisibility: 'hidden',
-                                  }}
-                                />
-                                <img
-                                  src={cardImages[card.name.toLowerCase() as keyof CardImages]}
-                                  alt={card.name}
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    borderRadius: '8px',
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    transform: 'rotateY(180deg)',
-                                    backfaceVisibility: 'hidden',
-                                    objectFit: 'cover',
-                                    ...getCardStyle(player)
-                                  }}
-                                />
-                              </motion.div>
-                            </Box>
-                          );
-                        } else {
-                          return (
-                            <Box key={index} sx={{ width: isSmallScreen ? '60px' : '90px', height: isSmallScreen ? '90px' : '135px' }}>
-                              <img
-                                src={backCard}
-                                alt={card.name}
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  borderRadius: '8px',
                                   objectFit: 'cover',
                                   ...getCardStyle(player)
                                 }}
                               />
-                            </Box>
-                          );
-                        }
-                      })}
-                    </Box>
-                  </CardContent>
-                </MuiCard>
-              </motion.div>
-            </Grid>
-          );
-        })}
+                            </motion.div>
+                          </Box>
+                        );
+                      } else {
+                        return (
+                          <Box key={index} sx={{ width: isSmallScreen ? '60px' : '105px', height: isSmallScreen ? '90px' : '170px' }}>
+                            <img
+                              src={backCard}
+                              alt={card.name}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: '8px',
+                                objectFit: 'cover',
+                                ...getCardStyle(player)
+                              }}
+                            />
+                          </Box>
+                        );
+                      }
+                    })}
+                  </Box>
+                </CardContent>
+              </MuiCard>
+            </motion.div>
+          </Grid>
+        ))}
       </Grid>
 
       {/* Spectators Section */}
@@ -427,14 +457,19 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
       {!showPendingActionModal &&
         !isSpectator &&
-        ((game.currentTurnUserId === currentUserId && !game.pendingAction) ||
-          (game.currentTurnUserId !== currentUserId && game.pendingAction)) &&
+        (((game.currentTurnUserId === currentUserId && !game.pendingAction) ||
+          (game.currentTurnUserId !== currentUserId && game.pendingAction)) ||
+          forceShowGame ||
+          currentPendingAction?.actionType === 'exchangeSelect') &&
         (
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
             <Button
               variant="contained"
               color="primary"
-              onClick={() => setShowPendingActionModal(true)}
+              onClick={() => {
+                setShowPendingActionModal(true);
+                setForceShowGame(false);
+              }}
               fullWidth={isSmallScreen}
               size={isSmallScreen ? 'small' : 'medium'}
               sx={{
@@ -496,9 +531,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
           showPendingActionModal &&
           !!currentPendingAction &&
           !isSpectator &&
-          currentPendingAction.initiatorId !== currentUserId &&
           gameState !== 'ACTION_CHALLENGED' &&
           gameState !== 'GAME_OVER' &&
+          (currentPendingAction.initiatorId !== currentUserId || currentPendingAction.actionType === 'exchangeSelect') &&
           currentPendingAction.actionType !== 'ReturnCard' &&
           (currentPendingAction.actionType !== 'exchangeSelect' || currentPendingAction.initiatorId === currentUserId) &&
           !currentPendingAction.responses[currentUserId] &&
@@ -543,44 +578,69 @@ const GameBoard: React.FC<GameBoardProps> = ({
         onClose={() => setShowReturnCardModal(false)}
         fullScreen={isSmallScreen}
         aria-labelledby="return-card-dialog-title"
+        maxWidth={isSmallScreen ? 'xs' : 'sm'}
       >
         <DialogTitle id="return-card-dialog-title">{t('game:cards.selectReturn')}</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} justifyContent="center">
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: 2,
+            }}
+          >
             {cardsToReturn.map((card, index) => (
-              <Grid item key={`${card.name}-${index}`} xs={6} sm={4} md={3}>
+              <Box
+                key={`${card.name}-${index}`}
+                sx={{
+                  flexBasis: {
+                    xs: 'calc(33.333% - 16px)',
+                    sm: 'calc(33.333% - 16px)',
+                    md: 'calc(33.333% - 16px)',
+                  },
+                }}
+              >
                 <Button
                   onClick={() => handleCardReturn(card.name)}
                   disabled={card.isRevealed}
                   sx={{
-                    minWidth: '100%',
-                    height: isSmallScreen ? '100px' : '220px',
-                    padding: 0,
+                    height: 'auto',
+                    width: isSmallScreen ? '200px' : '140px',
+                    paddingTop: '150%',
+                    position: 'relative',
                     border: '1px solid rgba(0, 0, 0, 0.23)',
                     borderRadius: '8px',
                     overflow: 'hidden',
-                    backgroundImage: `url(${cardImages[card.name.toLowerCase() as keyof CardImages]})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
                     cursor: card.isRevealed ? 'default' : 'pointer',
                     filter: card.isRevealed ? 'grayscale(100%)' : 'none',
-                    width: '100%',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundImage: `url(${cardImages[card.name.toLowerCase() as keyof CardImages]})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    },
                     ...(card.isRevealed
                       ? {}
-                      : {
-                        '&:hover': {
-                          opacity: 0.8,
-                          border: '1px solid rgba(0, 0, 0, 0.54)',
-                        },
-                      }),
+                      : !isSmallScreen && {
+                          '&:hover': {
+                            opacity: 0.8,
+                            border: '1px solid rgba(0, 0, 0, 0.54)',
+                          },
+                        }),
                   }}
                 />
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowReturnCardModal(false)} color="primary" size={isSmallScreen ? 'small' : 'medium'}>
+          <Button onClick={() => setShowReturnCardModal(false)} color="primary" size={isSmallScreen ? 'medium' : 'large'}>
             {t('common:buttons.cancel')}
           </Button>
         </DialogActions>

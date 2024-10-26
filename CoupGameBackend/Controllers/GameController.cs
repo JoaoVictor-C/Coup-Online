@@ -21,6 +21,7 @@ namespace CoupGameBackend.Controllers
         private readonly IConnectionService _connectionService;
         private readonly IHubContext<GameHub> _hubContext;
         private readonly IChallengeService _challengeService;
+        private readonly IGameStateService _gameStateService;
         private readonly IActionService _actionService;
         private readonly ITurnService _turnService;
 
@@ -33,7 +34,8 @@ namespace CoupGameBackend.Controllers
             IConnectionService connectionService,
             IChallengeService challengeService,
             IActionService actionService,
-            ITurnService turnService)
+            ITurnService turnService,
+            IGameStateService gameStateService)
         {
             _gameService = gameService;
             _userService = userService;
@@ -44,19 +46,23 @@ namespace CoupGameBackend.Controllers
             _challengeService = challengeService;
             _actionService = actionService;
             _turnService = turnService;
+            _gameStateService = gameStateService;
         }
 
         [HttpPost("create")]
         public async Task<IActionResult> CreateGame([FromBody] CreateGameRequest request)
         {
+            Console.WriteLine($"CreateGame: {request.PlayerCount}");
             if (request == null || request.PlayerCount < 2 || request.PlayerCount > 6)
             {
+                Console.WriteLine($"CreateGame: Invalid game creation request.");
                 return BadRequest(new { message = "Invalid game creation request." });
             }
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
+                Console.WriteLine($"CreateGame: User ID is missing.");
                 return Unauthorized(new { message = "User ID is missing." });
             }
 
@@ -67,6 +73,7 @@ namespace CoupGameBackend.Controllers
                 var leaveResult = await _connectionService.LeaveGameAsync(existingGameId, userId);
                 if (!leaveResult.IsSuccess)
                 {
+                    Console.WriteLine($"CreateGame: Failed to leave the previous game. {leaveResult.Message}");
                     return StatusCode(500, new { message = "Failed to leave the previous game.", details = leaveResult.Message });
                 }
             }
@@ -76,6 +83,7 @@ namespace CoupGameBackend.Controllers
                 var user = await _userRepository.GetByIdAsync(userId);
                 if (user == null)
                 {
+                    Console.WriteLine($"CreateGame: User not found.");
                     return NotFound(new { message = "User not found." });
                 }
 
@@ -85,11 +93,12 @@ namespace CoupGameBackend.Controllers
             }
             catch (ArgumentException ex)
             {
+                Console.WriteLine($"CreateGame: Argument exception: {ex.Message}");
                 return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                // Log exception
+                Console.WriteLine($"CreateGame: Exception: {ex.Message}");
                 return StatusCode(500, new { message = "An error occurred while creating the game.", details = ex.Message });
             }
         }

@@ -5,7 +5,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Box,
+  Grid,
   Card,
   CardContent,
   CardMedia,
@@ -14,9 +14,10 @@ import {
   useMediaQuery,
   useTheme,
   Snackbar,
-  Alert
+  Alert,
+  Box,
 } from '@mui/material';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Game, Action, cardImages } from '@utils/types';
 import TargetSelectionModal from './TargetSelectionModal';
 import { GameContext } from '@context/GameContext';
@@ -29,6 +30,19 @@ interface ActionSelectionModalProps {
   game: Game;
   currentUserId: string;
 }
+
+// Define animation variants for the modal
+const modalVariants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } },
+  exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 } },
+};
+
+// Define animation variants for action cards
+const cardVariants = {
+  hover: { scale: 1.05, boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.2)' },
+  tap: { scale: 0.95 },
+};
 
 const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
   open,
@@ -126,6 +140,7 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
     coup: undefined,
   };
 
+  // Start of Selection
   const renderActionCard = (actionType: string) => {
     const currentPlayer = game.players.find(player => player.userId === currentUserId);
     if (!currentPlayer) return null;
@@ -135,109 +150,134 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
       (actionType === 'coup' && currentPlayer.coins < 7);
 
     return (
-      <Box
-        key={actionType}
-        sx={{
-          width: { xs: '100%', sm: '48%', md: '23%' },
-          padding: 1,
-          display: 'flex',
-          justifyContent: 'center',
-        }}
-      >
+      <Grid item xs={12} sm={6} md={3} key={actionType}>
         <Tooltip title={getActionDetails(actionType).description} arrow>
-          <Card
-            component={motion.div}
-            whileHover={{ scale: isDisabled ? 1 : 1.05 }}
-            whileTap={{ scale: isDisabled ? 1 : 0.95 }}
-            onClick={() => !isDisabled && handleActionClick({ actionType: actionType as Action['actionType'] })}
-            sx={{
-              cursor: isDisabled ? 'not-allowed' : 'pointer',
-              height: '100%',
-              width: actionsWithImages[actionType] ? { xs: '100%', sm: '120px' } : '100%',
-              backgroundColor: isDisabled ? theme.palette.action.disabledBackground : theme.palette.background.paper,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'end',
-              opacity: isDisabled ? 0.6 : 1,
-              minHeight: { xs: '120px', sm: '150px' },
-              transition: 'transform 0.2s, opacity 0.2s',
-            }}
+          <motion.div
+            variants={cardVariants}
+            whileHover="hover"
+            whileTap="tap"
           >
-            {actionsWithImages[actionType] ? (
-              <CardMedia
-                component="img"
-                sx={{
-                  width: actionsWithImages[actionType] ? { xs: '80px', sm: '120px' } : '100%',
-                  height: 'auto',
-                }}
-                image={actionsWithImages[actionType]}
-                alt={t(`game:actions.${actionType}.name`)}
-              />
-            ) : (
-              <CardContent>
-                <Typography
-                  variant="subtitle1"
-                  component="div"
+            <Card
+              component={motion.div}
+              whileHover={{ scale: isDisabled ? 1 : 1.05 }}
+              whileTap={{ scale: isDisabled ? 1 : 0.95 }}
+              onClick={() => !isDisabled && handleActionClick({ actionType: actionType as Action['actionType'] })}
+              sx={{
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                backgroundColor: isDisabled ? theme.palette.action.disabledBackground : theme.palette.background.paper,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                height: '100%',
+                opacity: isDisabled ? 0.6 : 1,
+                boxShadow: isDisabled ? 'none' : theme.shadows[3],
+                borderRadius: 2,
+                transition: 'transform 0.2s, opacity 0.2s',
+                '&:hover': {
+                  boxShadow: !isDisabled ? theme.shadows[6] : 'none',
+                },
+              }}
+            >
+              {actionsWithImages[actionType] ? (
+                <CardMedia
+                  component="img"
                   sx={{
-                    textAlign: 'center',
-                    width: '100%',
-                    fontSize: { xs: '0.9rem', sm: '1rem' },
-                    color: isDisabled ? theme.palette.text.disabled : theme.palette.text.primary,
+                    width: 'auto',
+                    height: '210px',
+                    mb: 2,
                   }}
-                >
-                  {t(`game:actions.${actionType}.name`)}
-                </Typography>
-              </CardContent>
-            )}
-          </Card>
+                  image={actionsWithImages[actionType]}
+                  alt={t(`game:actions.${actionType}.name`)}
+                />
+              ) : (
+                <CardContent sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography
+                    variant="subtitle1"
+                    align="center"
+                    sx={{
+                      fontSize: { xs: '0.9rem', sm: '1rem' },
+                      color: isDisabled ? theme.palette.text.disabled : theme.palette.text.primary,
+                    }}
+                  >
+                    {t(`game:actions.${actionType}.name`)}
+                  </Typography>
+                </CardContent>
+              )}
+            </Card>
+          </motion.div>
         </Tooltip>
-      </Box>
+      </Grid>
     );
   };
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" fullScreen={fullScreen}>
-        <DialogTitle sx={{ textAlign: 'center', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-          {t('game:actions.select')}
-        </DialogTitle>
-        <DialogContent>
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ textAlign: 'center', fontSize: { xs: '1.1rem', sm: '1.3rem' } }}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
           >
-            {t('game:actions.roleActions')}
-          </Typography>
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            flexWrap={{ xs: 'nowrap', sm: 'wrap' }}
-            sx={{
-              overflowX: { xs: 'auto', sm: 'visible' },
-              pb: { xs: 1, sm: 0 },
-            }}
-          >
-            {['steal', 'assassinate', 'tax', 'exchange'].map(renderActionCard)}
-          </Box>
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ mt: 3, textAlign: 'center', fontSize: { xs: '1.1rem', sm: '1.3rem' } }}
-          >
-            {t('game:actions.mainActions')}
-          </Typography>
-          <Box display="flex" justifyContent="center" flexWrap="wrap">
-            {['income', 'foreign_aid', 'coup'].map(renderActionCard)}
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ padding: { xs: '16px', sm: '24px' } }}>
-          <Button onClick={onClose} color="primary" disabled={showTargetModal} fullWidth={fullScreen}>
-            {t('common:buttons.cancel')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <Dialog
+              open={open}
+              onClose={onClose}
+              PaperComponent={motion.div as React.ComponentType<React.PropsWithChildren<{}>>}
+              PaperProps={{
+                variants: modalVariants,
+                fullScreen: fullScreen,
+                sx: { backgroundColor: 'white' },
+              }}
+              fullWidth
+              maxWidth="md"
+            >
+              <DialogTitle sx={{ textAlign: 'center', fontSize: { xs: '1.5rem', sm: '2rem' }, fontWeight: 'bold', color: theme.palette.primary.main }}>
+                {t('game:actions.select')}
+              </DialogTitle>
+              <DialogContent dividers>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{ textAlign: 'center', fontSize: { xs: '1.1rem', sm: '1.3rem' }, mb: 2, color: theme.palette.text.primary }}
+                >
+                  {t('game:actions.roleActions')}
+                </Typography>
+                <Grid container spacing={2} justifyContent="center">
+                  {['steal', 'assassinate', 'tax', 'exchange'].map(renderActionCard)}
+                </Grid>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{ mt: 4, textAlign: 'center', fontSize: { xs: '1.1rem', sm: '1.3rem' }, mb: 2, color: theme.palette.text.primary }}
+                >
+                  {t('game:actions.mainActions')}
+                </Typography>
+                <Grid container spacing={2} justifyContent="center">
+                  {['income', 'foreign_aid', 'coup'].map(renderActionCard)}
+                </Grid>
+              </DialogContent>
+              <DialogActions sx={{ padding: { xs: '16px', sm: '24px' }, justifyContent: 'center' }}>
+                <Button
+                  onClick={onClose}
+                  color="primary"
+                  variant="contained"
+                  disabled={showTargetModal}
+                  fullWidth={fullScreen}
+                  sx={{
+                    maxWidth: '200px',
+                    padding: { xs: '8px 16px', sm: '10px 20px' },
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                    borderRadius: 2,
+                  }}
+                >
+                  {t('common:buttons.cancel')}
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {selectedAction && (
         <TargetSelectionModal
@@ -255,7 +295,7 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%', borderRadius: 2 }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

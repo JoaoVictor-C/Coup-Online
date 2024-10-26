@@ -740,6 +740,7 @@ namespace CoupGameBackend.Services
                     cardToReveal.IsRevealed = true;
                 }
 
+
                 // Draw a card for the blocker
                 var drawnCard = game.CentralDeck.OrderBy(c => Guid.NewGuid()).FirstOrDefault();
                 if (drawnCard != null)
@@ -766,6 +767,7 @@ namespace CoupGameBackend.Services
                     });
                 }
 
+                await _gameStateService.EmitGameUpdatesToUsers(game.Id);
                 await _hubContext.Clients.Group(game.Id.ToString()).SendAsync("BlockSuccessful", blocker.Username, cardToReveal?.Name);
                 return (true, "Block successful. Challenger lost an influence. Blocker to return a card.");
             }
@@ -796,10 +798,11 @@ namespace CoupGameBackend.Services
                 if (game.PendingAction.ActionType != "exchangeSelect")
                 {
                     game.PendingAction = null;
+                    _gameStateService.UpdateTurn(game);
                 }
 
                 await _gameRepository.UpdateGameAsync(game);
-                _gameStateService.UpdateTurn(game);
+                await _gameStateService.EmitGameUpdatesToUsers(game.Id);
                 await _hubContext.Clients.Group(game.Id.ToString()).SendAsync("ChallengeSucceeded", blocker.Username, cardToReveal?.Name);
                 return (true, "Challenge succeeded. Blocker lost an influence. Original action to be executed.");
             }
