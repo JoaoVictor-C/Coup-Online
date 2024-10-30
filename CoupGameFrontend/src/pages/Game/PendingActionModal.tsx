@@ -47,7 +47,6 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
 
   // Define animation variants for buttons
   const buttonVariants = {
-    hover: { scale: 1.05 },
     tap: { scale: 0.95 },
   };
 
