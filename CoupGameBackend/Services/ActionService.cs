@@ -283,7 +283,7 @@ namespace CoupGameBackend.Services
 
             if (updateTurn)
                 _gameStateService.UpdateTurn(game);
-            
+
             await _gameRepository.UpdateGameAsync(game);
 
             await _gameStateService.UpdateGameStateAndNotifyPlayers(game, "Assassinate", initiator.UserId, target.UserId);
@@ -487,7 +487,9 @@ namespace CoupGameBackend.Services
             if (!game.PendingAction.Responses.ContainsKey(userId))
             {
                 game.PendingAction.Responses.Add(userId, "pass");
-            } else {
+            }
+            else
+            {
                 return (false, "You already passed.");
             }
             // Log the pass action
@@ -727,22 +729,26 @@ namespace CoupGameBackend.Services
                 return (false, "Invalid block parameters.");
             }
             var blockOption = blockParameters.BlockOption;
-            bool blockerHasCard = blocker.Hand.Any(c => c.Name.ToLower() == blockOption.ToLower() && !c.IsRevealed);
+            bool blockerHasCard = blocker.Hand.Any(c => c.Name.Equals(blockOption, StringComparison.OrdinalIgnoreCase) && !c.IsRevealed);
 
             if (blockerHasCard)
             {
                 // Challenger loses an influence
                 challenger.Influences--;
 
-                var cardToReveal = challenger.Hand.Where(c => !c.IsRevealed).OrderBy(c => Guid.NewGuid()).FirstOrDefault();
+                var cardToReveal = challenger.Hand
+                    .Where(c => !c.IsRevealed)
+                    .OrderBy(c => Guid.NewGuid())
+                    .FirstOrDefault();
                 if (cardToReveal != null)
                 {
                     cardToReveal.IsRevealed = true;
                 }
 
-
                 // Draw a card for the blocker
-                var drawnCard = game.CentralDeck.OrderBy(c => Guid.NewGuid()).FirstOrDefault();
+                var drawnCard = game.CentralDeck
+                    .OrderBy(c => Guid.NewGuid())
+                    .FirstOrDefault();
                 if (drawnCard != null)
                 {
                     blocker.Hand.Add(drawnCard);
@@ -776,26 +782,31 @@ namespace CoupGameBackend.Services
                 // Blocker loses an influence
                 blocker.Influences--;
 
-                // Select a random card from the blocker's hand to set isRevealed to true
-                var cardToReveal = blocker.Hand.Where(c => !c.IsRevealed).OrderBy(c => Guid.NewGuid()).FirstOrDefault();
+                // Reveal a random card from the blocker's hand
+                var cardToReveal = blocker.Hand
+                    .Where(c => !c.IsRevealed)
+                    .OrderBy(c => Guid.NewGuid())
+                    .FirstOrDefault();
                 if (cardToReveal != null)
                 {
                     cardToReveal.IsRevealed = true;
                 }
 
-                // Challenge succeeds, execute the original action
-                game.PendingAction = new PendingAction
+                // Challenge fails, execute the original action
+                var originalAction = new PendingAction
                 {
                     ActionType = game.PendingAction.OriginalActionType,
-                    InitiatorId = game.PendingAction.TargetId, // This should be the original action initiator
-                    TargetId = game.PendingAction.InitiatorId, // This should be the blocker
+                    InitiatorId = game.PendingAction.InitiatorId, // Original action initiator
+                    TargetId = game.PendingAction.TargetId,       // Original action target
+                    Parameters = game.PendingAction.Parameters,
                     IsActionResolved = false
                 };
+                game.PendingAction = originalAction;
 
-                await HandleActionAsync(game, game.PendingAction, false);
+                await HandleActionAsync(game, originalAction, false);
 
-                Console.WriteLine(game.PendingAction.ActionType);
-                if (game.PendingAction.ActionType != "exchangeSelect")
+                Console.WriteLine($"Executing original action: {originalAction.ActionType}");
+                if (originalAction.ActionType != "exchangeSelect")
                 {
                     game.PendingAction = null;
                     _gameStateService.UpdateTurn(game);
@@ -804,7 +815,7 @@ namespace CoupGameBackend.Services
                 await _gameRepository.UpdateGameAsync(game);
                 await _gameStateService.EmitGameUpdatesToUsers(game.Id);
                 await _hubContext.Clients.Group(game.Id.ToString()).SendAsync("ChallengeSucceeded", blocker.Username, cardToReveal?.Name);
-                return (true, "Challenge succeeded. Blocker lost an influence. Original action to be executed.");
+                return (true, "Challenge failed. Blocker lost an influence. Original action executed.");
             }
         }
 
@@ -815,30 +826,34 @@ namespace CoupGameBackend.Services
                 return (false, "No block action to accept.");
             }
 
-            // Block is accepted, cancel the original action, but if the action costs something (assassinate and coup), remove the coin from the player
             var action = game.PendingAction;
-            if (action.ActionType == "assassinate" || action.ActionType == "coup")
+            var initiator = game.Players.FirstOrDefault(p => p.UserId == action.InitiatorId);
+            if (initiator == null)
             {
-                var player = game.Players.FirstOrDefault(p => p.UserId == action.InitiatorId);
-                if (player != null)
-                {
-                    if (player.Coins >= (action.ActionType == "assassinate" ? 3 : 7))
-                    {
-                        player.Coins -= action.ActionType == "assassinate" ? 3 : 7;
-                    }
-                    else
-                    {
-                        return (false, "Player does not have enough coins to pay for the action.");
-                    }
-                }
+                return (false, "Initiator of the action not found.");
             }
 
+            // If the action costs something (assassinate and coup), deduct the coins
+            if (action.ActionType.Equals("assassinate", StringComparison.OrdinalIgnoreCase) && initiator.Coins >= 3)
+            {
+                initiator.Coins -= 3;
+            }
+            else if (action.ActionType.Equals("coup", StringComparison.OrdinalIgnoreCase) && initiator.Coins >= 7)
+            {
+                initiator.Coins -= 7;
+            }
+            else
+            {
+                return (false, "Player does not have enough coins to pay for the action.");
+            }
+
+            // Cancel the original action
             game.PendingAction = null;
             _gameStateService.UpdateTurn(game);
             await _gameRepository.UpdateGameAsync(game);
 
             await _hubContext.Clients.Group(game.Id.ToString()).SendAsync("BlockAccepted");
-            return (true, "Block accepted, action cancelled.");
+            return (true, "Block accepted, original action cancelled.");
         }
     }
 }
