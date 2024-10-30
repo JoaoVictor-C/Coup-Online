@@ -390,7 +390,7 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
             </DialogTitle>
             <DialogContent>
               <Typography variant="body1" gutterBottom>
-                {t('game:actions.pendingDetails', { action: t(`game:actions.${action.actionType}`) })}
+                {t('game:actions.pendingDetails', { action: t(`game:actions.${action.actionType}.name`) })}
               </Typography>
             </DialogContent>
             <DialogActions sx={{ flexDirection: 'column', gap: 2 }}>
@@ -398,14 +398,14 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
               {action.actionType !== 'income' && action.actionType !== 'coup' && (
                 <>
                   {['foreign_aid', 'steal', 'assassinate'].includes(action.actionType) && (
-                    <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+                    <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
                       <Button variant="contained" color="error" onClick={() => handleResponse('block')} fullWidth>
                         {t('game:actions.block.action')}
                       </Button>
                     </motion.div>
                   )}
                   {['steal', 'assassinate', 'exchange', 'tax'].includes(action.actionType) && (
-                    <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+                    <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
                       <Button variant="contained" color="warning" onClick={() => handleResponse('challenge')} fullWidth>
                         {t('game:actions.challenge')}
                       </Button>
@@ -413,12 +413,12 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
                   )}
                 </>
               )}
-              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
                 <Button variant="contained" color="secondary" onClick={() => handleResponse('pass')} fullWidth>
                   {t('game:actions.pass')}
                 </Button>
               </motion.div>
-              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
                 <Button
                   variant="outlined"
                   color="primary"
