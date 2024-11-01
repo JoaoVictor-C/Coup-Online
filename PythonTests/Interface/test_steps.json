@@ -1,0 +1,55 @@
+{"timestamp": "2024-11-01 15:54:54", "step": "Generated user credentials", "game_state": {"user1": {"username": "np4ldml1", "email": "s1kzmgaiy9@test.com", "password": "gMlYJ17WroNW"}, "user2": {"username": "fa2alkqj", "email": "6g3fh4fe8t@test.com", "password": "ivGCCpN9x0qN"}}}
+{"timestamp": "2024-11-01 15:54:54", "step": "Attempting login with invalid credentials", "game_state": {"username": "np4ldml1"}}
+{"timestamp": "2024-11-01 15:54:54", "step": "Invalid credentials test passed", "game_state": null}
+{"timestamp": "2024-11-01 15:54:54", "step": "Registering User 1", "game_state": {"username": "np4ldml1"}}
+{"timestamp": "2024-11-01 15:54:54", "step": "User 1 registered successfully", "game_state": null}
+{"timestamp": "2024-11-01 15:54:54", "step": "Registering User 2", "game_state": {"username": "fa2alkqj"}}
+{"timestamp": "2024-11-01 15:54:54", "step": "User 2 registered successfully", "game_state": null}
+{"timestamp": "2024-11-01 15:54:54", "step": "Logging in User 1", "game_state": {"username": "np4ldml1"}}
+{"timestamp": "2024-11-01 15:54:54", "step": "User 1 logged in successfully", "game_state": {"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NzI1MjNmZTY2MTJjYmY3ZWQyZGI5MDgiLCJ1bmlxdWVfbmFtZSI6Im5wNGxkbWwxIiwiZW1haWwiOiJzMWt6bWdhaXk5QHRlc3QuY29tIiwianRpIjoiYThiYTFhZDUtOWU4Zi00ZTMzLTgxMDAtYzQ2ZGFmOGE1MDUyIiwiZXhwIjoxNzMwNTczNjk0LCJpc3MiOiJDb3VwT25saW5lIiwiYXVkIjoiQ291cE9ubGluZSJ9.QRvqvRif8_o-aEFa-yWjj2jQPYcGIJ8zrOv6TYAQScs"}}
+{"timestamp": "2024-11-01 15:54:54", "step": "Logging in User 2", "game_state": {"username": "fa2alkqj"}}
+{"timestamp": "2024-11-01 15:54:54", "step": "User 2 logged in successfully", "game_state": {"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NzI1MjNmZTY2MTJjYmY3ZWQyZGI5MDkiLCJ1bmlxdWVfbmFtZSI6ImZhMmFsa3FqIiwiZW1haWwiOiI2ZzNmaDRmZTh0QHRlc3QuY29tIiwianRpIjoiNDI2YjVhZjQtNTI1Yy00MTRjLThhMjMtN2IwODJjN2IwODZiIiwiZXhwIjoxNzMwNTczNjk0LCJpc3MiOiJDb3VwT25saW5lIiwiYXVkIjoiQ291cE9ubGluZSJ9.ta6Yn58EcnERj9RwSldXi7m3AXKUDdXjONDKJgOUJ2k"}}
+{"timestamp": "2024-11-01 15:54:54", "step": "Creating game room", "game_state": {"creator": "np4ldml1"}}
+{"timestamp": "2024-11-01 15:54:54", "step": "Room created successfully", "game_state": {"room_id": "672523fe6612cbf7ed2db90a"}}
+{"timestamp": "2024-11-01 15:54:54", "step": "User 2 joining room", "game_state": {"room_id": "672523fe6612cbf7ed2db90a"}}
+{"timestamp": "2024-11-01 15:54:54", "step": "User 2 joined room successfully", "game_state": null}
+{"timestamp": "2024-11-01 15:54:54", "step": "Starting game", "game_state": {"room_id": "672523fe6612cbf7ed2db90a"}}
+{"timestamp": "2024-11-01 15:54:55", "step": "Game started successfully", "game_state": {"game_id": "672523fe6612cbf7ed2db90a"}}
+{"timestamp": "2024-11-01 15:54:55", "step": "SignalR connection started", "game_state": {"connection": "User1"}}
+{"timestamp": "2024-11-01 15:54:55", "step": "SignalR connection started", "game_state": {"connection": "User2"}}
+{"timestamp": "2024-11-01 15:54:55", "step": "Waiting for SignalR connections to establish", "game_state": null}
+{"timestamp": "2024-11-01 15:54:57", "step": "Testing steal action", "game_state": {"attacker": "User1", "target": "fa2alkqj"}}
+{"timestamp": "2024-11-01 15:54:57", "step": "Attempting action: steal", "game_state": {"game_id": "672523fe6612cbf7ed2db90a", "action": "steal", "target_id": "fa2alkqj"}}
+{"timestamp": "2024-11-01 15:54:57", "step": "Steal action succeeded", "game_state": null}
+{"timestamp": "2024-11-01 15:54:57", "step": "Testing tax action", "game_state": {"player": "User1"}}
+{"timestamp": "2024-11-01 15:54:57", "step": "Attempting action: tax", "game_state": {"game_id": "672523fe6612cbf7ed2db90a", "action": "tax", "target_id": null}}
+{"timestamp": "2024-11-01 15:54:57", "step": "Action performed event received", "game_state": {"connection": "User1", "data": [{"userId": "672523fe6612cbf7ed2db908", "action": "Tax", "targetId": null}]}}
+{"timestamp": "2024-11-01 15:54:57", "step": "Action performed event received", "game_state": {"connection": "User2", "data": [{"userId": "672523fe6612cbf7ed2db908", "action": "Tax", "targetId": null}]}}
+{"timestamp": "2024-11-01 15:54:57", "step": "Action performed event received", "game_state": {"connection": "User2", "data": [{"timestamp": "2024-11-01T18:54:57.730905Z", "playerId": "672523fe6612cbf7ed2db908", "action": "tax", "targetId": null}]}}
+{"timestamp": "2024-11-01 15:54:57", "step": "Action performed event received", "game_state": {"connection": "User1", "data": [{"timestamp": "2024-11-01T18:54:57.730905Z", "playerId": "672523fe6612cbf7ed2db908", "action": "tax", "targetId": null}]}}
+{"timestamp": "2024-11-01 15:54:57", "step": "Tax action succeeded", "game_state": null}
+{"timestamp": "2024-11-01 15:54:57", "step": "Testing ambassador action", "game_state": {"player": "User1"}}
+{"timestamp": "2024-11-01 15:54:57", "step": "Attempting action: ambassador", "game_state": {"game_id": "672523fe6612cbf7ed2db90a", "action": "ambassador", "target_id": null}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Ambassador action succeeded", "game_state": null}
+{"timestamp": "2024-11-01 15:54:58", "step": "Testing assassinate action", "game_state": {"attacker": "User1", "target": "fa2alkqj"}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Attempting action: assassinate", "game_state": {"game_id": "672523fe6612cbf7ed2db90a", "action": "assassinate", "target_id": "fa2alkqj"}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Assassinate action succeeded", "game_state": null}
+{"timestamp": "2024-11-01 15:54:58", "step": "Testing income action", "game_state": {"player": "User2"}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Attempting action: income", "game_state": {"game_id": "672523fe6612cbf7ed2db90a", "action": "income", "target_id": null}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Action performed event received", "game_state": {"connection": "User1", "data": [{"userId": "672523fe6612cbf7ed2db909", "action": "Income", "targetId": null}]}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Action performed event received", "game_state": {"connection": "User2", "data": [{"userId": "672523fe6612cbf7ed2db909", "action": "Income", "targetId": null}]}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Action performed event received", "game_state": {"connection": "User1", "data": [{"timestamp": "2024-11-01T18:54:58.6668526Z", "playerId": "672523fe6612cbf7ed2db909", "action": "income", "targetId": null}]}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Action performed event received", "game_state": {"connection": "User2", "data": [{"timestamp": "2024-11-01T18:54:58.6668526Z", "playerId": "672523fe6612cbf7ed2db909", "action": "income", "targetId": null}]}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Income action succeeded", "game_state": null}
+{"timestamp": "2024-11-01 15:54:58", "step": "Testing coup action", "game_state": {"attacker": "User2", "target": "np4ldml1"}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Attempting action: coup", "game_state": {"game_id": "672523fe6612cbf7ed2db90a", "action": "coup", "target_id": "np4ldml1"}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Coup action succeeded", "game_state": null}
+{"timestamp": "2024-11-01 15:54:58", "step": "Testing block action", "game_state": {"action": "steal", "blocker": "fa2alkqj", "target": "np4ldml1"}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Attempting response action: Block to steal", "game_state": {"game_id": "672523fe6612cbf7ed2db90a", "action_type": "steal", "initiator_id": "np4ldml1", "response_type": "Block"}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Block steal action succeeded", "game_state": null}
+{"timestamp": "2024-11-01 15:54:58", "step": "Testing challenge action", "game_state": {"action": "tax", "challenger": "fa2alkqj", "target": "np4ldml1"}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Attempting response action: Challenge to tax", "game_state": {"game_id": "672523fe6612cbf7ed2db90a", "action_type": "tax", "initiator_id": "np4ldml1", "response_type": "Challenge"}}
+{"timestamp": "2024-11-01 15:54:58", "step": "Challenge tax action succeeded", "game_state": null}
+{"timestamp": "2024-11-01 15:54:58", "step": "SignalR connection stopped", "game_state": {"connection": "User1"}}
+{"timestamp": "2024-11-01 15:54:59", "step": "SignalR connection stopped", "game_state": {"connection": "User2"}}
+{"timestamp": "2024-11-01 15:54:59", "step": "Test suite completed successfully", "game_state": null}

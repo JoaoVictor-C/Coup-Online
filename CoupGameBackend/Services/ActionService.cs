@@ -834,11 +834,11 @@ namespace CoupGameBackend.Services
             }
 
             // If the action costs something (assassinate and coup), deduct the coins
-            if (action.ActionType.Equals("assassinate", StringComparison.OrdinalIgnoreCase) && initiator.Coins >= 3)
+            if (action.OriginalActionType.Equals("assassinate", StringComparison.OrdinalIgnoreCase) && initiator.Coins >= 3)
             {
                 initiator.Coins -= 3;
             }
-            else if (action.ActionType.Equals("coup", StringComparison.OrdinalIgnoreCase) && initiator.Coins >= 7)
+            else if (action.OriginalActionType.Equals("coup", StringComparison.OrdinalIgnoreCase) && initiator.Coins >= 7)
             {
                 initiator.Coins -= 7;
             }

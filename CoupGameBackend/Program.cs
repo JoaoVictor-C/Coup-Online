@@ -154,7 +154,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",
         corsPolicyBuilder => corsPolicyBuilder
-            .WithOrigins("https://coup-online-nu.vercel.app", "http://localhost:3000")
+            .WithOrigins("https://coup-online-nu.vercel.app", "http://localhost", "http://localhost:3000")
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials());
