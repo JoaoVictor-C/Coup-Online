@@ -107,6 +107,7 @@
                     ActionType = "blockAttempt",
                     InitiatorId = blockerId, // This is the player who is blocking
                     TargetId = game.PendingAction.InitiatorId, // This is the player who is being blocked, or the player who did the action
+                    OriginalActionType = game.PendingAction.OriginalActionType,
                     Parameters = new BlockActionParameters
                     {
                         BlockOption = blockOption

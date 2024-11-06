@@ -220,16 +220,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
     });
   };
 
-  useEffect(() => {
-    console.log('showPendingActionModal:', showPendingActionModal);
-    console.log('game.currentTurnUserId === currentUserId:', game.currentTurnUserId === currentUserId);
-    console.log('!game.pendingAction:', !game.pendingAction);
-    console.log('game.currentTurnUserId !== currentUserId:', game.currentTurnUserId !== currentUserId);
-    console.log('game.pendingAction:', game.pendingAction);
-    console.log('forceShowGame:', forceShowGame);
-    console.log('currentPendingAction?.actionType:', currentPendingAction?.actionType);
-  }, [showPendingActionModal, game.currentTurnUserId, currentUserId, game.pendingAction, forceShowGame, currentPendingAction]);
-
   if (gameState === 'WAITING_FOR_PLAYERS') {
     return <WaitingScreen />;
   }
@@ -465,12 +455,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
         </Box>
       )}
 
-      {!showPendingActionModal &&
+      {(!showPendingActionModal &&
         !isSpectator &&
         ((game.currentTurnUserId === currentUserId && game.pendingAction) ||
          (game.currentTurnUserId !== currentUserId) ||
-         forceShowGame ||
-         currentPendingAction?.actionType === 'exchangeSelect') && (
+         currentPendingAction?.actionType === 'exchangeSelect')) ||
+         forceShowGame ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
             <Button
               variant="contained"
@@ -496,7 +486,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
               {t('common:buttons.continue')}
             </Button>
           </Box>
-        )}
+        ) : null}
       {/* Waiting for turn */}
       {gameState === 'WAITING_FOR_TURN' && (
         <Container sx={{ textAlign: 'center', my: 5 }}>
@@ -544,9 +534,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
           gameState !== 'GAME_OVER' &&
           (currentPendingAction.initiatorId !== currentUserId || currentPendingAction.actionType === 'exchangeSelect') &&
           currentPendingAction.actionType !== 'ReturnCard' &&
-          (currentPendingAction.actionType !== 'exchangeSelect' || currentPendingAction.initiatorId === currentUserId) &&
-          !currentPendingAction.responses[currentUserId] &&
-          !!game.players.find(p => p.userId === currentUserId)?.isActive
+          (currentPendingAction?.actionType !== 'exchangeSelect' || currentPendingAction?.initiatorId === currentUserId) &&
+          (currentPendingAction?.actionType !== 'blockAttempt' || currentPendingAction?.targetId === currentUserId) &&
+          !currentPendingAction?.responses[currentUserId] &&
+          !!game.players.find(p => p.userId === currentUserId)?.isActive 
         }
         action={currentPendingAction as Action | undefined}
         onRespond={handleRespond}

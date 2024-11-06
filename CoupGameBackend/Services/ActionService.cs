@@ -616,7 +616,7 @@ namespace CoupGameBackend.Services
             var returnCardAction = new PendingAction
             {
                 ActionType = "ReturnCard",
-                OriginalActionType = pendingAction.ActionType,
+                OriginalActionType = pendingAction.OriginalActionType,
                 TargetId = pendingAction.TargetId,
                 Parameters = pendingAction.Parameters,
                 InitiatorId = player.UserId,
@@ -801,6 +801,7 @@ namespace CoupGameBackend.Services
                 {
                     ActionType = game.PendingAction.OriginalActionType,
                     InitiatorId = game.PendingAction.InitiatorId, // Original action initiator
+                    OriginalActionType = game.PendingAction.OriginalActionType,
                     TargetId = game.PendingAction.TargetId,       // Original action target
                     Parameters = game.PendingAction.Parameters,
                     IsActionResolved = false
@@ -831,7 +832,9 @@ namespace CoupGameBackend.Services
             }
 
             var action = game.PendingAction;
-            var initiator = game.Players.FirstOrDefault(p => p.UserId == action.InitiatorId);
+            // The Initiator and Target are switched because the blocker is the one who is accepting the block
+            var initiator = game.Players.FirstOrDefault(p => p.UserId == action.TargetId);
+            var target = game.Players.FirstOrDefault(p => p.UserId == action.InitiatorId);
             if (initiator == null)
             {
                 return (false, "Initiator of the action not found.");
@@ -846,7 +849,7 @@ namespace CoupGameBackend.Services
             {
                 initiator.Coins -= 7;
             }
-            else
+            else if (!action.OriginalActionType.Equals("steal", StringComparison.OrdinalIgnoreCase))
             {
                 return (false, "Player does not have enough coins to pay for the action.");
             }
@@ -856,7 +859,7 @@ namespace CoupGameBackend.Services
             _gameStateService.UpdateTurn(game);
             await _gameRepository.UpdateGameAsync(game);
 
-            await _hubContext.Clients.Group(game.Id.ToString()).SendAsync("BlockAccepted");
+            await _gameStateService.EmitGameUpdatesToUsers(game.Id);
             return (true, "Block accepted, original action cancelled.");
         }
     }

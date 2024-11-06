@@ -1,8 +1,7 @@
 import { Game } from '@utils/types';
 import { useTranslation } from 'react-i18next';
-import { Button, Container, Typography, Stack, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Button, Container, Typography, Stack } from '@mui/material';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
 
 interface GameOverScreenProps {
     winnerName: string | null;
@@ -16,10 +15,6 @@ interface GameOverScreenProps {
 const GameOverScreen: React.FC<GameOverScreenProps> = ({ winnerName, onRestart, onExit, game, currentUserId, showGame }) => {
     const { t } = useTranslation(['game', 'common']);
     const isLeader = game.players.find(player => player.userId === currentUserId)?.userId === game.leaderId;
-
-    const handleReturnToGame = () => {
-        showGame();
-    };
 
     return (
         <Container sx={{ textAlign: 'center', py: 5 }}>
@@ -55,7 +50,7 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ winnerName, onRestart, 
                             {t('common:buttons.exit')}
                         </Button>
                         {/* Return to Game Button */}
-                        <Button variant="outlined" color="secondary" onClick={handleReturnToGame}>
+                        <Button variant="outlined" color="secondary" onClick={showGame}>
                             {t('common:buttons.returnToGame')}
                         </Button>
                     </Stack>
@@ -71,7 +66,7 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ winnerName, onRestart, 
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.5, duration: 0.5 }}
                     >
-                        <Button variant="outlined" color="secondary" onClick={handleReturnToGame} sx={{ mt: 3 }}>
+                        <Button variant="outlined" color="secondary" onClick={showGame} sx={{ mt: 3 }}>
                             {t('common:buttons.returnToGame')}
                         </Button>
                     </motion.div>

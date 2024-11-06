@@ -62,7 +62,7 @@ const GameRoom: React.FC = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (gameHub && currentUserId && game?.players.find(p => p.userId === currentUserId)?.isConnected === false) {
+      if (gameHub && currentUserId && game?.players.find(p => p.userId === currentUserId)?.isConnected === false && !isSpectator) {
         gameHub.reconnect(id || '');
       }
     }, 5000);
@@ -109,7 +109,25 @@ const GameRoom: React.FC = () => {
     });
 
     gameHub.on('ActionPerformed', (actionLog: ActionLog) => {
-      console.log('Action performed:', actionLog);
+      setGame(prevGame => {
+        if (prevGame) {
+          // Check if action log already exists
+          const exists = prevGame.actionsHistory.some(log => 
+            log.timestamp === actionLog.timestamp &&
+            log.playerId === actionLog.playerId &&
+            log.action === actionLog.action &&
+            log.targetId === actionLog.targetId
+          );
+
+          if (!exists) {
+            return {
+              ...prevGame,
+              actionsHistory: [...prevGame.actionsHistory, actionLog],
+            };
+          }
+        }
+        return prevGame;
+      });
     });
 
     gameHub.on('ActionSucceeded', (playerId: string, action: string, targetId?: string) => {
@@ -121,10 +139,19 @@ const GameRoom: React.FC = () => {
       };
       setGame(prevGame => {
         if (prevGame) {
-          return {
-            ...prevGame,
-            actionsHistory: [...prevGame.actionsHistory, newLog],
-          };
+          // Check if action log already exists
+          const exists = prevGame.actionsHistory.some(log => 
+            log.playerId === playerId &&
+            log.action === action &&
+            log.targetId === targetId
+          );
+
+          if (!exists) {
+            return {
+              ...prevGame,
+              actionsHistory: [...prevGame.actionsHistory, newLog],
+            };
+          }
         }
         return prevGame;
       });
@@ -140,10 +167,19 @@ const GameRoom: React.FC = () => {
       };
       setGame(prevGame => {
         if (prevGame) {
-          return {
-            ...prevGame,
-            actionsHistory: [...prevGame.actionsHistory, challengeLog],
-          };
+          // Check if challenge log already exists
+          const exists = prevGame.actionsHistory.some(log => 
+            log.playerId === challengerId &&
+            log.action === 'Challenged' &&
+            log.targetId === challengedUserId
+          );
+
+          if (!exists) {
+            return {
+              ...prevGame,
+              actionsHistory: [...prevGame.actionsHistory, challengeLog],
+            };
+          }
         }
         return prevGame;
       });
@@ -159,10 +195,19 @@ const GameRoom: React.FC = () => {
       };
       setGame(prevGame => {
         if (prevGame) {
-          return {
-            ...prevGame,
-            actionsHistory: [...prevGame.actionsHistory, blockLog],
-          };
+          // Check if block log already exists
+          const exists = prevGame.actionsHistory.some(log => 
+            log.playerId === blockerId &&
+            log.action === `Blocked ${action}` &&
+            log.targetId === blockedUserId
+          );
+
+          if (!exists) {
+            return {
+              ...prevGame,
+              actionsHistory: [...prevGame.actionsHistory, blockLog],
+            };
+          }
         }
         return prevGame;
       });
@@ -373,15 +418,7 @@ const GameRoom: React.FC = () => {
   }
 
   if (loading || !game) {
-    console.log(loading, game);
-    if (!game) {
-      if (gameHub) {
-        gameHub.getGameState(id || '').then(game => {
-          setGame(game);
-          setLoading(false);
-        });
-      }
-    }
+
     return (
       <Container
         sx={{

@@ -412,7 +412,7 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
                 {/* Action Buttons */}
                 {action.actionType !== 'income' && action.actionType !== 'coup' && (
                   <>
-                    {['foreign_aid', 'steal', 'assassinate'].includes(action.actionType) && (
+                    {['foreign_aid', 'steal', 'assassinate'].includes(action.actionType) && isTarget && (
                       <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
                         <Button variant="contained" color="error" onClick={() => handleResponse('block')} fullWidth>
                           {t('game:actions.block.action')}
