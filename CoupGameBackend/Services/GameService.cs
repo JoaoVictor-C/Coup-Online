@@ -255,6 +255,16 @@ namespace CoupGameBackend.Services
             if (player == null)
                 return (false, "Player not found in the game.");
 
+            // If player is leader, assign new leader before removing
+            if (game.LeaderId == userId)
+            {
+                var remainingPlayers = game.Players.Where(p => p.UserId != userId).ToList();
+                if (remainingPlayers.Any())
+                {
+                    game.LeaderId = remainingPlayers.First().UserId;
+                }
+            }
+
             // Remove from players list
             game.Players.Remove(player);
 
@@ -264,8 +274,7 @@ namespace CoupGameBackend.Services
                 UserId = userId,
                 Username = await _gameRepository.GetUsernameAsync(userId)
             };
-            game.Spectators.Add(spectator); 
-
+            game.Spectators.Add(spectator);
 
             // Log the action
             game.ActionsHistory.Add(new ActionLog

@@ -166,11 +166,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
   }, [game, setGameState, currentUserId, t]);
 
   useEffect(() => {
+    console.log(game.pendingAction);
     if (game.pendingAction && game.pendingAction.actionType === "ReturnCard" && game.pendingAction.initiatorId === currentUserId) {
       const player = game.players.find(p => p.userId === currentUserId);
       if (player) {
         setCardsToReturn(player.hand);
         setShowReturnCardModal(true);
+      } else {
+        setShowReturnCardModal(false);
       }
     }
   }, [game, currentUserId]);
@@ -185,7 +188,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
   const handleCardReturn = (cardId: string) => {
     respondToReturnCard(game.roomCode, cardId);
-    setShowReturnCardModal(false);
   };
 
   // Updated function to determine card styles based on user status
@@ -219,6 +221,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
       return newSet;
     });
   };
+
+  useEffect(() => {
+    console.log('Show return card modal', showReturnCardModal);
+  }, [showReturnCardModal]);
 
   if (gameState === 'WAITING_FOR_PLAYERS') {
     return <WaitingScreen />;
@@ -458,35 +464,35 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {(!showPendingActionModal &&
         !isSpectator &&
         ((game.currentTurnUserId === currentUserId && game.pendingAction) ||
-         (game.currentTurnUserId !== currentUserId) ||
-         currentPendingAction?.actionType === 'exchangeSelect')) ||
-         forceShowGame ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => {
-                setShowPendingActionModal(true);
-                setForceShowGame(false);
-              }}
-              fullWidth={isSmallScreen}
-              size={isSmallScreen ? 'small' : 'medium'}
-              sx={{
-                transition: 'all 0.3s ease-in-out',
-                '&:hover': {
-                  transform: 'scale(1.05)',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
-                  backgroundColor: 'primary.dark',
-                },
-                fontWeight: 'bold',
-                padding: isSmallScreen ? '8px 16px' : '10px 20px',  
-                borderRadius: '8px',
-              }}
-            >
-              {t('common:buttons.continue')}
-            </Button>
-          </Box>
-        ) : null}
+          (game.currentTurnUserId !== currentUserId) ||
+          currentPendingAction?.actionType === 'exchangeSelect')) ||
+        forceShowGame ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              setShowPendingActionModal(true);
+              setForceShowGame(false);
+            }}
+            fullWidth={isSmallScreen}
+            size={isSmallScreen ? 'small' : 'medium'}
+            sx={{
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': {
+                transform: 'scale(1.05)',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
+                backgroundColor: 'primary.dark',
+              },
+              fontWeight: 'bold',
+              padding: isSmallScreen ? '8px 16px' : '10px 20px',
+              borderRadius: '8px',
+            }}
+          >
+            {t('common:buttons.continue')}
+          </Button>
+        </Box>
+      ) : null}
       {/* Waiting for turn */}
       {gameState === 'WAITING_FOR_TURN' && (
         <Container sx={{ textAlign: 'center', my: 5 }}>
@@ -537,7 +543,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
           (currentPendingAction?.actionType !== 'exchangeSelect' || currentPendingAction?.initiatorId === currentUserId) &&
           (currentPendingAction?.actionType !== 'blockAttempt' || currentPendingAction?.targetId === currentUserId) &&
           !currentPendingAction?.responses[currentUserId] &&
-          !!game.players.find(p => p.userId === currentUserId)?.isActive 
+          !!game.players.find(p => p.userId === currentUserId)?.isActive
         }
         action={currentPendingAction as Action | undefined}
         onRespond={handleRespond}
@@ -572,7 +578,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={showReturnCardModal}
         onClose={() => setShowReturnCardModal(false)}
@@ -602,7 +607,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 }}
               >
                 <Button
-                  onClick={() => handleCardReturn(card.name)}
+                  onClick={() => {
+                    handleCardReturn(card.name);
+                    setShowReturnCardModal(false);
+                  }}
                   disabled={card.isRevealed}
                   sx={{
                     height: 'auto',
@@ -628,11 +636,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     ...(card.isRevealed
                       ? {}
                       : !isSmallScreen && {
-                          '&:hover': {
-                            opacity: 0.8,
-                            border: '1px solid rgba(0, 0, 0, 0.54)',
-                          },
-                        }),
+                        '&:hover': {
+                          opacity: 0.8,
+                          border: '1px solid rgba(0, 0, 0, 0.54)',
+                        },
+                      }),
                   }}
                 />
               </Box>

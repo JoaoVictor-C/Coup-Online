@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CoupGameBackend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fe4d0c446e7971db0607685c3d4a83d9dc4523ef")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3ea9d748c1926129244be6931b7211d618274926")]
 [assembly: System.Reflection.AssemblyProductAttribute("CoupGameBackend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CoupGameBackend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
