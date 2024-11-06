@@ -286,6 +286,7 @@ const ActionSelectionModal: React.FC<ActionSelectionModalProps> = ({
           onSelectTarget={handleTargetSelect}
           game={game}
           currentUserId={currentUserId}
+          showDisabledPlayers={selectedAction.actionType !== 'steal'}
         />
       )}
 

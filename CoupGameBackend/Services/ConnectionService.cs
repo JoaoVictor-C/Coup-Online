@@ -97,6 +97,7 @@ namespace CoupGameBackend.Services
             }
         }
 
+        // Start of Selection
         public async Task<(bool IsSuccess, string Message)> ReconnectToGame(string gameId, string userId, string? newConnectionId)
         {
             var game = await _gameRepository.GetGameAsync(gameId);
@@ -107,6 +108,9 @@ namespace CoupGameBackend.Services
             var player = game.Players.FirstOrDefault(p => p.UserId == userId);
             if (player != null)
             {
+                if (player.IsConnected)
+                    return (true, "Player already connected.");
+
                 Console.WriteLine($"Player {player.Username} reconnected.");
                 var timeoutKey = $"{game.Id}_{userId}";
                 if (PendingDisconnections.TryRemove(timeoutKey, out var cts))
@@ -114,43 +118,44 @@ namespace CoupGameBackend.Services
                     // Cancel the pending disconnection timeout
                     cts.Cancel();
                     cts.Dispose();
-
-                    // Restore player connection status
-                    player.IsConnected = true;
-
-                    // Update the connection ID if provided
-                    if (!string.IsNullOrEmpty(newConnectionId))
-                    {
-                        await AddUserConnection(userId, newConnectionId);
-                    }
-
-                    // Notify others about the reconnection
-                    await _hubContext.Clients.Group(gameId).SendAsync("PlayerReconnected", userId);
-
-                    // Update the game state in the repository
-                    await _gameRepository.UpdateGameAsync(game);
-
-                    return (true, "Reconnected successfully as player.");
                 }
 
-                return (false, "No pending player reconnection found or reconnection window has expired.");
-            }
+                // Restore player connection status
+                player.IsConnected = true;
 
-            // Check if user is a spectator
-            var spectator = game.Spectators.FirstOrDefault(s => s.UserId == userId);
-            if (spectator != null)
-            {
                 // Update the connection ID if provided
                 if (!string.IsNullOrEmpty(newConnectionId))
                 {
                     await AddUserConnection(userId, newConnectionId);
                 }
 
+                // Notify others about the reconnection
+                await _hubContext.Clients.Group(gameId).SendAsync("PlayerReconnected", userId);
+
+                // Update the game state in the repository
+                await _gameRepository.UpdateGameAsync(game);
+
+                return (true, "Reconnected successfully as player.");
+            }
+
+            // Check if user is a spectator
+            var spectator = game.Spectators.FirstOrDefault(s => s.UserId == userId);
+            if (spectator != null)
+            {
                 // Restore spectator connection status
                 spectator.IsConnected = true;
 
+                // Update the connection ID if provided
+                if (!string.IsNullOrEmpty(newConnectionId))
+                {
+                    await AddUserConnection(userId, newConnectionId);
+                }
+
                 // Notify others about spectator reconnection
                 await _hubContext.Clients.Group(gameId).SendAsync("SpectatorReconnected", userId);
+
+                // Update the game state in the repository
+                await _gameRepository.UpdateGameAsync(game);
 
                 return (true, "Reconnected successfully as spectator.");
             }
@@ -169,6 +174,9 @@ namespace CoupGameBackend.Services
             var player = game.Players.FirstOrDefault(p => p.UserId == userId);
             if (player != null)
             {
+                if (!player.IsConnected)
+                    return (true, "Player already disconnected.");
+
                 Console.WriteLine($"Player {player.Username} disconnected.");
                 // Mark player as disconnected
                 player.IsConnected = false;
@@ -192,7 +200,7 @@ namespace CoupGameBackend.Services
                     {
                         try
                         {
-                            await Task.Delay(TimeSpan.FromSeconds(45), cts.Token);
+                            await Task.Delay(TimeSpan.FromMinutes(1), cts.Token);
                             // After timeout, kick the player if still disconnected
                             var updatedGame = await _gameRepository.GetGameAsync(gameId);
                             var disconnectedPlayer = updatedGame?.Players.FirstOrDefault(p => p.UserId == userId);

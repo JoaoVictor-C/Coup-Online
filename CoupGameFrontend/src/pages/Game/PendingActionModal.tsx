@@ -44,6 +44,7 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
   const [maxSelections, setMaxSelections] = useState(2);
   const theme = useTheme();
   const isFullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTarget = pendingAction?.targetId === currentUserId;
 
   // Define animation variants for buttons
   const buttonVariants = {
@@ -97,9 +98,15 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
     }
   }, [pendingAction, currentUserId]);
 
+  useEffect(() => {
+    if (!showRespondToExchangeSelect && open && pendingAction?.actionType === 'exchangeSelect' && pendingAction.initiatorId === currentUserId) {
+      setShowRespondToExchangeSelect(true);
+    }
+  }, [open, showRespondToExchangeSelect]);
+
   if (!action) return null;
 
-  if (showRespondToExchangeSelect) {
+  if (showRespondToExchangeSelect && open) {
     const initiator = players.find((player) => player.userId === pendingAction?.initiatorId);
     const playerHand = initiator?.hand || [];
     const unrevealedCards = playerHand.filter(card => !card.isRevealed);
@@ -124,7 +131,11 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
     return (
       <Dialog
         open={showRespondToExchangeSelect && open}
-        onClose={() => setShowRespondToExchangeSelect(false)}
+        onClose={() => {
+          setShowRespondToExchangeSelect(false);
+          setSelectedCards([]);
+          onClose(false);
+        }}
         maxWidth="md"
         fullWidth
       >
@@ -202,7 +213,11 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
           )}
         </DialogContent>
         <DialogActions sx={{ flexDirection: isFullScreen ? 'column' : 'row', gap: 1 }}>
-          <Button onClick={() => onClose(false)} color="secondary" fullWidth={isFullScreen}>
+          <Button onClick={() => {
+            setShowRespondToExchangeSelect(false);
+            setSelectedCards([]);
+            onClose(false);
+          }} color="secondary" fullWidth={isFullScreen}>
             {t('common:buttons.returnToGame')}
           </Button>
         </DialogActions>
@@ -282,12 +297,12 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
     );
   }
 
-  if (showRespondToBlock) {
+  if (showRespondToBlock && isTarget) {
     return (
       <Dialog
         open={showRespondToBlock && open}
         onClose={() => onClose(false)}
-        maxWidth={isFullScreen ? 'xs' : 'sm'} 
+        maxWidth={isFullScreen ? 'xs' : 'sm'}
         fullWidth
         fullScreen={isFullScreen}
       >
@@ -366,75 +381,77 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
   }
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          variants={modalVariants}
-          animate="visible"
-          exit="exit"
-        >
-          <Dialog
-            open={open}
-            onClose={() => onClose(false)}
-            PaperComponent={motion.div as React.ComponentType<React.PropsWithChildren<{}>>}
-            PaperProps={{
-              variants: modalVariants,
-              sx: { backgroundColor: 'white' },
-            }}
-            fullWidth
-            maxWidth="sm"
+   !showRespondToExchangeSelect && (
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            variants={modalVariants}
+            animate="visible"
+            exit="exit"
           >
-            <DialogTitle>
-              {t('game:actions.pending')}
-            </DialogTitle>
-            <DialogContent>
-              <Typography variant="body1" gutterBottom>
-                {t('game:actions.pendingDetails', { action: t(`game:actions.${action.actionType}.name`) })}
-              </Typography>
-            </DialogContent>
-            <DialogActions sx={{ flexDirection: 'column', gap: 2 }}>
-              {/* Action Buttons */}
-              {action.actionType !== 'income' && action.actionType !== 'coup' && (
-                <>
-                  {['foreign_aid', 'steal', 'assassinate'].includes(action.actionType) && (
-                    <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
-                      <Button variant="contained" color="error" onClick={() => handleResponse('block')} fullWidth>
-                        {t('game:actions.block.action')}
-                      </Button>
-                    </motion.div>
-                  )}
-                  {['steal', 'assassinate', 'exchange', 'tax'].includes(action.actionType) && (
-                    <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
-                      <Button variant="contained" color="warning" onClick={() => handleResponse('challenge')} fullWidth>
-                        {t('game:actions.challenge')}
-                      </Button>
-                    </motion.div>
-                  )}
-                </>
-              )}
-              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
-                <Button variant="contained" color="secondary" onClick={() => handleResponse('pass')} fullWidth>
-                  {t('game:actions.pass')}
-                </Button>
-              </motion.div>
-              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={() => onClose(false)}
-                  fullWidth
-                  sx={{
-                    mt: 2,
-                  }}
-                >
-                  {t('common:buttons.returnToGame')}
-                </Button>
-              </motion.div>
-            </DialogActions>
-          </Dialog>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <Dialog
+              open={open}
+              onClose={() => onClose(false)}
+              PaperComponent={motion.div as React.ComponentType<React.PropsWithChildren<{}>>}
+              PaperProps={{
+                variants: modalVariants,
+                sx: { backgroundColor: 'white' },
+              }}
+              fullWidth
+              maxWidth="sm"
+            >
+              <DialogTitle>
+                {t('game:actions.pending')}
+              </DialogTitle>
+              <DialogContent>
+                <Typography variant="body1" gutterBottom>
+                  {t('game:actions.pendingDetails', { action: t(`game:actions.${action.actionType}.name`) })}
+                </Typography>
+              </DialogContent>
+              <DialogActions sx={{ flexDirection: 'column', gap: 2 }}>
+                {/* Action Buttons */}
+                {action.actionType !== 'income' && action.actionType !== 'coup' && (
+                  <>
+                    {['foreign_aid', 'steal', 'assassinate'].includes(action.actionType) && (
+                      <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
+                        <Button variant="contained" color="error" onClick={() => handleResponse('block')} fullWidth>
+                          {t('game:actions.block.action')}
+                        </Button>
+                      </motion.div>
+                    )}
+                    {['steal', 'assassinate', 'exchange', 'tax'].includes(action.actionType) && (
+                      <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
+                        <Button variant="contained" color="warning" onClick={() => handleResponse('challenge')} fullWidth>
+                          {t('game:actions.challenge')}
+                        </Button>
+                      </motion.div>
+                    )}
+                  </>
+                )}
+                <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
+                  <Button variant="contained" color="secondary" onClick={() => handleResponse('pass')} fullWidth>
+                    {t('game:actions.pass')}
+                  </Button>
+                </motion.div>
+                <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap" style={{ width: '100%' }}>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => onClose(false)}
+                    fullWidth
+                    sx={{
+                      mt: 2,
+                    }}
+                  >
+                    {t('common:buttons.returnToGame')}
+                  </Button>
+                </motion.div>
+              </DialogActions>
+            </Dialog>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    )
   );
 };
 

@@ -194,5 +194,13 @@
         "title": "Pronto para Jogar?",
         "description": "Junte-se a uma sala agora e comece sua aventura no Coup!"
       }
+    },
+    "loading": {
+      "processingAction": "Processando Ação...",
+      "waitingForPlayers": "Aguardando jogadores...",
+      "waitingForTurn": "Aguardando turno...",
+      "actionBlocked": "Ação Bloqueado",
+      "actionChallenged": "Ação Desafiada",
+      "general": "Carregando..."
     }
 }

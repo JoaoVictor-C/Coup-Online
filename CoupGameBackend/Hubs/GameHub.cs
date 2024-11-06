@@ -157,9 +157,15 @@ namespace CoupGameBackend.Hubs
                 if (result.IsSuccess)
                 {
                     await Groups.AddToGroupAsync(Context.ConnectionId, game.Id);
-                    await Clients.Group(game.Id).SendAsync("PlayerReconnected", userId);
+                    
+                    // Only send updates if the state actually changed (user wasn't already connected)
+                    if (!result.Message.Contains("already connected"))
+                    {
+                        await Clients.Group(game.Id).SendAsync("PlayerReconnected", userId);
+                        await _gameStateService.EmitGameUpdatesToUsers(game.Id);
+                    }
+                    
                     await Clients.Caller.SendAsync("ReconnectSucceeded", "Reconnected to the game successfully.");
-                    await _gameStateService.EmitGameUpdatesToUsers(game.Id);
                 }
                 else
                 {

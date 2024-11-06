@@ -60,15 +60,14 @@ const GameRoom: React.FC = () => {
     };
   }, [id, isSpectator, t]);
 
-  // If the user isn't active, but he is on the page, try to reconnect
   useEffect(() => {
-    if (!gameHub) return;
-    gameHub.on('ReconnectFailed', (message: string) => {
-      if (message === 'Player is not active.') {
+    const interval = setInterval(() => {
+      if (gameHub && currentUserId && game?.players.find(p => p.userId === currentUserId)?.isConnected === false) {
         gameHub.reconnect(id || '');
       }
-    });
-  }, [gameHub, id]);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [gameHub, currentUserId, game, id]);
 
   useEffect(() => {
     authService.getUser(getToken() || '').then(user => {
@@ -182,6 +181,9 @@ const GameRoom: React.FC = () => {
     gameHub.on('ReconnectFailed', (message: string) => {
       console.error(message);
       if (message === 'Game not found.') {
+        navigate('/rooms');
+      }
+      if (message === 'User not found in game as player or spectator.') {
         navigate('/rooms');
       }
     });
@@ -375,7 +377,6 @@ const GameRoom: React.FC = () => {
     if (!game) {
       if (gameHub) {
         gameHub.getGameState(id || '').then(game => {
-          console.log(game);
           setGame(game);
           setLoading(false);
         });

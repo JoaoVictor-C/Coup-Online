@@ -24,6 +24,7 @@ interface TargetSelectionModalProps {
   onSelectTarget: (userId: string) => void;
   game: Game;
   currentUserId: string;
+  showDisabledPlayers: boolean;
 }
 
 // Define animation variants for list items
@@ -40,7 +41,7 @@ const listItemVariants = {
   }),
 };
 
-const TargetSelectionModal: React.FC<TargetSelectionModalProps> = ({ open, onClose, onSelectTarget, game, currentUserId }) => {
+const TargetSelectionModal: React.FC<TargetSelectionModalProps> = ({ open, onClose, onSelectTarget, game, currentUserId, showDisabledPlayers }) => {
   const { t } = useTranslation(['game', 'common']);
   const alivePlayers = game.players.filter(p => p.isActive && p.userId !== currentUserId);
 
@@ -60,7 +61,14 @@ const TargetSelectionModal: React.FC<TargetSelectionModalProps> = ({ open, onClo
                   animate="visible"
                   variants={listItemVariants}
                 >
-                  <ListItemButton onClick={() => onSelectTarget(player.userId)}>
+                  <ListItemButton 
+                    onClick={() => onSelectTarget(player.userId)}
+                    disabled={player.coins === 0 && !showDisabledPlayers}
+                    sx={{
+                      opacity: player.coins === 0 && !showDisabledPlayers ? 0.5 : 1,
+                      cursor: player.coins === 0 && !showDisabledPlayers ? 'not-allowed' : 'pointer'
+                    }}
+                  >
                     <ListItemAvatar>
                       <Avatar alt={player.username}>
                         {player.username.charAt(0).toUpperCase()}

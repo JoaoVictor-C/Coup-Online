@@ -195,5 +195,12 @@
         "title": "Ready to Play?",
         "description": "Join a room now and start your Coup adventure!"
       }
+    },
+    "loading": {
+      "waitingForPlayers": "Waiting for players...",
+      "waitingForTurn": "Waiting for turn...",
+      "actionBlocked": "Action Blocked",
+      "actionChallenged": "Action Challenged",
+      "general": "Loading..."
     }
 }

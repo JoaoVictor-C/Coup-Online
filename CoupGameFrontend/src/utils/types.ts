@@ -81,19 +81,19 @@ export interface ActionParameters {
   targetUserId: string;
 }
 
-export interface CoupActionParameters extends ActionParameters {}
+export interface CoupActionParameters extends ActionParameters { }
 
-export interface StealActionParameters extends ActionParameters {}
+export interface StealActionParameters extends ActionParameters { }
 
-export interface AssassinateActionParameters extends ActionParameters {}
+export interface AssassinateActionParameters extends ActionParameters { }
 
 export interface ExchangeActionParameters extends ActionParameters {
   drawnCards: string[];
 }
 
-export interface ForeignAidActionParameters extends ActionParameters {}
+export interface ForeignAidActionParameters extends ActionParameters { }
 
-export interface TaxActionParameters extends ActionParameters {}
+export interface TaxActionParameters extends ActionParameters { }
 
 export interface BlockActionParameters extends ActionParameters {
   blockOption?: string;
@@ -146,3 +146,4 @@ export interface RespondToPendingActionPayload {
   response: 'block' | 'challenge' | 'pass';
   targetUserId?: string;
 }
+

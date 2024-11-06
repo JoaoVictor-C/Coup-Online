@@ -220,6 +220,16 @@ const GameBoard: React.FC<GameBoardProps> = ({
     });
   };
 
+  useEffect(() => {
+    console.log('showPendingActionModal:', showPendingActionModal);
+    console.log('game.currentTurnUserId === currentUserId:', game.currentTurnUserId === currentUserId);
+    console.log('!game.pendingAction:', !game.pendingAction);
+    console.log('game.currentTurnUserId !== currentUserId:', game.currentTurnUserId !== currentUserId);
+    console.log('game.pendingAction:', game.pendingAction);
+    console.log('forceShowGame:', forceShowGame);
+    console.log('currentPendingAction?.actionType:', currentPendingAction?.actionType);
+  }, [showPendingActionModal, game.currentTurnUserId, currentUserId, game.pendingAction, forceShowGame, currentPendingAction]);
+
   if (gameState === 'WAITING_FOR_PLAYERS') {
     return <WaitingScreen />;
   }
@@ -457,11 +467,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
       {!showPendingActionModal &&
         !isSpectator &&
-        (((game.currentTurnUserId === currentUserId && !game.pendingAction) ||
-          (game.currentTurnUserId !== currentUserId && game.pendingAction)) ||
-          forceShowGame ||
-          currentPendingAction?.actionType === 'exchangeSelect') &&
-        (
+        ((game.currentTurnUserId === currentUserId && game.pendingAction) ||
+         (game.currentTurnUserId !== currentUserId) ||
+         forceShowGame ||
+         currentPendingAction?.actionType === 'exchangeSelect') && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
             <Button
               variant="contained"
@@ -480,7 +489,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                   backgroundColor: 'primary.dark',
                 },
                 fontWeight: 'bold',
-                padding: isSmallScreen ? '8px 16px' : '10px 20px',
+                padding: isSmallScreen ? '8px 16px' : '10px 20px',  
                 borderRadius: '8px',
               }}
             >

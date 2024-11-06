@@ -62,7 +62,7 @@ const Home: React.FC = () => {
           backgroundImage: 'url(/assets/images/hero-bg.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          color: '#fff',
+          color: '#000',
           paddingY: 10,
           textAlign: 'center',
           borderRadius: 2,
