@@ -23,7 +23,8 @@
         "leader": "Leader",
         "inactive": "Inactive",
         "minPlayers": "You need at least 2 players to start the game",
-        "needMorePlayers": "Need at least 2 players to start"
+        "needMorePlayers": "Need at least 2 players to start",
+        "addBot": "Add Bot"
       },
       "code": "Room Code",
       "codeCopied": "Room code copied to clipboard!",
@@ -71,18 +72,22 @@
       },
       "coup": {
         "name": "Coup",
-        "description": "Coup: Spend 7 coins to remove another player's Card from the game"
+        "description": "Coup: Spend 7 coins to remove another player's Card from the game",
+        "card": "Duke"
       },
       "steal": {
         "name": "Steal",
-        "description": "Steal: Steal 2 coins from another player"
+        "description": "Steal: Steal 2 coins from another player",
+        "card": "Captain"
       },
       "assassinate": {
         "name": "Assassinate",
-        "description": "Assassinate: Spend 3 coins to assassinate another player"
+        "description": "Assassinate: Spend 3 coins to assassinate another player",
+        "card": "Assassin"
       },
       "exchange": {
         "name": "Exchange",
+        "card": "Ambassador",
         "description": "Exchange: Draw 2 cards from the central deck",
         "selectCards": "Select Cards to Keep",
         "selectCardsToKeep": "Select {{count}} cards to keep",
@@ -91,11 +96,13 @@
       },
       "tax": {
         "name": "Tax",
-        "description": "Tax: Take 3 coins from the treasury"
+        "description": "Tax: Take 3 coins from the treasury",
+        "card": "Duke"
       },
       "contessa": {
         "name": "Contessa",
-        "description": "Contessa: Can block assassination attempts"
+        "description": "Contessa: Can block assassination attempts",
+        "card": "Contessa"
       },
       "select": "Select an Action",
       "selectTarget": "Select a Target",
@@ -167,7 +174,9 @@
       "duke": "Duke"
     },
     "actionLog": {
-      "title": "Action Log"
+      "title": "Action Log",
+      "performAction": "{{user}} is performing {{action}} ({{card}}).",
+      "performActionWithTarget": "{{user}} is performing {{action}} ({{card}}) on {{target}}."
     },
     "waitingForPlayers": "Waiting for players...",
     "home": {

@@ -1,4 +1,4 @@
- using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 using CoupGameBackend.Models;
 
@@ -7,23 +7,35 @@ namespace CoupGameBackend.Services
     public class TurnService : ITurnService
     {
         private readonly IGameRepository _gameRepository;
+        private readonly IBotTurnService _botTurnService;
 
-        public TurnService(IGameRepository gameRepository)
+        public TurnService(IGameRepository gameRepository, IBotTurnService botTurnService)
         {
             _gameRepository = gameRepository;
+            _botTurnService = botTurnService;
         }
 
-        public async Task UpdateTurnAsync(Game game)
+        public async Task UpdateTurn(Game game)
         {
-            var activePlayers = game.Players.Where(p => p.IsActive).ToList();
-            if (!activePlayers.Any())
-                return;
+            while (true)
+            {
+                var activePlayers = game.Players.Where(p => p.IsActive).ToList();
+                if (!activePlayers.Any())
+                    return;
 
-            var currentIndex = activePlayers.FindIndex(p => p.UserId == game.CurrentTurnUserId);
-            var nextIndex = (currentIndex + 1) % activePlayers.Count;
-            game.CurrentTurnUserId = activePlayers[nextIndex].UserId;
+                var currentIndex = activePlayers.FindIndex(p => p.UserId == game.CurrentTurnUserId);
+                var nextIndex = (currentIndex + 1) % activePlayers.Count;
+                game.CurrentTurnUserId = activePlayers[nextIndex].UserId;
 
-            await _gameRepository.UpdateGameAsync(game);
+                await _gameRepository.UpdateGameAsync(game);
+
+                // var currentPlayer = game.Players.FirstOrDefault(p => p.UserId == game.CurrentTurnUserId);
+                // if (currentPlayer?.IsBot == true)
+                // {
+                //     await _botTurnService.HandleBotTurnAsync(game);
+                //     UpdateTurn(game);
+                // }
+            }
         }
     }
 }

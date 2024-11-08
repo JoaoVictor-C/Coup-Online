@@ -27,6 +27,8 @@ import LeaderboardIcon from '@mui/icons-material/EmojiEvents';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+
 
 // Define animation variants for player items
 const playerItemVariants = {
@@ -61,6 +63,7 @@ interface GameLobbyProps {
   onRejoinAsPlayer: () => void;
   onStartGame: () => void;
   isSpectator?: boolean;
+  onAddBot: () => void;
 }
 
 const GameLobby: React.FC<GameLobbyProps> = ({
@@ -70,6 +73,7 @@ const GameLobby: React.FC<GameLobbyProps> = ({
   onRejoinAsPlayer,
   onStartGame,
   isSpectator = false,
+  onAddBot,
 }) => {
   const { t } = useTranslation(['game', 'common']);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -204,7 +208,6 @@ const GameLobby: React.FC<GameLobbyProps> = ({
                 display: 'flex',
                 flexDirection: isMobile ? 'column' : 'row',
                 justifyContent: 'center',
-                gap: 2,
                 mt: 2,
                 flexWrap: 'wrap',
               }}
@@ -278,6 +281,16 @@ const GameLobby: React.FC<GameLobbyProps> = ({
                 {t('game:spectator.rejoinButton')}
               </Button>
             )}
+                          <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={() => onAddBot()}
+                startIcon={<AddCircleIcon />}
+                sx={{ paddingY: 1.5, width: { xs: '100%', sm: 'auto' } }}
+              >
+                {t('game:room.lobby.addBot')}
+              </Button>
           </Box>
         </Grid>
 

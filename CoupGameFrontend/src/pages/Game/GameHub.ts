@@ -202,6 +202,18 @@ class GameHub {
             console.error('Cannot return to lobby: not connected to GameHub.');
         }
     }
+
+    public async addBot(gameId: string) {
+        if (await this.ensureConnected()) {
+            try {
+                await this.connection?.invoke('AddBot', gameId);
+            } catch (err) {
+                console.error('Failed to add bot:', err);
+            }
+        } else {
+            console.error('Cannot add bot: not connected to GameHub.');
+        }
+    }
 }
 
 export default GameHub;

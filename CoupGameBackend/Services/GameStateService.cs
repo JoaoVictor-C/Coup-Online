@@ -50,7 +50,7 @@ namespace CoupGameBackend.Services
         public async Task<Game> GetGameState(string gameId, string userId)
         {
             var game = await _gameRepository.GetGameAsync(gameId) ?? throw new KeyNotFoundException("Game not found.");
-                
+
             if (game == null)
                 return null;
 
@@ -75,6 +75,7 @@ namespace CoupGameBackend.Services
                     Influences = p.Influences,
                     IsActive = p.IsActive,
                     IsConnected = p.IsConnected,
+                    IsBot = p.IsBot,
                     Hand = p.UserId == userId
                         ? p.Hand
                         : p.Hand.Select(c => c.IsRevealed ? c : new Card { Name = "Hidden", Role = "Hidden", IsRevealed = false }).ToList()

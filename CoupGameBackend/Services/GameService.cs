@@ -16,6 +16,8 @@ namespace CoupGameBackend.Services
         private readonly IGameRepository _gameRepository;
         private readonly IActionService _actionService;
         private readonly IChallengeService _challengeService;
+        private readonly ITurnService _turnService;
+        private readonly IBotTurnService _botTurnService;
         public Dictionary<string, PendingAction> PendingActions { get; private set; } = new Dictionary<string, PendingAction>();
 
         public GameService(
@@ -23,13 +25,17 @@ namespace CoupGameBackend.Services
             ISchedulingService schedulingService,
             IGameRepository gameRepository,
             IActionService actionService,
-            IChallengeService challengeService)
+            IChallengeService challengeService,
+            ITurnService turnService,
+            IBotTurnService botTurnService)
         {
             _gameStateService = gameStateService;
             _schedulingService = schedulingService;
             _gameRepository = gameRepository;
             _actionService = actionService;
             _challengeService = challengeService;
+            _turnService = turnService;
+            _botTurnService = botTurnService;
         }
 
         public async Task<Game> CreateGame(string userId, CreateGameRequest request)
@@ -52,7 +58,8 @@ namespace CoupGameBackend.Services
                 Coins = 2,
                 Influences = 2,
                 IsActive = true,
-                IsConnected = true
+                IsConnected = true,
+                IsBot = false
             };
             game.Players.Add(player);
 
@@ -165,11 +172,9 @@ namespace CoupGameBackend.Services
                 _gameStateService.DealCardsToPlayer(game, player, 2);
             }
 
-
             // Save the updated game state
             await _gameRepository.UpdateGameAsync(game);
 
-            // Emit game started event
             await _gameStateService.EmitGameUpdatesToUsers(game.Id);
 
             return (true, "Game started successfully.");
@@ -194,7 +199,7 @@ namespace CoupGameBackend.Services
                 player.IsActive = true;
                 player.Hand.Clear();
             });
-            
+
             game.CentralDeck = InitializeDeck();
             ShuffleDeck(game);
 
@@ -303,6 +308,34 @@ namespace CoupGameBackend.Services
             if (PendingActions.TryGetValue(gameId, out var pendingAction))
                 return pendingAction;
             return null;
+        }
+
+        public async Task<(bool IsSuccess, string Message)> AddBotAsync(string gameId, string userId)
+        {
+            var game = await _gameRepository.GetGameAsync(gameId);
+            if (game == null)
+                return (false, "Game not found.");
+
+            if (game.Players.Count >= game.PlayerCount)
+                return (false, "Game is full.");
+
+            var bot = new Player
+            {
+                UserId = Guid.NewGuid().ToString(), // Generate a unique ID for the bot
+                Username = "Bot_" + new Random().Next(1000, 9999),
+                Coins = 2,
+                Influences = 2,
+                IsActive = true,
+                IsConnected = true,
+                Hand = new List<Card>(),
+                IsBot = true
+            };
+
+            game.Players.Add(bot);
+            await _gameRepository.UpdateGameAsync(game);
+            await _gameStateService.EmitGameUpdatesToUsers(game.Id);
+
+            return (true, "Bot added successfully.");
         }
     }
 }

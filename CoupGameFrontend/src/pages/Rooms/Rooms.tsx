@@ -358,7 +358,7 @@ const Rooms: React.FC = () => {
                   <Grid container spacing={4}>
                     {paginatedRooms.length > 0 ? (
                       paginatedRooms.map((room) => (
-                        <Grid item xs={12} sm={6} md={4} key={room.id}>
+                        <Grid item xs={12} sm={6} md={3} key={room.id}>
                           <Card
                             elevation={3}
                             sx={{

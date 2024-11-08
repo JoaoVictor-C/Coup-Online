@@ -18,6 +18,7 @@ namespace CoupGameBackend.Services
         Task<(bool IsSuccess, string Message)> SwitchToSpectatorAsync(string gameId, string userId);
         bool HasPendingAction(string gameId);
         PendingAction? GetPendingAction(string gameId);
+        Task<(bool IsSuccess, string Message)> AddBotAsync(string gameId, string userId);
 
     }
 }

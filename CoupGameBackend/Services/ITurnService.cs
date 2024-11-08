@@ -5,6 +5,6 @@ namespace CoupGameBackend.Services
 {
     public interface ITurnService
     {
-        Task UpdateTurnAsync(Game game);
+        Task UpdateTurn(Game game);
     }
 }

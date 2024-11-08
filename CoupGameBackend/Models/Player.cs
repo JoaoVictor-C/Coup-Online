@@ -18,6 +18,8 @@ namespace CoupGameBackend.Models
         public bool IsConnected { get; set; } = true;
         [BsonElement("Hand")]
         public List<Card> Hand { get; set; } = new List<Card>();
+        [BsonElement("IsBot")]
+        public bool IsBot { get; set; } = false;
     }
 
     public class Spectator

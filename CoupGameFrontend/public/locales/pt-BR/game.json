@@ -23,7 +23,8 @@
         "leader": "Líder",
         "inactive": "Inativo",
         "minPlayers": "Você precisa de pelo menos 2 jogadores para iniciar",
-        "needMorePlayers": "Necessário pelo menos 2 jogadores para iniciar"
+        "needMorePlayers": "Necessário pelo menos 2 jogadores para iniciar",
+        "addBot": "Adicionar Bot"
       },
       "code": "Código da Sala",
       "codeCopied": "Código da sala copiado!",
@@ -164,7 +165,9 @@
       "duke": "Duque"
     },
     "actionLog": {
-      "title": "Registro de Ações"
+      "title": "Registro de Ações",
+      "performAction": "{{user}} está realizando {{action}} ({{card}}).",
+      "performActionWithTarget": "{{user}} está realizando {{action}} ({{card}}) em {{target}}."
     },
     "waitingForPlayers": "Aguardando jogadores...",
     "home": {

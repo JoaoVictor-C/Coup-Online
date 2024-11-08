@@ -398,6 +398,17 @@ const GameRoom: React.FC = () => {
     }
   };
 
+  const handleAddBot = async () => {
+    if (gameHub && game) {
+      try {
+        await gameHub.addBot(game.id);
+      } catch (err: any) {
+        console.error('Failed to add bot:', err);
+        setError('Failed to add bot. Please try again.');
+      }
+    }
+  };
+
   if (error) {
     return (
       <Container
@@ -458,6 +469,7 @@ const GameRoom: React.FC = () => {
           onRejoinAsPlayer={handleRejoinAsPlayer}
           onStartGame={handleStartGame}
           isSpectator={isSpectator}
+          onAddBot={handleAddBot}
         />
       ) : (
         <GameBoard

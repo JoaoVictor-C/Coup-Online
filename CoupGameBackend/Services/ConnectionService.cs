@@ -87,7 +87,8 @@ namespace CoupGameBackend.Services
                     Influences = 2,
                     IsActive = true,
                     IsConnected = true,
-                    Hand = new List<Card>()
+                    Hand = new List<Card>(),
+                    IsBot = false
                 };
                 game.Players.Add(newPlayer);
 
@@ -171,13 +172,12 @@ namespace CoupGameBackend.Services
                 return (false, "Game not found.");
             }
 
-            var player = game.Players.FirstOrDefault(p => p.UserId == userId);
+            var player = game.Players.FirstOrDefault(p => p.UserId == userId && !p.IsBot);
             if (player != null)
             {
                 if (!player.IsConnected)
                     return (true, "Player already disconnected.");
 
-                Console.WriteLine($"Player {player.Username} disconnected.");
                 // Mark player as disconnected
                 player.IsConnected = false;
                 await _gameRepository.UpdateGameAsync(game);
@@ -203,7 +203,7 @@ namespace CoupGameBackend.Services
                             await Task.Delay(TimeSpan.FromMinutes(1), cts.Token);
                             // After timeout, kick the player if still disconnected
                             var updatedGame = await _gameRepository.GetGameAsync(gameId);
-                            var disconnectedPlayer = updatedGame?.Players.FirstOrDefault(p => p.UserId == userId);
+                            var disconnectedPlayer = updatedGame?.Players.FirstOrDefault(p => p.UserId == userId && !p.IsBot);
                             if (disconnectedPlayer != null && !disconnectedPlayer.IsConnected)
                             {
                                 // Remove player from the game
@@ -216,9 +216,9 @@ namespace CoupGameBackend.Services
                                 // If the player was the leader, assign a new leader
                                 if (updatedGame.LeaderId == userId)
                                 {
-                                    if (updatedGame.Players.Count > 0)
+                                    if (updatedGame.Players.FirstOrDefault(p => !p.IsBot) != null)
                                     {
-                                        updatedGame.LeaderId = updatedGame.Players.First().UserId;
+                                        updatedGame.LeaderId = updatedGame.Players.First(p => !p.IsBot).UserId;
                                         await _hubContext.Clients.Group(gameId).SendAsync("LeaderChanged", updatedGame.LeaderId);
                                     }
                                     else
@@ -322,19 +322,16 @@ namespace CoupGameBackend.Services
 
             if (player != null)
             {
-                Console.WriteLine($"Player: {player.Username} left the game: {gameId}");
-                // Remove player from the game
                 game.Players.Remove(player);
 
                 // Notify other players about the player leaving
                 await _hubContext.Clients.Group(gameId).SendAsync("PlayerLeft", userId);
 
-                // If the player was the leader, assign a new leader
                 if (game.LeaderId == userId)
                 {
-                    if (game.Players.Count > 0)
+                    if (game.Players.FirstOrDefault(p => !p.IsBot) != null)
                     {
-                        game.LeaderId = game.Players.First().UserId;
+                        game.LeaderId = game.Players.First(p => p.IsConnected && !p.IsBot).UserId;
                         await _hubContext.Clients.Group(gameId).SendAsync("LeaderChanged", game.LeaderId);
                     }
                     else if (!game.IsStarted)
@@ -419,7 +416,8 @@ namespace CoupGameBackend.Services
                 Influences = game.IsStarted ? 0 : 2, // Start with 0 influences if game is in progress
                 IsActive = true,
                 IsConnected = true,
-                Hand = new List<Card>()
+                Hand = new List<Card>(),
+                IsBot = false
             };
             game.Players.Add(player);
 

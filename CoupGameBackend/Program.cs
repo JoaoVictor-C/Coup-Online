@@ -137,18 +137,15 @@ builder.Services.AddSwaggerGen(c =>
 // Register Repositories and Services
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<IGameRepository, GameRepository>();
-
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IGameService, GameService>();
-
-// Register new services
 builder.Services.AddScoped<IActionService, ActionService>();
 builder.Services.AddScoped<IConnectionService, ConnectionService>();
 builder.Services.AddScoped<ITurnService, TurnService>();
 builder.Services.AddScoped<IChallengeService, ChallengeService>();
 builder.Services.AddScoped<IGameStateService, GameStateService>();
 builder.Services.AddSingleton<ISchedulingService, SchedulingService>();
-
+builder.Services.AddScoped<IBotTurnService, BotTurnService>();
 // Configure CORS
 builder.Services.AddCors(options =>
 {

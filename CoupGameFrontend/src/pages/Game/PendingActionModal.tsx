@@ -381,7 +381,7 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
   }
 
   return (
-   !showRespondToExchangeSelect && (
+    !showRespondToExchangeSelect && (
       <AnimatePresence>
         {open && (
           <motion.div
@@ -405,7 +405,18 @@ const PendingActionModal: React.FC<PendingActionModalProps> = ({
               </DialogTitle>
               <DialogContent>
                 <Typography variant="body1" gutterBottom>
-                  {t('game:actions.pendingDetails', { action: t(`game:actions.${action.actionType}.name`) })}
+                  {['steal', 'coup', 'assassinate'].includes(action.actionType)
+                    ? t('actionLog.performActionWithTarget', {
+                      user: players.find(player => player.userId === pendingAction?.initiatorId)?.username || 'Unknown',
+                      action: t(`game:actions.${action.actionType}.name`),
+                      target: pendingAction?.targetId === currentUserId ? t('labels.you') : (players.find(player => player.userId === pendingAction?.targetId)?.username || 'Unknown'),
+                      card: !['coup'].includes(action.actionType) ? t(`game:actions.${action.actionType}.card`) : ''
+                    })
+                    : t('actionLog.performAction', {
+                      user: players.find(player => player.userId === pendingAction?.initiatorId)?.username || 'Unknown',
+                      action: t(`game:actions.${action.actionType}.name`),
+                      card: !['income', 'foreign_aid'].includes(action.actionType) ? t(`game:actions.${action.actionType}.card`) : ''
+                    })}
                 </Typography>
               </DialogContent>
               <DialogActions sx={{ flexDirection: 'column', gap: 2 }}>

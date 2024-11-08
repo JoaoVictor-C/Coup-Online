@@ -144,6 +144,6 @@ export interface RespondToPendingActionPayload {
   initiatorId: string;
   responderId: string;
   response: 'block' | 'challenge' | 'pass';
-  targetUserId?: string;
+  targetId?: string;
 }
 

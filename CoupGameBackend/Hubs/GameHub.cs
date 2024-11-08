@@ -157,14 +157,14 @@ namespace CoupGameBackend.Hubs
                 if (result.IsSuccess)
                 {
                     await Groups.AddToGroupAsync(Context.ConnectionId, game.Id);
-                    
+
                     // Only send updates if the state actually changed (user wasn't already connected)
                     if (!result.Message.Contains("already connected"))
                     {
                         await Clients.Group(game.Id).SendAsync("PlayerReconnected", userId);
                         await _gameStateService.EmitGameUpdatesToUsers(game.Id);
                     }
-                    
+
                     await Clients.Caller.SendAsync("ReconnectSucceeded", "Reconnected to the game successfully.");
                 }
                 else
@@ -588,6 +588,34 @@ namespace CoupGameBackend.Hubs
                     _logger.LogWarning("{MethodName}: Unhandled action result.", methodName);
                     await Clients.Caller.SendAsync("ActionFailed", "An unknown error occurred.");
                     break;
+            }
+        }
+
+        public async Task AddBot(string gameIdOrCode)
+        {
+            var userId = GetUserId();
+            if (!ValidateUser(userId, "AddBot")) return;
+
+            var game = await GetGameAsync(gameIdOrCode, "AddBot");
+            if (game == null) return;
+
+            try
+            {
+                var result = await _gameService.AddBotAsync(game.Id, userId);
+                if (result.IsSuccess)
+                {
+                    await Clients.Group(game.Id).SendAsync("BotAdded", result.Message);
+                }
+                else
+                {
+                    _logger.LogWarning("AddBot failed for game {GameId}: {Message}", game.Id, result.Message);
+                    await Clients.Caller.SendAsync("Error", result.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in AddBot for game {GameId}", game.Id);
+                await Clients.Caller.SendAsync("Error", "An error occurred while adding a bot.");
             }
         }
 
