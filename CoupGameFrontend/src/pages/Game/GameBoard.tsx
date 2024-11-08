@@ -175,6 +175,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
       } else {
         setShowReturnCardModal(false);
       }
+    } else {
+      setShowReturnCardModal(false);
     }
   }, [game, currentUserId]);
 
@@ -578,8 +580,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+
       <Dialog
-        open={showReturnCardModal}
+        open={showReturnCardModal && !showButton}
         onClose={() => setShowReturnCardModal(false)}
         fullScreen={isSmallScreen}
         aria-labelledby="return-card-dialog-title"
@@ -648,9 +651,32 @@ const GameBoard: React.FC<GameBoardProps> = ({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowReturnCardModal(false)} color="primary" size={isSmallScreen ? 'medium' : 'large'}>
-            {t('common:buttons.cancel')}
-          </Button>
+          <Grid container spacing={2} justifyContent="center">
+            <Grid item xs={6}>
+              <Button onClick={() => setShowReturnCardModal(false)} color="primary" size={isSmallScreen ? 'medium' : 'large'} fullWidth>
+                {t('common:buttons.cancel')}
+              </Button>
+            </Grid>
+            <Grid item xs={6}>
+              <Button
+                onClick={() => handlePendingActionClose(false)}
+                color="primary"
+                variant="outlined"
+                fullWidth
+                sx={{
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  borderColor: '#3f51b5',
+                  color: '#3f51b5',
+                  '&:hover': {
+                    backgroundColor: 'rgba(63, 81, 181, 0.04)',
+                  },
+                }}
+              >
+                {t('common:buttons.returnToGame')}
+              </Button>
+            </Grid>
+          </Grid>
         </DialogActions>
       </Dialog>
     </Container>
