@@ -3,8 +3,8 @@
       "create": {
         "title": "Criar Nova Sala",
         "gameName": "Nome do Jogo",
-        "playerCount": "Número de Jogadores", 
-        "playersCount": "{{count}} Jogadores",
+        "playerCount": "Número de Jogadores",
+        "playersCount": "{{count}} Jogadores", 
         "privateRoom": "Tornar esta sala privada",
         "creating": "Criando...",
         "success": "Sala criada com sucesso!"
@@ -29,7 +29,7 @@
       "codeCopied": "Código da sala copiado!",
       "clickToCopy": "Clique para copiar",
       "name": "Nome da Sala",
-      "available": "Salas Disponíveis", 
+      "available": "Salas Disponíveis",
       "searchPlaceholder": "Buscar salas...",
       "noRooms": "Nenhuma sala disponível",
       "players": "Jogadores",
@@ -37,6 +37,16 @@
       "lastSearch": {
         "na": "Última busca: N/D",
         "time": "Última busca: há {{minutes}}m {{seconds}}s"
+      },
+      "status": "Status",
+      "state": {
+        "finished": "Finalizado",
+        "playing": "Em Andamento",
+        "lobby": "Aguardando Jogadores"
+      },
+      "creator": "Criado por",
+      "spectator": {
+        "title": "Assistir Jogo"
       }
     },
     "rooms": {

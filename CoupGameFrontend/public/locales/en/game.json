@@ -2,8 +2,8 @@
     "room": {
       "create": {
         "title": "Create New Room",
-        "gameName": "Game Name", 
-        "playerCount": "Number of Players",
+        "gameName": "Game Name",
+        "playerCount": "Number of Players", 
         "playersCount": "{{count}} Players",
         "privateRoom": "Make this a private room",
         "creating": "Creating...",
@@ -37,7 +37,19 @@
       "lastSearch": {
         "na": "Last search: N/A",
         "time": "Last search: {{minutes}}m {{seconds}}s ago"
-      }
+      },
+      "status": "Status",
+      "state": {
+        "finished": "Finished", 
+        "playing": "In progress",
+        "lobby": "Waiting for players"
+      },
+      "creator": "Created by",
+      "spectator": {
+        "title": "Watch Game"
+      },
+      "playerCount": "Players",
+      "host": "Host"
     },
     "rooms": {
       "errors": {
@@ -202,5 +214,15 @@
       "actionBlocked": "Action Blocked",
       "actionChallenged": "Action Challenged",
       "general": "Loading..."
+    },
+    "common": {
+      "error": {
+        "generic": "An error occurred. Please try again."
+      },
+      "buttons": {
+        "join": "Join",
+        "joining": "Joining...",
+        "refresh": "Refresh"
+      }
     }
 }
