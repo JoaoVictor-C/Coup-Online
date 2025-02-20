@@ -8,6 +8,7 @@
     "start": "Start",
     "restart": "Restart",
     "exit": "Exit",
+    "returnToLobby": "Return to Lobby",
     "return": "Return",
     "login": "Login",
     "logout": "Logout",

@@ -47,9 +47,8 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ winnerName, onRestart, 
                             {t('common:buttons.restart')}
                         </Button>
                         <Button variant="outlined" color="secondary" onClick={onExit}>
-                            {t('common:buttons.exit')}
+                            {t('common:buttons.returnToLobby')}
                         </Button>
-                        {/* Return to Game Button */}
                         <Button variant="outlined" color="secondary" onClick={showGame}>
                             {t('common:buttons.returnToGame')}
                         </Button>

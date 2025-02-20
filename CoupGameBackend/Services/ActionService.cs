@@ -469,7 +469,7 @@ namespace CoupGameBackend.Services
                 return (true, "Action is pending return card response.");
 
             // If block option is selected, the user blocking needs to be the target of the action not other players
-            if (blockOption != null && game.PendingAction.TargetId != userId)
+            if (blockOption != null && game.PendingAction.TargetId != userId && game.PendingAction.TargetId != null)
                 return (false, "You are not the target of this action.");
 
             switch (response)

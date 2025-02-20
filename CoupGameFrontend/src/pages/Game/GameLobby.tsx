@@ -281,7 +281,7 @@ const GameLobby: React.FC<GameLobbyProps> = ({
                 {t('game:spectator.rejoinButton')}
               </Button>
             )}
-                          <Button
+                          {/* <Button
                 variant="contained"
                 color="primary"
                 size="large"
@@ -290,7 +290,7 @@ const GameLobby: React.FC<GameLobbyProps> = ({
                 sx={{ paddingY: 1.5, width: { xs: '100%', sm: 'auto' } }}
               >
                 {t('game:room.lobby.addBot')}
-              </Button>
+              </Button> */}
           </Box>
         </Grid>
 
