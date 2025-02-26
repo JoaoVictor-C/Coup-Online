@@ -56,9 +56,16 @@ const Register: React.FC = () => {
       await register(form.username, form.email, form.password);
       navigate('/login');
     } catch (err: any) {
-      if (err.response?.data?.message === 'Username already exists') {
+      console.error('Register error:', err);
+      const errorMessage = err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message;
+
+      if (errorMessage?.includes('Username already exists') ||
+        err.response?.status === 400 && err.response?.data?.username === form.username) {
         setError(t('auth:register.error.userExists'));
-      } else if (err.response?.data?.message === 'Email already registered') {
+      } else if (errorMessage?.includes('Email already exists') ||
+        err.response?.status === 400 && err.response?.data?.email === form.email) {
         setError(t('auth:register.error.emailExists'));
       } else {
         setError(t('common:error.generic'));

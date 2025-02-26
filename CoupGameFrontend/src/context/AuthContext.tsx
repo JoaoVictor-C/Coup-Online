@@ -64,8 +64,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const register = async (username: string, email: string, password: string) => {
     setLoading(true);
     try {
-      await authService.register(username, email, password);
-      // Optionally, you can log the user in immediately after registration
+      const response = await authService.register(username, email, password);
+      console.log(response);
     } catch (error) {
       throw error;
     } finally {

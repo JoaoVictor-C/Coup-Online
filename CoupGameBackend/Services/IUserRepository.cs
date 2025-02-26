@@ -11,6 +11,7 @@ namespace CoupGameBackend.Services
         Task UpdateAsync(User user);
         Task DeleteAsync(string id);
         Task<User> GetUserByUsername(string username);
+        Task<User> GetByEmailAsync(string email);
 
     }
 }

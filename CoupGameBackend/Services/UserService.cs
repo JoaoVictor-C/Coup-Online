@@ -136,6 +136,11 @@ namespace CoupGameBackend.Services
             if (existingUser != null)
                 throw new ArgumentException("Username already exists.");
 
+            //Check if email already exists
+            existingUser = await _userRepository.GetByEmailAsync(email);
+            if (existingUser != null)
+                throw new ArgumentException("Email already exists.");
+
             // Optionally, validate email format or uniqueness
 
             var passwordHash = ComputeSha256Hash(password);
