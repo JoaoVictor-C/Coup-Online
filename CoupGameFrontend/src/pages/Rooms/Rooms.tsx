@@ -108,9 +108,10 @@ const Rooms: React.FC = () => {
       setJoiningRoomId(room.id); // Set loading state
       try {
         const game = await roomService.joinRoom(room.id);
+
         const isSpectator =
           game.spectators.some((spectator) => spectator.userId === currentUserId) ||
-          (game.players && game.players.length >= room.playerCount);
+          (game.players && game.players.length > room.playerCount);
         navigate(`/${isSpectator ? 'spectator' : 'game'}/${game.roomCode}`);
       } catch (err: any) {
         if (err.response?.data?.message === 'Game not found.') {
